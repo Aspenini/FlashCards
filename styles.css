@@ -160,6 +160,10 @@ h3 {
 }
 
 /* Sets List */
+#bundledSetsContainer {
+    margin-bottom: 48px;
+}
+
 .sets-container {
     margin-top: 0;
 }

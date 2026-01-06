@@ -193,39 +193,64 @@ function handleHashChange() {
 // Render sets list
 function renderSets() {
     const setsList = document.getElementById('setsList');
+    const bundledSetsList = document.getElementById('bundledSetsList');
+    const bundledSetsContainer = document.getElementById('bundledSetsContainer');
     const studyBtn = document.getElementById('studyBtn');
 
-    if (sets.length === 0) {
-        setsList.innerHTML = '<p class="empty-message">No sets yet. Create your first set to get started!</p>';
-        studyBtn.disabled = true;
-        return;
+    // Separate bundled sets from user sets
+    const bundledSets = sets.filter(set => set.bundled);
+    const userSets = sets.filter(set => !set.bundled);
+
+    // Render bundled sets
+    if (bundledSets.length > 0) {
+        bundledSetsContainer.style.display = 'block';
+        bundledSetsList.innerHTML = '';
+        bundledSets.forEach((set, originalIndex) => {
+            const index = sets.indexOf(set); // Get original index in full sets array
+            const setItem = document.createElement('div');
+            setItem.className = 'set-item bundled-set';
+            setItem.innerHTML = `
+                <div class="set-info" onclick="editSet(${index})">
+                    <div class="set-name">${escapeHtml(set.name)}</div>
+                    <div class="set-meta">${set.cards.length} card${set.cards.length !== 1 ? 's' : ''}</div>
+                </div>
+                <div class="set-actions">
+                    <button class="btn btn-secondary btn-icon" onclick="editSet(${index})">Edit</button>
+                    <button class="btn btn-secondary btn-icon" onclick="exportSet(${index})">Export</button>
+                </div>
+            `;
+            bundledSetsList.appendChild(setItem);
+        });
+    } else {
+        bundledSetsContainer.style.display = 'none';
     }
 
-    studyBtn.disabled = false;
-    setsList.innerHTML = '';
+    // Render user sets
+    if (userSets.length === 0) {
+        setsList.innerHTML = '<p class="empty-message">No sets yet. Create your first set to get started!</p>';
+    } else {
+        setsList.innerHTML = '';
+        userSets.forEach((set, originalIndex) => {
+            const index = sets.indexOf(set); // Get original index in full sets array
+            const setItem = document.createElement('div');
+            setItem.className = 'set-item';
+            setItem.innerHTML = `
+                <div class="set-info" onclick="editSet(${index})">
+                    <div class="set-name">${escapeHtml(set.name)}</div>
+                    <div class="set-meta">${set.cards.length} card${set.cards.length !== 1 ? 's' : ''}</div>
+                </div>
+                <div class="set-actions">
+                    <button class="btn btn-secondary btn-icon" onclick="editSet(${index})">Edit</button>
+                    <button class="btn btn-secondary btn-icon" onclick="exportSet(${index})">Export</button>
+                    <button class="btn btn-danger btn-icon" onclick="deleteSetFromList(${index})">Delete</button>
+                </div>
+            `;
+            setsList.appendChild(setItem);
+        });
+    }
 
-    sets.forEach((set, index) => {
-        const setItem = document.createElement('div');
-        setItem.className = set.bundled ? 'set-item bundled-set' : 'set-item';
-        
-        const bundledBadge = set.bundled ? '<span class="bundled-badge">Bundled</span>' : '';
-        const deleteButton = set.bundled 
-            ? '' 
-            : `<button class="btn btn-danger btn-icon" onclick="deleteSetFromList(${index})">Delete</button>`;
-        
-        setItem.innerHTML = `
-            <div class="set-info" onclick="editSet(${index})">
-                <div class="set-name">${escapeHtml(set.name)}${bundledBadge}</div>
-                <div class="set-meta">${set.cards.length} card${set.cards.length !== 1 ? 's' : ''}</div>
-            </div>
-            <div class="set-actions">
-                <button class="btn btn-secondary btn-icon" onclick="editSet(${index})">Edit</button>
-                <button class="btn btn-secondary btn-icon" onclick="exportSet(${index})">Export</button>
-                ${deleteButton}
-            </div>
-        `;
-        setsList.appendChild(setItem);
-    });
+    // Enable study button if there are any sets
+    studyBtn.disabled = sets.length === 0;
 }
 
 // Edit set
