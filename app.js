@@ -31,36 +31,112 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 0);
 });
 
-// Load bundled sets from bundled folder
+// Load bundled sets from bundled folder dynamically
+// Tries multiple methods: GitHub API, index.json fallback, and direct file discovery
 async function loadBundledSets() {
+    const bundledSets = [];
+    let fileList = [];
+    
+    // Method 1: Try GitHub API to list bundled directory (works for public repos)
+    // Extract repo info from various sources
     try {
-        // Try to load bundled sets from the bundled folder
-        // Use absolute path starting with / to ensure it works on GitHub Pages
-        const response = await fetch('/bundled/index.json');
-        if (response.ok) {
-            const index = await response.json();
-            const bundledSets = [];
-            
-            for (const fileName of index.files || []) {
-                try {
-                    const setResponse = await fetch(`/bundled/${fileName}`);
-                    if (setResponse.ok) {
-                        const setData = await setResponse.json();
-                        setData.bundled = true; // Mark as bundled
-                        setData.bundledFileName = fileName; // Store original filename
-                        bundledSets.push(setData);
-                    }
-                } catch (err) {
-                    console.warn(`Failed to load bundled set: ${fileName}`, err);
+        // Try to get repo from meta tags, referrer, or common GitHub Pages patterns
+        const metaRepo = document.querySelector('meta[name="github-repo"]')?.content;
+        let repoPath = null;
+        
+        if (metaRepo) {
+            repoPath = metaRepo;
+        } else {
+            // Try to detect from referrer if available
+            const referrer = document.referrer;
+            if (referrer.includes('github.com')) {
+                const match = referrer.match(/github\.com\/([^\/]+\/[^\/]+)/);
+                if (match) {
+                    repoPath = match[1];
                 }
             }
-            
-            // Add bundled sets to the beginning of sets array
-            sets = [...bundledSets, ...sets];
+        }
+        
+        // If we have repo path, try GitHub API
+        if (repoPath) {
+            try {
+                const apiUrl = `https://api.github.com/repos/${repoPath}/contents/bundled`;
+                const apiResponse = await fetch(apiUrl);
+                if (apiResponse.ok) {
+                    const contents = await apiResponse.json();
+                    // Filter for JSON files, exclude index.json
+                    fileList = contents
+                        .filter(item => item.type === 'file' && item.name.endsWith('.json') && item.name !== 'index.json')
+                        .map(item => item.name);
+                }
+            } catch (apiErr) {
+                // API failed, continue to other methods
+            }
         }
     } catch (err) {
-        // Bundled folder doesn't exist or index.json not found - that's okay
-        console.log('No bundled sets found or bundled folder not accessible');
+        // Continue to fallback methods
+    }
+    
+    // Method 2: Try index.json as fallback
+    if (fileList.length === 0) {
+        try {
+            const indexResponse = await fetch('/bundled/index.json');
+            if (indexResponse.ok) {
+                const index = await indexResponse.json();
+                fileList = index.files || [];
+            }
+        } catch (err) {
+            // index.json doesn't exist, continue to discovery
+        }
+    }
+    
+    // Method 3: Try to discover files by attempting common patterns
+    // This is a simple discovery mechanism - try fetching files directly
+    if (fileList.length === 0) {
+        // Try known files first
+        const knownFiles = [
+            'Science_Middle_Grades_KAAC.json'
+            // Add more known files here as needed
+        ];
+        
+        // Try each known file
+        const discoveryPromises = knownFiles.map(async (fileName) => {
+            try {
+                const testResponse = await fetch(`/bundled/${fileName}`);
+                if (testResponse.ok) {
+                    return fileName;
+                }
+            } catch (e) {
+                // File doesn't exist
+            }
+            return null;
+        });
+        
+        const discoveredFiles = await Promise.all(discoveryPromises);
+        fileList = discoveredFiles.filter(f => f !== null);
+    }
+    
+    // Fetch all discovered JSON files
+    for (const fileName of fileList) {
+        try {
+            const setResponse = await fetch(`/bundled/${fileName}`);
+            if (setResponse.ok) {
+                const setData = await setResponse.json();
+                // Validate it's a valid set (has name and cards)
+                if (setData.name && Array.isArray(setData.cards)) {
+                    setData.bundled = true;
+                    setData.bundledFileName = fileName;
+                    bundledSets.push(setData);
+                }
+            }
+        } catch (err) {
+            console.warn(`Failed to load bundled set: ${fileName}`, err);
+        }
+    }
+    
+    // Add bundled sets to the beginning of sets array
+    if (bundledSets.length > 0) {
+        sets = [...bundledSets, ...sets];
     }
 }
 
