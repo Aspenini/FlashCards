@@ -210,13 +210,11 @@ function renderSets() {
             const setItem = document.createElement('div');
             setItem.className = 'set-item bundled-set';
             setItem.innerHTML = `
-                <div class="set-info" onclick="editSet(${index})">
+                <div class="set-info">
                     <div class="set-name">${escapeHtml(set.name)}</div>
                     <div class="set-meta">${set.cards.length} card${set.cards.length !== 1 ? 's' : ''}</div>
                 </div>
                 <div class="set-actions">
-                    <button class="btn btn-secondary btn-icon" onclick="editSet(${index})">Edit</button>
-                    <button class="btn btn-secondary btn-icon" onclick="exportSet(${index})">Export</button>
                 </div>
             `;
             bundledSetsList.appendChild(setItem);
@@ -255,8 +253,12 @@ function renderSets() {
 
 // Edit set
 function editSet(index) {
-    currentSetId = index;
     const set = sets[index];
+    if (set.bundled) {
+        alert('Bundled sets cannot be edited. You can only edit sets you created.');
+        return;
+    }
+    currentSetId = index;
     showView('setEditorView');
     document.getElementById('editorTitle').textContent = 'Edit Set';
     document.getElementById('deleteSetBtn').style.display = 'block';
@@ -653,6 +655,10 @@ function deleteSet() {
 // Export set
 function exportSet(index) {
     const set = sets[index];
+    if (set.bundled) {
+        alert('Bundled sets cannot be exported. You can only export sets you created.');
+        return;
+    }
     const exportData = {
         name: set.name,
         cards: set.cards,
