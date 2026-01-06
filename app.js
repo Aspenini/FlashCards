@@ -1,0 +1,1200 @@
+// State management
+let sets = [];
+let currentSetId = null;
+let studyCards = [];
+let currentCardIndex = 0;
+let currentQuestionIndex = 0; // For progressive mode
+let studyResults = { correct: 0, wrong: 0, points: 0, cards: [] }; // cards array stores {card, result, question}
+let progressiveMode = false;
+let currentCardQuestions = []; // Questions for current card in order (sorted by order property)
+let currentCardQuestionsForCardIndex = -1; // which card the cache belongs to
+let shownQuestions = []; // Questions shown so far (for progressive mode - accumulates in order: Q1, Q2, Q3...)
+
+// Initialize app
+document.addEventListener('DOMContentLoaded', () => {
+    loadBundledSets(); // Load bundled sets first
+    loadSets(); // Load user sets
+    setupEventListeners();
+    renderSets();
+    
+    // Handle initial hash or hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    
+    // Check hash on initial load (after a small delay to ensure DOM is ready)
+    setTimeout(() => {
+        if (window.location.hash) {
+            handleHashChange();
+        } else {
+            // No hash, ensure main view is shown
+            showView('mainView', false);
+        }
+    }, 0);
+});
+
+// Load bundled sets from bundled folder
+async function loadBundledSets() {
+    try {
+        // Try to load bundled sets from the bundled folder
+        const response = await fetch('bundled/index.json');
+        if (response.ok) {
+            const index = await response.json();
+            const bundledSets = [];
+            
+            for (const fileName of index.files || []) {
+                try {
+                    const setResponse = await fetch(`bundled/${fileName}`);
+                    if (setResponse.ok) {
+                        const setData = await setResponse.json();
+                        setData.bundled = true; // Mark as bundled
+                        setData.bundledFileName = fileName; // Store original filename
+                        bundledSets.push(setData);
+                    }
+                } catch (err) {
+                    console.warn(`Failed to load bundled set: ${fileName}`, err);
+                }
+            }
+            
+            // Add bundled sets to the beginning of sets array
+            sets = [...bundledSets, ...sets];
+        }
+    } catch (err) {
+        // Bundled folder doesn't exist or index.json not found - that's okay
+        console.log('No bundled sets found or bundled folder not accessible');
+    }
+}
+
+// Load sets from localStorage
+function loadSets() {
+    const saved = localStorage.getItem('flashcardSets');
+    if (saved) {
+        const userSets = JSON.parse(saved);
+        // Filter out bundled sets that might have been saved (shouldn't happen, but just in case)
+        sets = sets.filter(s => !s.bundled).concat(userSets);
+    }
+}
+
+
+// Save sets to localStorage
+function saveSets() {
+    localStorage.setItem('flashcardSets', JSON.stringify(sets));
+}
+
+    // Setup event listeners
+    function setupEventListeners() {
+        // Drag and drop for questions
+        setupQuestionDragAndDrop();
+    // Main view
+    document.getElementById('createSetBtn').addEventListener('click', () => {
+        currentSetId = null;
+        showView('setEditorView');
+        document.getElementById('editorTitle').textContent = 'Create New Set';
+        document.getElementById('deleteSetBtn').style.display = 'none';
+        document.getElementById('setName').value = '';
+        document.getElementById('cardsList').innerHTML = '';
+    });
+
+    document.getElementById('studyBtn').addEventListener('click', () => {
+        showView('studySetupView');
+        populateSetSelect();
+    });
+
+    document.getElementById('importSetBtn').addEventListener('click', () => {
+        document.getElementById('importFileInput').click();
+    });
+
+    document.getElementById('importFileInput').addEventListener('change', handleImport);
+
+    // Editor view
+    document.getElementById('backToMainBtn').addEventListener('click', () => {
+        showView('mainView');
+    });
+
+    document.getElementById('addCardBtn').addEventListener('click', addCardToEditor);
+    document.getElementById('saveSetBtn').addEventListener('click', saveSet);
+    document.getElementById('deleteSetBtn').addEventListener('click', deleteSet);
+    
+
+    // Study setup
+    document.getElementById('backToMainFromSetupBtn').addEventListener('click', () => {
+        showView('mainView');
+    });
+
+    document.getElementById('selectedSet').addEventListener('change', updateCardCount);
+    document.getElementById('startStudyBtn').addEventListener('click', startStudy);
+
+    // Study view
+    document.getElementById('flipCardBtn').addEventListener('click', flipCard);
+    document.getElementById('flashcard').addEventListener('click', () => {
+        if (!document.getElementById('flashcard').classList.contains('flipped')) {
+            flipCard();
+        }
+    });
+    document.getElementById('wrongBtn').addEventListener('click', () => markAnswer(false));
+    document.getElementById('rightBtn').addEventListener('click', () => markAnswer(true));
+    document.getElementById('askForHintBtn').addEventListener('click', askForHint);
+
+    // Results view
+    document.getElementById('studyAgainBtn').addEventListener('click', () => {
+        showView('studySetupView');
+        populateSetSelect();
+    });
+
+    document.getElementById('backToMainFromResultsBtn').addEventListener('click', () => {
+        showView('mainView');
+    });
+}
+
+// View management with URL hash support
+let isUpdatingHash = false; // Prevent infinite loop
+
+function showView(viewId, updateHash = true) {
+    document.querySelectorAll('.view').forEach(view => {
+        view.classList.remove('active');
+    });
+    document.getElementById(viewId).classList.add('active');
+    
+    // Update URL hash based on view (unless we're handling a hash change)
+    if (updateHash && !isUpdatingHash) {
+        const hashMap = {
+            'mainView': '',
+            'setEditorView': 'creator',
+            'studySetupView': 'study',
+            'studyView': 'study',
+            'resultsView': 'study'
+        };
+        
+        const hash = hashMap[viewId] || '';
+        if (hash) {
+            window.location.hash = hash;
+        } else {
+            // Remove hash for main view
+            if (window.location.hash) {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        }
+    }
+}
+
+// Handle hash changes (for direct navigation/bookmarking)
+function handleHashChange() {
+    isUpdatingHash = true; // Prevent showView from updating hash during hash change
+    
+    const hash = window.location.hash.substring(1); // Remove the #
+    
+    if (hash === 'creator') {
+        // Check if we're creating new or editing
+        if (currentSetId === null) {
+            showView('setEditorView', false);
+            document.getElementById('editorTitle').textContent = 'Create New Set';
+            document.getElementById('deleteSetBtn').style.display = 'none';
+            document.getElementById('setName').value = '';
+            document.getElementById('cardsList').innerHTML = '';
+        } else {
+            // Already in editor, just show the view
+            showView('setEditorView', false);
+        }
+    } else if (hash === 'study') {
+        // Show study setup if not already in study
+        if (!document.getElementById('studyView').classList.contains('active') && 
+            !document.getElementById('resultsView').classList.contains('active')) {
+            showView('studySetupView', false);
+            populateSetSelect();
+        }
+    } else {
+        // Default to main view
+        showView('mainView', false);
+    }
+    
+    isUpdatingHash = false;
+}
+
+// Render sets list
+function renderSets() {
+    const setsList = document.getElementById('setsList');
+    const studyBtn = document.getElementById('studyBtn');
+
+    if (sets.length === 0) {
+        setsList.innerHTML = '<p class="empty-message">No sets yet. Create your first set to get started!</p>';
+        studyBtn.disabled = true;
+        return;
+    }
+
+    studyBtn.disabled = false;
+    setsList.innerHTML = '';
+
+    sets.forEach((set, index) => {
+        const setItem = document.createElement('div');
+        setItem.className = 'set-item';
+        setItem.innerHTML = `
+            <div class="set-info" onclick="editSet(${index})">
+                <div class="set-name">${escapeHtml(set.name)}</div>
+                <div class="set-meta">${set.cards.length} card${set.cards.length !== 1 ? 's' : ''}</div>
+            </div>
+            <div class="set-actions">
+                <button class="btn btn-secondary btn-icon" onclick="editSet(${index})">Edit</button>
+                <button class="btn btn-secondary btn-icon" onclick="exportSet(${index})">Export</button>
+                <button class="btn btn-danger btn-icon" onclick="deleteSetFromList(${index})">Delete</button>
+            </div>
+        `;
+        setsList.appendChild(setItem);
+    });
+}
+
+// Edit set
+function editSet(index) {
+    currentSetId = index;
+    const set = sets[index];
+    showView('setEditorView');
+    document.getElementById('editorTitle').textContent = 'Edit Set';
+    document.getElementById('deleteSetBtn').style.display = 'block';
+    document.getElementById('setName').value = set.name;
+    
+    const cardsList = document.getElementById('cardsList');
+    cardsList.innerHTML = '';
+    set.cards.forEach((card, cardIndex) => {
+        let questions = card.questions || [{ text: '' }];
+        
+        // Ensure all questions have order property (migrate old data)
+        questions = questions.map((q, index) => {
+            if (typeof q === 'string') {
+                return { text: q, order: index + 1 };
+            }
+            if (!q.order) {
+                return { ...q, order: index + 1 };
+            }
+            return q;
+        });
+        
+        // Sort by order to ensure correct sequence
+        questions.sort((a, b) => (a.order || 999) - (b.order || 999));
+        
+        const hints = card.hints || [];
+        addCardToEditor(questions, card.answer, hints, cardIndex);
+    });
+}
+
+// Expand (option1/option2) syntax recursively
+function expandInterchangeableParts(text) {
+    // Find all (option1/option2/option3) patterns
+    const pattern = /\(([^)]+)\)/g;
+    const matches = [...text.matchAll(pattern)];
+    
+    if (matches.length === 0) {
+        return [text]; // No variations, return as-is
+    }
+    
+    // Get the first match
+    const firstMatch = matches[0];
+    const options = firstMatch[1].split('/').map(opt => opt.trim()).filter(opt => opt.length > 0);
+    
+    if (options.length === 0) {
+        return [text]; // Empty options, return as-is
+    }
+    
+    // Replace this match with each option and recursively expand
+    const results = [];
+    for (const option of options) {
+        const replaced = text.replace(firstMatch[0], option);
+        const expanded = expandInterchangeableParts(replaced);
+        results.push(...expanded);
+    }
+    
+    return results;
+}
+
+// Expand answer variations (handles both (option1/option2) and [optional] syntax for prefixes and suffixes)
+function expandAnswerVariations(answerText) {
+    if (!answerText || !answerText.trim()) return [];
+    
+    let baseText = answerText;
+    let optionalPrefix = null;
+    let optionalSuffix = null;
+    
+    // Handle optional prefix syntax: [PREFIX] rest
+    const prefixMatch = baseText.match(/^\[([^\]]+)\]\s*(.+)$/);
+    if (prefixMatch) {
+        optionalPrefix = prefixMatch[1].trim();
+        baseText = prefixMatch[2].trim();
+    }
+    
+    // Handle optional suffix syntax: rest [SUFFIX]
+    const suffixMatch = baseText.match(/^(.+?)\s+\[([^\]]+)\]$/);
+    if (suffixMatch) {
+        optionalSuffix = suffixMatch[2].trim();
+        baseText = suffixMatch[1].trim();
+    }
+    
+    // Expand (option1/option2) syntax
+    const variations = expandInterchangeableParts(baseText);
+    
+    // Remove duplicates
+    let uniqueVariations = [...new Set(variations)];
+    
+    // Apply optional prefix if present
+    if (optionalPrefix) {
+        const withPrefix = uniqueVariations.map(v => `${optionalPrefix} ${v}`.trim());
+        uniqueVariations = [...uniqueVariations, ...withPrefix];
+    }
+    
+    // Apply optional suffix if present
+    if (optionalSuffix) {
+        const withSuffix = uniqueVariations.map(v => `${v} ${optionalSuffix}`.trim());
+        uniqueVariations = [...uniqueVariations, ...withSuffix];
+    }
+    
+    // If both prefix and suffix exist, also add combinations
+    if (optionalPrefix && optionalSuffix) {
+        const withBoth = uniqueVariations
+            .filter(v => !v.includes(optionalPrefix) && !v.includes(optionalSuffix))
+            .map(v => `${optionalPrefix} ${v} ${optionalSuffix}`.trim());
+        uniqueVariations = [...uniqueVariations, ...withBoth];
+    }
+    
+    // Remove duplicates again after all expansions
+    return [...new Set(uniqueVariations)];
+}
+
+
+// Add card to editor
+function addCardToEditor(questions = [{ text: '' }], answer = '', hints = [], index = null) {
+    const cardsList = document.getElementById('cardsList');
+    const cardIndex = index !== null ? index : cardsList.children.length;
+    
+    // Ensure questions is an array of objects with text property
+    if (!Array.isArray(questions) || questions.length === 0) {
+        questions = [{ text: '' }];
+    }
+    
+    // Ensure hints is an array
+    if (!Array.isArray(hints)) {
+        hints = [];
+    }
+    if (hints.length === 0) {
+        hints = [''];
+    }
+    
+    const cardItem = document.createElement('div');
+    cardItem.className = 'card-item';
+    
+    // Sort questions by order property (if exists) to ensure correct order
+    const sortedQuestions = [...questions].sort((a, b) => {
+        const aOrder = (a && a.order) ? a.order : 999;
+        const bOrder = (b && b.order) ? b.order : 999;
+        return aOrder - bOrder;
+    });
+    
+    const questionsHtml = sortedQuestions.map((q, qIndex) => {
+        const questionText = typeof q === 'string' ? q : (q.text || '');
+        const questionOrder = (q && q.order) ? q.order : (qIndex + 1);
+        return `
+            <div class="question-item" draggable="true" data-question-index="${qIndex}">
+                <div class="question-drag-handle">⋮⋮</div>
+                <div class="question-input-wrapper">
+                    <textarea placeholder="Question ${questionOrder}" class="card-question" data-question-order="${questionOrder}">${escapeHtml(questionText)}</textarea>
+                </div>
+                ${qIndex > 0 ? '<button class="btn btn-danger btn-tiny" onclick="removeQuestion(this)">×</button>' : ''}
+            </div>
+        `;
+    }).join('');
+    
+    cardItem.innerHTML = `
+        <div class="card-item-header">
+            <span class="card-item-number">Card ${cardIndex + 1}</span>
+            <button class="btn btn-danger btn-small" onclick="removeCard(this)">Remove</button>
+        </div>
+        <div class="card-item-inputs">
+            <div class="questions-section">
+                <div class="questions-header">
+                    <label>Questions (randomly selected during study)</label>
+                    <button class="btn btn-secondary btn-tiny" onclick="addQuestion(this)">+ Add Question</button>
+                </div>
+                <div class="questions-list">
+                    ${questionsHtml}
+                </div>
+            </div>
+            <textarea placeholder="Answer" class="card-answer">${escapeHtml(answer)}</textarea>
+            <div class="answer-syntax-hint">
+                <small>Tip: Use (option1/option2) for interchangeable words, [optional] for optional prefixes or suffixes</small>
+                <small>Examples: Conservation of (mass/matter), [Law of] Conservation of (mass/matter), (Chordate/Chordata), Answer [Law]</small>
+            </div>
+            <div class="hints-section">
+                <div class="hints-header">
+                    <label>Hints (always visible, don't affect points)</label>
+                    <button class="btn btn-secondary btn-tiny" onclick="addHint(this)">+ Add Hint</button>
+                </div>
+                <div class="hints-list">
+                    ${hints.map((hint, hIndex) => `
+                        <div class="hint-item">
+                            <input type="text" placeholder="Hint ${hIndex + 1} (e.g., multi-word answer)" class="card-hint" value="${escapeHtml(hint)}" maxlength="100">
+                            ${hIndex > 0 ? '<button class="btn btn-danger btn-tiny" onclick="removeHint(this)">×</button>' : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    cardsList.appendChild(cardItem);
+    
+    // Setup Enter key handlers for all question textareas
+    const questionTextareas = cardItem.querySelectorAll('.card-question');
+    questionTextareas.forEach(textarea => {
+        setupQuestionEnterHandler(textarea);
+    });
+}
+
+// Remove card
+function removeCard(button) {
+    button.closest('.card-item').remove();
+    updateCardNumbers();
+}
+
+// Update card numbers
+function updateCardNumbers() {
+    const cards = document.querySelectorAll('.card-item');
+    cards.forEach((card, index) => {
+        card.querySelector('.card-item-number').textContent = `Card ${index + 1}`;
+    });
+}
+
+// Handle Enter key on question textarea to move to next question
+function setupQuestionEnterHandler(textarea) {
+    textarea.addEventListener('keydown', (e) => {
+        // If Enter is pressed without Shift, move to next question
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            
+            const questionsList = textarea.closest('.questions-list');
+            const questionItems = Array.from(questionsList.querySelectorAll('.question-item'));
+            const currentItem = textarea.closest('.question-item');
+            const currentIndex = questionItems.indexOf(currentItem);
+            
+            // If there's a next question, focus it
+            if (currentIndex < questionItems.length - 1) {
+                const nextTextarea = questionItems[currentIndex + 1].querySelector('.card-question');
+                if (nextTextarea) {
+                    nextTextarea.focus();
+                }
+            } else {
+                // If this is the last question, create a new one
+                const addButton = textarea.closest('.questions-section').querySelector('.questions-header button');
+                if (addButton) {
+                    addQuestion(addButton);
+                    // Focus the newly created question
+                    const newQuestionsList = textarea.closest('.questions-list');
+                    const newQuestionItems = Array.from(newQuestionsList.querySelectorAll('.question-item'));
+                    const newTextarea = newQuestionItems[newQuestionItems.length - 1].querySelector('.card-question');
+                    if (newTextarea) {
+                        newTextarea.focus();
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Add question to a card
+function addQuestion(button) {
+    const cardItem = button.closest('.card-item');
+    const questionsList = button.closest('.questions-section').querySelector('.questions-list');
+    const questionItems = questionsList.querySelectorAll('.question-item');
+    const questionCount = questionItems.length;
+    
+    // Find the highest order number to assign next
+    let maxOrder = 0;
+    questionItems.forEach(item => {
+        const textarea = item.querySelector('.card-question');
+        if (textarea) {
+            const order = parseInt(textarea.getAttribute('data-question-order')) || 0;
+            if (order > maxOrder) maxOrder = order;
+        }
+    });
+    const nextOrder = maxOrder + 1;
+    
+    const questionItem = document.createElement('div');
+    questionItem.className = 'question-item';
+    questionItem.draggable = true;
+    questionItem.setAttribute('data-question-index', questionCount.toString());
+    questionItem.innerHTML = `
+        <div class="question-drag-handle">⋮⋮</div>
+        <div class="question-input-wrapper">
+            <textarea placeholder="Question ${nextOrder}" class="card-question" data-question-order="${nextOrder}"></textarea>
+        </div>
+        <button class="btn btn-danger btn-tiny" onclick="removeQuestion(this)">×</button>
+    `;
+    questionsList.appendChild(questionItem);
+    
+    // Setup Enter key handler for the new question
+    const newTextarea = questionItem.querySelector('.card-question');
+    if (newTextarea) {
+        setupQuestionEnterHandler(newTextarea);
+    }
+}
+
+// Remove question from a card
+function removeQuestion(button) {
+    const questionsList = button.closest('.questions-list');
+    if (questionsList.children.length > 1) {
+        button.closest('.question-item').remove();
+    } else {
+        alert('Each card must have at least one question');
+    }
+}
+
+// Save set
+function saveSet() {
+    const name = document.getElementById('setName').value.trim();
+    if (!name) {
+        alert('Please enter a set name');
+        return;
+    }
+
+    const cards = [];
+    const cardItems = document.querySelectorAll('.card-item');
+    
+    cardItems.forEach(cardItem => {
+        const questionInputs = cardItem.querySelectorAll('.card-question');
+        const questions = [];
+        
+        questionInputs.forEach((input) => {
+            const text = input.value.trim();
+            if (text.length > 0) {
+                // Get order from data attribute, or assign based on position
+                const order = parseInt(input.getAttribute('data-question-order')) || (questions.length + 1);
+                questions.push({ text, order });
+            }
+        });
+        
+        // Sort questions by order before saving
+        questions.sort((a, b) => a.order - b.order);
+        // Renumber to keep orders contiguous (prevents weird Q1/Q3 jumps later)
+        questions.forEach((q, idx) => { q.order = idx + 1; });
+        
+        const answer = cardItem.querySelector('.card-answer').value.trim();
+        
+        // Get hints
+        const hintInputs = cardItem.querySelectorAll('.card-hint');
+        const hints = Array.from(hintInputs)
+            .map(input => input.value.trim())
+            .filter(hint => hint.length > 0);
+        
+        if (questions.length > 0 && answer) {
+            cards.push({ questions, answer, hints });
+        }
+    });
+
+    if (cards.length === 0) {
+        alert('Please add at least one card with at least one question and an answer');
+        return;
+    }
+
+    const setData = { name, cards };
+    
+    // Preserve bundled status if editing a bundled set
+    if (currentSetId !== null) {
+        const existingSet = sets[currentSetId];
+        if (existingSet && existingSet.bundled) {
+            setData.bundled = true;
+            setData.bundledFileName = existingSet.bundledFileName;
+        }
+        sets[currentSetId] = setData;
+    } else {
+        sets.push(setData);
+    }
+
+    saveSets();
+    renderSets();
+    showView('mainView');
+}
+
+// Delete set from list
+function deleteSetFromList(index) {
+    const set = sets[index];
+    if (set.bundled) {
+        alert('Bundled sets cannot be deleted. You can only delete sets you created.');
+        return;
+    }
+    if (confirm('Are you sure you want to delete this set?')) {
+        sets.splice(index, 1);
+        saveSets();
+        renderSets();
+    }
+}
+
+// Delete set from editor
+function deleteSet() {
+    if (currentSetId !== null) {
+        const set = sets[currentSetId];
+        if (set.bundled) {
+            alert('Bundled sets cannot be deleted. You can only delete sets you created.');
+            return;
+        }
+        if (confirm('Are you sure you want to delete this set?')) {
+            sets.splice(currentSetId, 1);
+            saveSets();
+            renderSets();
+            showView('mainView');
+        }
+    }
+}
+
+// Export set
+function exportSet(index) {
+    const set = sets[index];
+    const exportData = {
+        name: set.name,
+        cards: set.cards,
+        exportedAt: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${set.name.replace(/[^a-z0-9]/gi, '_')}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+// Populate set select
+function populateSetSelect() {
+    const select = document.getElementById('selectedSet');
+    select.innerHTML = '<option value="">Select a set...</option>';
+    
+    sets.forEach((set, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${set.name} (${set.cards.length} cards)`;
+        select.appendChild(option);
+    });
+    
+    updateCardCount();
+}
+
+// Update card count
+function updateCardCount() {
+    const select = document.getElementById('selectedSet');
+    const cardCountInput = document.getElementById('cardCount');
+    const hint = document.getElementById('maxCardsHint');
+    
+    if (select.value === '') {
+        cardCountInput.max = 1;
+        cardCountInput.value = 1;
+        hint.textContent = '';
+        return;
+    }
+    
+    const setIndex = parseInt(select.value);
+    const set = sets[setIndex];
+    const maxCards = set.cards.length;
+    
+    cardCountInput.max = maxCards;
+    cardCountInput.value = maxCards; // Always default to max cards
+    hint.textContent = `Maximum: ${maxCards} cards`;
+}
+
+// Start study
+function startStudy() {
+    const select = document.getElementById('selectedSet');
+    const cardCount = parseInt(document.getElementById('cardCount').value);
+    // Set progressiveMode once at the start - it persists for the entire study session
+    progressiveMode = document.getElementById('progressiveMode').checked;
+    
+    if (select.value === '') {
+        alert('Please select a set');
+        return;
+    }
+    
+    const setIndex = parseInt(select.value);
+    const set = sets[setIndex];
+    
+    if (cardCount < 1 || cardCount > set.cards.length) {
+        alert('Invalid number of cards');
+        return;
+    }
+    
+    // Shuffle and select cards
+    const shuffled = [...set.cards].sort(() => Math.random() - 0.5);
+    studyCards = shuffled.slice(0, cardCount);
+    currentCardIndex = 0;
+    currentQuestionIndex = progressiveMode ? 1 : 0; // Start with 1 question shown in progressive mode
+    shownQuestions = []; // Reset shown questions
+    currentCardQuestions = []; // Reset cached questions
+    currentCardQuestionsForCardIndex = -1;
+    studyResults = { correct: 0, wrong: 0, points: 0, cards: [] };
+    
+    showView('studyView');
+    updateStudyCard();
+}
+
+// Update study card
+function updateStudyCard(showHint = false) {
+    if (currentCardIndex >= studyCards.length) {
+        showResults();
+        return;
+    }
+    
+    const card = studyCards[currentCardIndex];
+    // Get questions (assume current format: array of objects with text property)
+    const questions = (Array.isArray(card.questions) && card.questions.length) ? card.questions : [{ text: '' }];
+    
+    if (progressiveMode) {
+        // PROGRESSIVE MODE: Sort questions in numeric order (Q1, Q2, Q3...).
+        // Cache per-card so "Add Next Question" doesn't reshuffle.
+        if (currentCardQuestionsForCardIndex !== currentCardIndex) {
+            currentCardQuestions = [...questions]
+                .map((q, idx) => {
+                    if (typeof q === 'string') {
+                        return { text: q, order: idx + 1 };
+                    }
+                    const rawOrder = (q && q.order !== undefined && q.order !== null) ? q.order : '';
+                    const order = Number.parseInt(rawOrder, 10);
+                    const text = (q && typeof q === 'object') ? (q.text || '') : '';
+                    return { text, order: Number.isFinite(order) ? order : (idx + 1) };
+                })
+                .sort((a, b) => a.order - b.order)
+                // Renumber to 1..n so labels always match the sequence
+                .map((q, idx) => ({ ...q, order: idx + 1 }));
+
+            currentCardQuestionsForCardIndex = currentCardIndex;
+        }
+
+
+        // Initialize or update shown questions based on currentQuestionIndex
+        shownQuestions = currentCardQuestions.slice(0, currentQuestionIndex);
+        
+        // Build merged question text - display in order: Q1, then Q2, then Q3...
+        let mergedQuestionText = '';
+        for (let i = 0; i < shownQuestions.length; i++) {
+            const q = shownQuestions[i];
+            const text = (q && q.text) ? q.text : (typeof q === 'string' ? q : '');
+            if (text) {
+                if (mergedQuestionText) {
+                    mergedQuestionText += ' ' + text; // Add space between questions
+                } else {
+                    mergedQuestionText = text; // First question, no space before
+                }
+            }
+        }
+        
+        // Set the merged question text with question numbers
+        const questionDisplay = shownQuestions.map((q, idx) => {
+            const text = (q && q.text) ? q.text : (typeof q === 'string' ? q : '');
+            return `[Q${idx + 1}] ${text}`;
+        }).join(' ');
+        
+        document.getElementById('questionText').textContent = questionDisplay;
+        
+        // Show "Add Next Question" button only if there are more questions (only BEFORE flipping)
+        const hintButton = document.getElementById('hintButton');
+        const flashcard = document.getElementById('flashcard');
+        const isFlipped = flashcard.classList.contains('flipped');
+        
+        if (!isFlipped && currentQuestionIndex < currentCardQuestions.length) {
+            // Show "Add Next Question" button if there are more questions and card is not flipped
+            hintButton.style.display = 'flex';
+        } else {
+            // Hide button when flipped or no more questions
+            hintButton.style.display = 'none';
+        }
+    } else {
+        // RANDOM MODE: randomly pick one question for each card
+        const questionObj = questions[Math.floor(Math.random() * questions.length)];
+        document.getElementById('hintButton').style.display = 'none';
+        
+        const questionText = questionObj.text || questionObj;
+        document.getElementById('questionText').textContent = questionText;
+    }
+    
+    // Display hints
+    const hints = card.hints || [];
+    const hintsFront = document.getElementById('hintsFront');
+    const hintsBack = document.getElementById('hintsBack');
+    
+    if (hints.length > 0) {
+        const hintsText = hints.join(' • ');
+        if (hintsFront) hintsFront.textContent = hintsText;
+        if (hintsBack) hintsBack.textContent = hintsText;
+    } else {
+        if (hintsFront) hintsFront.textContent = '';
+        if (hintsBack) hintsBack.textContent = '';
+    }
+    
+    // Fade animation for question change (only in random mode, progressive mode handled above)
+    if (!progressiveMode) {
+        const questionElement = document.getElementById('questionText');
+        if (showHint && questionElement) {
+            questionElement.style.opacity = '0';
+            questionElement.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => {
+                questionElement.textContent = questionText;
+                questionElement.style.opacity = '1';
+            }, 150);
+        }
+    }
+    
+    // Expand answer variations
+    const answerText = card.answer || '';
+    const expandedAnswers = expandAnswerVariations(answerText);
+    
+    // Primary answer (first variation, or original if no expansion)
+    const primaryAnswer = expandedAnswers.length > 0 ? expandedAnswers[0] : answerText;
+    
+    document.getElementById('answerText').textContent = primaryAnswer;
+    
+    // Show other variations if there are multiple
+    const acceptedAnswersList = document.getElementById('acceptedAnswersList');
+    if (expandedAnswers.length > 1) {
+        acceptedAnswersList.innerHTML = `
+            <div class="accepted-forms-label">Also accepted:</div>
+            <div class="accepted-forms">
+                ${expandedAnswers.slice(1).map(answer => 
+                    `<div class="accepted-form-item">${escapeHtml(answer)}</div>`
+                ).join('')}
+            </div>
+        `;
+    } else {
+        acceptedAnswersList.innerHTML = '';
+    }
+    
+    const flashcard = document.getElementById('flashcard');
+    // Always ensure card starts face-down (not flipped)
+    flashcard.classList.remove('flipped');
+    
+    document.getElementById('flipCardBtn').style.display = 'block';
+    document.getElementById('answerButtons').style.display = 'none';
+    
+    const progress = ((currentCardIndex + 1) / studyCards.length) * 100;
+    document.getElementById('progressText').textContent = `Card ${currentCardIndex + 1} of ${studyCards.length}`;
+    document.getElementById('progressFill').style.width = `${progress}%`;
+}
+
+// Flip card
+function flipCard() {
+    const flashcard = document.getElementById('flashcard');
+    flashcard.classList.add('flipped');
+    document.getElementById('flipCardBtn').style.display = 'none';
+    document.getElementById('answerButtons').style.display = 'flex';
+    
+    // Hide "Add Next Question" button when flipped
+    document.getElementById('hintButton').style.display = 'none';
+}
+
+// Mark answer
+function markAnswer(isCorrect) {
+    const card = studyCards[currentCardIndex];
+    let questions = card.questions || [];
+    
+    if (!Array.isArray(questions) || questions.length === 0) {
+        questions = [{ text: '' }];
+    }
+    
+    questions = questions.map(q => {
+        if (typeof q === 'string') {
+            return { text: q };
+        }
+        // Remove difficulty property if it exists
+        const { difficulty, ...rest } = q;
+        return rest;
+    });
+    
+    // Get the question that was shown
+    let questionText = '';
+    if (progressiveMode) {
+        // In progressive mode, get the merged question text
+        const questionTexts = shownQuestions.map(q => q.text || q);
+        questionText = questionTexts.join(' ');
+    } else {
+        // In random mode, get the random question that was shown
+        const questionElement = document.getElementById('questionText');
+        questionText = questionElement ? questionElement.textContent : '';
+    }
+    
+    // Store card result
+    studyResults.cards.push({
+        card: card,
+        result: isCorrect ? 'correct' : 'wrong',
+        question: questionText
+    });
+    
+    if (progressiveMode) {
+        // PROGRESSIVE MODE: Always give 1 point per card if correct
+        // Progressive mode persists for the ENTIRE study session (all cards)
+        if (isCorrect) {
+            studyResults.correct++;
+            studyResults.points += 1; // Always 1 point per card
+        } else {
+            studyResults.wrong++;
+        }
+    } else {
+        // RANDOM MODE: simple correct/wrong (1 point per card)
+        if (isCorrect) {
+            studyResults.correct++;
+            studyResults.points += 1;
+        } else {
+            studyResults.wrong++;
+        }
+    }
+    
+    // Move to next card and reset question tracking for the new card
+    currentCardIndex++;
+    currentQuestionIndex = progressiveMode ? 1 : 0; // Reset to start with 1 question shown in progressive mode
+    shownQuestions = []; // Reset shown questions for next card
+    currentCardQuestions = []; // Reset current card questions for next card
+    currentCardQuestionsForCardIndex = -1;
+    
+    // Slide out current card and slide in next card (always face-down)
+    const flashcard = document.getElementById('flashcard');
+    
+    // Ensure card is face-down before sliding out
+    flashcard.classList.remove('flipped');
+    flashcard.classList.add('slide-out');
+    
+    // Wait for card to slide completely off screen before showing next card
+    setTimeout(() => {
+        // Update to show the next card (progressive mode will start with Question 1)
+        updateStudyCard();
+        
+        // Slide in the new card (already face-down from updateStudyCard)
+        flashcard.classList.remove('slide-out');
+        flashcard.classList.add('slide-in');
+        
+        // Remove slide-in class after animation completes
+        setTimeout(() => {
+            flashcard.classList.remove('slide-in');
+        }, 600);
+    }, 600);
+}
+
+// Ask for next question (add more to the card)
+function askForHint() {
+    if (progressiveMode && currentQuestionIndex < currentCardQuestions.length) {
+        currentQuestionIndex++;
+        // Update shown questions to include the first currentQuestionIndex questions
+        shownQuestions = currentCardQuestions.slice(0, currentQuestionIndex);
+        updateStudyCard(true); // true = show fade animation
+    }
+}
+
+
+// Show results
+function showResults() {
+    const total = studyResults.correct + studyResults.wrong;
+    const accuracy = total > 0 ? Math.round((studyResults.correct / total) * 100) : 0;
+    
+    document.getElementById('totalCards').textContent = total;
+    document.getElementById('correctCards').textContent = studyResults.correct;
+    document.getElementById('wrongCards').textContent = studyResults.wrong;
+    document.getElementById('accuracyPercent').textContent = `${accuracy}%`;
+    
+    // Show points if in progressive mode
+    const pointsCard = document.getElementById('pointsCard');
+    const pointsValue = document.getElementById('pointsValue');
+    if (pointsCard && pointsValue && progressiveMode) {
+        pointsValue.textContent = studyResults.points;
+        pointsCard.style.display = 'block';
+    } else if (pointsCard) {
+        pointsCard.style.display = 'none';
+    }
+    
+    // Display each card with its result
+    const cardsList = document.getElementById('cardsResultsList');
+    if (cardsList) {
+        cardsList.innerHTML = '';
+        studyResults.cards.forEach((cardResult, index) => {
+            const cardItem = document.createElement('div');
+            cardItem.className = `card-result-item ${cardResult.result}`;
+            const resultIcon = cardResult.result === 'correct' ? '✓' : '✗';
+            const resultClass = cardResult.result === 'correct' ? 'correct' : 'wrong';
+            
+            // Get answer text
+            const answerText = cardResult.card.answer || '';
+            const expandedAnswers = expandAnswerVariations(answerText);
+            const primaryAnswer = expandedAnswers.length > 0 ? expandedAnswers[0] : answerText;
+            
+            cardItem.innerHTML = `
+                <div class="card-result-header">
+                    <span class="card-result-number">Card ${index + 1}</span>
+                    <span class="card-result-badge ${resultClass}">${resultIcon} ${cardResult.result === 'correct' ? 'Correct' : 'Wrong'}</span>
+                </div>
+                <div class="card-result-content">
+                    <div class="card-result-question">
+                        <strong>Question:</strong> ${escapeHtml(cardResult.question)}
+                    </div>
+                    <div class="card-result-answer">
+                        <strong>Answer:</strong> ${escapeHtml(primaryAnswer)}
+                    </div>
+                </div>
+            `;
+            cardsList.appendChild(cardItem);
+        });
+    }
+    
+    showView('resultsView');
+}
+
+// Utility: Escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Import set
+function handleImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const importData = JSON.parse(e.target.result);
+            
+            if (!importData.name || !importData.cards || !Array.isArray(importData.cards)) {
+                alert('Invalid file format');
+                return;
+            }
+
+            const setData = {
+                name: importData.name,
+                cards: importData.cards
+            };
+
+            sets.push(setData);
+            saveSets();
+            renderSets();
+            alert('Set imported successfully!');
+        } catch (error) {
+            alert('Error importing file. Please make sure it is a valid JSON file.');
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // Reset input
+}
+
+// Add hint to a card
+function addHint(button) {
+    const hintsList = button.closest('.hints-section').querySelector('.hints-list');
+    const hintCount = hintsList.children.length;
+    
+    const hintItem = document.createElement('div');
+    hintItem.className = 'hint-item';
+    hintItem.innerHTML = `
+        <input type="text" placeholder="Hint ${hintCount + 1} (e.g., multi-word answer)" class="card-hint" value="" maxlength="100">
+        <button class="btn btn-danger btn-tiny" onclick="removeHint(this)">×</button>
+    `;
+    hintsList.appendChild(hintItem);
+}
+
+// Remove hint from a card
+function removeHint(button) {
+    const hintsList = button.closest('.hints-list');
+    if (hintsList.children.length > 1) {
+        button.closest('.hint-item').remove();
+    } else {
+        alert('Each card must have at least one hint field (can be empty)');
+    }
+}
+
+// Setup drag and drop for question reordering
+function setupQuestionDragAndDrop() {
+    let draggedElement = null;
+    let placeholder = null;
+
+    document.addEventListener('dragstart', (e) => {
+        if (e.target.classList.contains('question-item')) {
+            draggedElement = e.target;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.outerHTML);
+
+            // Add dragging class for visual feedback
+            draggedElement.classList.add('dragging');
+
+            // Create placeholder
+            placeholder = document.createElement('div');
+            placeholder.className = 'question-item question-placeholder';
+            placeholder.innerHTML = '<div class="question-drag-handle">⋮⋮</div><div class="question-input-wrapper"><div class="placeholder-text">Drop here</div></div>';
+
+            e.target.style.opacity = '0.5';
+        }
+    });
+
+    document.addEventListener('dragend', (e) => {
+        if (draggedElement) {
+            draggedElement.classList.remove('dragging');
+            draggedElement.style.opacity = '';
+            draggedElement = null;
+
+            if (placeholder && placeholder.parentNode) {
+                placeholder.remove();
+                placeholder = null;
+            }
+        }
+    });
+
+    document.addEventListener('dragover', (e) => {
+        if (draggedElement) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+
+            const target = e.target.closest('.question-item');
+            if (target && target !== draggedElement && target !== placeholder) {
+                const rect = target.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+
+                if (placeholder && placeholder.parentNode) {
+                    placeholder.remove();
+                }
+
+                if (e.clientY < midpoint) {
+                    // Insert before target
+                    target.parentNode.insertBefore(placeholder, target);
+                } else {
+                    // Insert after target
+                    target.parentNode.insertBefore(placeholder, target.nextSibling);
+                }
+            }
+        }
+    });
+
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+
+        if (draggedElement && placeholder && placeholder.parentNode) {
+            // Replace placeholder with dragged element
+            placeholder.parentNode.replaceChild(draggedElement, placeholder);
+
+            // Update question indices and order properties
+            updateQuestionIndices(draggedElement.closest('.questions-list'));
+
+            placeholder = null;
+            draggedElement = null;
+        }
+    });
+}
+
+// Update question indices and data attributes after reordering
+function updateQuestionIndices(questionsList) {
+    const questionItems = questionsList.querySelectorAll('.question-item:not(.question-placeholder)');
+
+    questionItems.forEach((item, index) => {
+        item.setAttribute('data-question-index', index.toString());
+
+        const textarea = item.querySelector('.card-question');
+        if (textarea) {
+            textarea.setAttribute('data-question-order', (index + 1).toString());
+            textarea.placeholder = `Question ${index + 1}`;
+        }
+    });
+}
+
+// Make functions available globally for onclick handlers
+window.editSet = editSet;
+window.deleteSetFromList = deleteSetFromList;
+window.exportSet = exportSet;
+window.removeCard = removeCard;
+window.addQuestion = addQuestion;
+window.removeQuestion = removeQuestion;
+window.addHint = addHint;
+window.removeHint = removeHint;
+

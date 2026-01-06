@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashCards</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Main Menu View -->
+        <div id="mainView" class="view active">
+            <div class="main-header">
+                <h1>FlashCards</h1>
+                <div class="button-group">
+                    <button id="createSetBtn" class="btn btn-primary">Create New Set</button>
+                    <button id="studyBtn" class="btn btn-primary" disabled>Study</button>
+                    <button id="importSetBtn" class="btn btn-secondary">Import Set</button>
+                </div>
+            </div>
+            <input type="file" id="importFileInput" accept=".json" style="display: none;">
+            
+            <div class="sets-container">
+                <h2>Your Sets</h2>
+                <div id="setsList" class="sets-list">
+                    <p class="empty-message">No sets yet. Create your first set to get started!</p>
+                </div>
+            </div>
+            
+            <div class="version-info">v0.1.0</div>
+        </div>
+
+        <!-- Create/Edit Set View -->
+        <div id="setEditorView" class="view">
+            <div class="editor-header">
+                <button id="backToMainBtn" class="btn btn-secondary">← Back</button>
+                <h2 id="editorTitle">Create New Set</h2>
+            </div>
+            
+            <div class="form-group">
+                <label for="setName">Set Name</label>
+                <input type="text" id="setName" placeholder="Enter set name" maxlength="50">
+            </div>
+
+            <div class="cards-editor">
+                <div class="cards-header">
+                    <h3>Cards</h3>
+                    <div class="cards-header-actions">
+                        <button id="addCardBtn" class="btn btn-small">+ Add Card</button>
+                    </div>
+                </div>
+                <div id="cardsList" class="cards-list"></div>
+            </div>
+
+            <div class="editor-actions">
+                <button id="saveSetBtn" class="btn btn-primary">Save Set</button>
+                <button id="deleteSetBtn" class="btn btn-danger" style="display: none;">Delete Set</button>
+            </div>
+        </div>
+
+        <!-- Study Setup View -->
+        <div id="studySetupView" class="view">
+            <div class="setup-header">
+                <button id="backToMainFromSetupBtn" class="btn btn-secondary">← Back</button>
+                <h2>Study Setup</h2>
+            </div>
+            
+            <div class="setup-content">
+                <div class="form-group">
+                    <label for="selectedSet">Select Set</label>
+                    <select id="selectedSet" class="select-input"></select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cardCount">Number of Cards</label>
+                    <input type="number" id="cardCount" min="1" value="10">
+                    <span class="hint" id="maxCardsHint"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="progressiveMode" checked>
+                        <span>Progressive Mode (questions shown in order, can add more before answering)</span>
+                    </label>
+                </div>
+                
+                <button id="startStudyBtn" class="btn btn-primary">Start Studying</button>
+            </div>
+        </div>
+
+        <!-- Study View -->
+        <div id="studyView" class="view">
+            <div class="study-header">
+                <div class="progress-info">
+                    <span id="progressText">Card 1 of 10</span>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-container">
+                <div id="flashcard" class="flashcard">
+                    <div class="card-front">
+                        <div id="hintsFront" class="card-hints"></div>
+                        <div class="card-label">
+                            <span>Question</span>
+                        </div>
+                        <div id="questionText" class="card-content"></div>
+                    </div>
+                    <div class="card-back">
+                        <div id="hintsBack" class="card-hints"></div>
+                        <div class="card-label">Answer</div>
+                        <div id="answerText" class="card-content"></div>
+                        <div id="acceptedAnswersList" class="accepted-answers-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="study-actions">
+                <button id="flipCardBtn" class="btn btn-secondary">Flip Card</button>
+                <div id="answerButtons" class="answer-buttons" style="display: none;">
+                    <button id="wrongBtn" class="btn btn-danger">✗ Wrong</button>
+                    <button id="rightBtn" class="btn btn-success">✓ Right</button>
+                </div>
+                <div id="hintButton" class="hint-button" style="display: none;">
+                    <button id="askForHintBtn" class="btn btn-secondary">Add Next Question</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results View -->
+        <div id="resultsView" class="view">
+            <div class="results-header">
+                <h2>Study Results</h2>
+            </div>
+            
+            <div class="results-content">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalCards">0</div>
+                    <div class="stat-label">Total Cards</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="correctCards">0</div>
+                    <div class="stat-label">Correct</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="wrongCards">0</div>
+                    <div class="stat-label">Wrong</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="accuracyPercent">0%</div>
+                    <div class="stat-label">Accuracy</div>
+                </div>
+            </div>
+            
+            <div class="cards-results-container">
+                <h3>Card Results</h3>
+                <div id="cardsResultsList" class="cards-results-list"></div>
+            </div>
+
+            <div class="results-actions">
+                <button id="studyAgainBtn" class="btn btn-primary">Study Again</button>
+                <button id="backToMainFromResultsBtn" class="btn btn-secondary">Back to Main</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
