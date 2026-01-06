@@ -35,14 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadBundledSets() {
     try {
         // Try to load bundled sets from the bundled folder
-        const response = await fetch('bundled/index.json');
+        // Use absolute path starting with / to ensure it works on GitHub Pages
+        const response = await fetch('/bundled/index.json');
         if (response.ok) {
             const index = await response.json();
             const bundledSets = [];
             
             for (const fileName of index.files || []) {
                 try {
-                    const setResponse = await fetch(`bundled/${fileName}`);
+                    const setResponse = await fetch(`/bundled/${fileName}`);
                     if (setResponse.ok) {
                         const setData = await setResponse.json();
                         setData.bundled = true; // Mark as bundled
