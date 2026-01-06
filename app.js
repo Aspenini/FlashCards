@@ -206,16 +206,22 @@ function renderSets() {
 
     sets.forEach((set, index) => {
         const setItem = document.createElement('div');
-        setItem.className = 'set-item';
+        setItem.className = set.bundled ? 'set-item bundled-set' : 'set-item';
+        
+        const bundledBadge = set.bundled ? '<span class="bundled-badge">Bundled</span>' : '';
+        const deleteButton = set.bundled 
+            ? '' 
+            : `<button class="btn btn-danger btn-icon" onclick="deleteSetFromList(${index})">Delete</button>`;
+        
         setItem.innerHTML = `
             <div class="set-info" onclick="editSet(${index})">
-                <div class="set-name">${escapeHtml(set.name)}</div>
+                <div class="set-name">${escapeHtml(set.name)}${bundledBadge}</div>
                 <div class="set-meta">${set.cards.length} card${set.cards.length !== 1 ? 's' : ''}</div>
             </div>
             <div class="set-actions">
                 <button class="btn btn-secondary btn-icon" onclick="editSet(${index})">Edit</button>
                 <button class="btn btn-secondary btn-icon" onclick="exportSet(${index})">Export</button>
-                <button class="btn btn-danger btn-icon" onclick="deleteSetFromList(${index})">Delete</button>
+                ${deleteButton}
             </div>
         `;
         setsList.appendChild(setItem);
