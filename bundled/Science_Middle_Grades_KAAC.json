@@ -92,7 +92,225 @@
       ],
       "answer": "LIMESTONE",
       "hints": []
+    },
+    {
+      "questions": [
+        {
+          "text": "This scientist's work titled On The Revolutions of the Heavenly Spheres was published the year of his death.",
+          "order": 1
+        },
+        {
+          "text": "This astronomer cited evidence that at times the outer planets could be seen moving backwards in the sky in retrograde motion and he refuted the geocentric theory for the solar system.",
+          "order": 2
+        },
+        {
+          "text": "Who was this Polish astronomer who first proposed the heliocentric solar system?",
+          "order": 3
+        }
+      ],
+      "answer": "[NICOLAUS] COPERNICUS",
+      "hints": []
+    },
+    {
+      "questions": [
+        {
+          "text": "Without this type of radiant energy, most of life would not be able to survive.",
+          "order": 1
+        },
+        {
+          "text": "This radiation type of energy is emitted by a hot body through waves in the electromagnetic spectrum of which we only see on the visible spectrum.",
+          "order": 2
+        },
+        {
+          "text": "What is this type of energy that is propagated by waves that we receive mostly from the Sun?",
+          "order": 3
+        }
+      ],
+      "answer": "LIGHT [ENERGY]",
+      "hints": []
+    },
+    {
+      "questions": [
+        {
+          "text": "When these fungal structures have dividing walls they are said to be septate.",
+          "order": 1
+        },
+        {
+          "text": "These structures are well adapted to absorb nutrients and they make form dense networks called a mycelium.",
+          "order": 2
+        },
+        {
+          "text": "Name these long fungal filaments that make up a fungal body.",
+          "order": 3
+        }
+      ],
+      "answer": "(HYPHAE/HYPHA)",
+      "hints": []
+    },
+    {
+      "questions": [
+        {
+          "text": "This plant behavior is regulated by phytochromes that respond to red and far-red light.",
+          "order": 1
+        },
+        {
+          "text": "It's not phototropism, but this behavior may lead to a growth response to light or darkness.",
+          "order": 2
+        },
+        {
+          "text": "What is this response by flowering plants to the number of hours of daylight and darkness?",
+          "order": 3
+        }
+      ],
+      "answer": "PHOTOPERIODISM",
+      "hints": []
+    },
+    {
+      "questions": [
+        {
+          "text": "This organic compound class is the most abundant among the major biomolecules and appears to be more ample in plants rather than animals.",
+          "order": 1
+        },
+        {
+          "text": "Most of these compounds provide 4 calories of energy per gram when consumed, although cellulose cannot be digested for energy by humans.",
+          "order": 2
+        },
+        {
+          "text": "What is this main group of compounds made of carbon, hydrogen, and oxygen that provides energy for cells, examples of which are sugars and starches?",
+          "order": 3
+        }
+      ],
+      "answer": "CARBOHYDRATE[S]",
+      "hints": []
+    },
+    {
+      "questions": [
+        {
+          "text": "The bumblebee variety of these animals is the world's smallest mammal by length at just 33 millimeters.",
+          "order": 1
+        },
+        {
+          "text": "These mammals are in order Chiroptera and they have a thin membrane of skin between the digits of their forelimbs.",
+          "order": 2
+        },
+        {
+          "text": "What is this only flying mammal?",
+          "order": 3
+        }
+      ],
+      "answer": "BAT[S]",
+      "hints": []
+    },
+    {
+      "questions": [
+        {
+          "text": "This eukaryotic organelle is a series of folded sacs that produce secretory vesicles.",
+          "order": 1
+        },
+        {
+          "text": "This organelle often receives proteins from the endoplasmic reticulum.",
+          "order": 2
+        },
+        {
+          "text": "What organelles modify, package, and secrete cellular products?",
+          "order": 3
+        }
+      ],
+      "answer": "GOLGI [(APPARATUS/BODY/COMPLEX)]",
+      "hints": []
+    },
+    {
+      "questions": [
+        {
+          "text": "These celestial objects were named for the Greek word for wanderer and are classified by their composition and size.",
+          "order": 1
+        },
+        {
+          "text": "To be classified as such, these objects must be massive enough to be spherical in shape and they must clear their orbital neighborhood of other objects.",
+          "order": 2
+        },
+        {
+          "text": "What are these large spherical bodies in space that orbits a star such as the Sun?",
+          "order": 3
+        }
+      ],
+      "answer": "PLANET[S]",
+      "hints": []
+    },
+    {
+      "questions": [
+        {
+          "text": "Persons with this condition may have a partial immunity to the parasitic disease malaria.",
+          "order": 1
+        },
+        {
+          "text": "This condition is caused by a mutation in the beta-goblin gene, which may lead to red blood cells becoming stuck in small vessels, causing pain.",
+          "order": 2
+        },
+        {
+          "text": "What is this type of anemia that causes the red blood cells to be shaped like a crescent moon?",
+          "order": 3
+        }
+      ],
+      "answer": "SICKLE CELL [AMEMIA]",
+      "hints": []
+    },
+    {
+      "questions": [
+        {
+          "text": "These cells are considered to be haploid, in that they have only a single copy of each chromosome.",
+          "order": 1
+        },
+        {
+          "text": "These cells are typically produced four at a time during meiosis.",
+          "order": 2
+        },
+        {
+          "text": "What are these cells that fuse to create a zygote?",
+          "order": 3
+        }
+      ],
+      "answer": "(GAMETE[S]/SEX CELLS)",
+      "hints": []
+    },
+    {
+      "questions": [
+        {
+          "text": "The straight arrows in this diagram represent the direction of energy flow from prey predator.",
+          "order": 1
+        },
+        {
+          "text": "This diagram shows energy across the trophic levels and it ends in an apex predator.",
+          "order": 2
+        },
+        {
+          "text": "What are these simple, linear models of energy flow in an ecosystem that are not as complex as a web?",
+          "order": 3
+        }
+      ],
+      "answer": "FOOD CHAIN",
+      "hints": []
+    },
+    {
+      "questions": [
+        {
+          "text": "These tiny organs are located inside small bumps called papillae in our mouths that can alert our brains if something is safe to consume.",
+          "order": 1
+        },
+        {
+          "text": "These organs have five senses of flavor from sweet and salty to bitter and sour.",
+          "order": 2
+        },
+        {
+          "text": "What are these sensory organs that mainly around on our tongues that help us enjoy our food.",
+          "order": 3
+        }
+      ],
+      "answer": "TASTE BUD[S]",
+      "hints": [
+        "two-word answer"
+      ]
     }
   ],
-  "exportedAt": "2026-01-06T02:34:26.016Z"
+  "exportedAt": "2026-01-09T01:40:47.144Z"
 }
