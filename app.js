@@ -288,85 +288,152 @@ function editSet(index) {
     });
 }
 
-// Expand (option1/option2) syntax recursively
-function expandInterchangeableParts(text) {
-    // Find all (option1/option2/option3) patterns
-    const pattern = /\(([^)]+)\)/g;
-    const matches = [...text.matchAll(pattern)];
+// Expand square brackets within text (e.g., GAMETE[S] -> GAMETE, GAMETES)
+// [X] means X is optional - generates versions with and without X
+function expandSquareBrackets(text) {
+    const bracketPattern = /\[([^\]]*)\]/;
+    const match = text.match(bracketPattern);
     
-    if (matches.length === 0) {
-        return [text]; // No variations, return as-is
+    if (!match) {
+        return [text]; // No brackets, return as-is
     }
     
-    // Get the first match
-    const firstMatch = matches[0];
-    const options = firstMatch[1].split('/').map(opt => opt.trim()).filter(opt => opt.length > 0);
+    const bracketContent = match[1];
+    const beforeBracket = text.substring(0, match.index);
+    const afterBracket = text.substring(match.index + match[0].length);
+    
+    // Two variations: with and without the bracketed content
+    const withoutBracket = (beforeBracket + afterBracket).trim();
+    const withBracket = (beforeBracket + bracketContent + afterBracket).trim();
+    
+    // Recursively expand remaining brackets in both variations
+    const results = [];
+    results.push(...expandSquareBrackets(withoutBracket));
+    if (withBracket && withBracket !== withoutBracket) {
+        results.push(...expandSquareBrackets(withBracket));
+    }
+    
+    return [...new Set(results)];
+}
+
+// Expand (option1/option2) syntax recursively
+// Handles nested brackets inside options (e.g., (GAMETE[S]/SEX CELLS))
+function expandInterchangeableParts(text) {
+    // Find the first (option1/option2/option3) pattern
+    const pattern = /\(([^)]+)\)/;
+    const match = text.match(pattern);
+    
+    if (!match) {
+        // No parentheses found, but check for square brackets
+        return expandSquareBrackets(text);
+    }
+    
+    const options = match[1].split('/').map(opt => opt.trim()).filter(opt => opt.length > 0);
     
     if (options.length === 0) {
-        return [text]; // Empty options, return as-is
+        return [text];
     }
     
     // Replace this match with each option and recursively expand
+    const beforeMatch = text.substring(0, match.index);
+    const afterMatch = text.substring(match.index + match[0].length);
     const results = [];
+    
     for (const option of options) {
-        const replaced = text.replace(firstMatch[0], option);
-        const expanded = expandInterchangeableParts(replaced);
-        results.push(...expanded);
+        // First expand any square brackets in the option itself (e.g., GAMETE[S])
+        const optionVariations = expandSquareBrackets(option);
+        for (const optionVar of optionVariations) {
+            const replaced = beforeMatch + optionVar + afterMatch;
+            const expanded = expandInterchangeableParts(replaced);
+            results.push(...expanded);
+        }
     }
     
-    return results;
+    return [...new Set(results)];
 }
 
-// Expand answer variations (handles both (option1/option2) and [optional] syntax for prefixes and suffixes)
+// Expand answer variations (handles (option1/option2), [optional], and nested patterns)
+// Examples:
+//   (GAMETE[S]/SEX CELLS) -> GAMETE, GAMETES, SEX CELLS
+//   GOLGI [(APPARATUS/BODY/COMPLEX)] -> GOLGI, GOLGI APPARATUS, GOLGI BODY, GOLGI COMPLEX
 function expandAnswerVariations(answerText) {
     if (!answerText || !answerText.trim()) return [];
     
-    let baseText = answerText;
-    let optionalPrefix = null;
-    let optionalSuffix = null;
+    // Find outermost square brackets (not inside parentheses)
+    // Process from right to left to maintain string positions
+    let processedText = answerText;
+    const bracketMatches = [];
     
-    // Handle optional prefix syntax: [PREFIX] rest
-    const prefixMatch = baseText.match(/^\[([^\]]+)\]\s*(.+)$/);
-    if (prefixMatch) {
-        optionalPrefix = prefixMatch[1].trim();
-        baseText = prefixMatch[2].trim();
+    // Find all [X] patterns that are not inside parentheses
+    for (let i = processedText.length - 1; i >= 0; i--) {
+        if (processedText[i] === ']') {
+            // Find matching [
+            let depth = 0;
+            let start = -1;
+            for (let j = i - 1; j >= 0; j--) {
+                if (processedText[j] === ')') depth++;
+                else if (processedText[j] === '(') {
+                    depth--;
+                    if (depth < 0) break; // Inside parentheses, skip
+                } else if (processedText[j] === '[' && depth === 0) {
+                    start = j;
+                    break;
+                }
+            }
+            
+            if (start !== -1) {
+                // Check if this bracket pair is inside parentheses
+                const beforeStart = processedText.substring(0, start);
+                const openParens = (beforeStart.match(/\(/g) || []).length;
+                const closeParens = (beforeStart.match(/\)/g) || []).length;
+                
+                if (openParens === closeParens) {
+                    // Not inside parentheses - this is an optional part
+                    bracketMatches.push({
+                        start: start,
+                        end: i + 1,
+                        fullMatch: processedText.substring(start, i + 1),
+                        content: processedText.substring(start + 1, i)
+                    });
+                }
+            }
+        }
     }
     
-    // Handle optional suffix syntax: rest [SUFFIX]
-    const suffixMatch = baseText.match(/^(.+?)\s+\[([^\]]+)\]$/);
-    if (suffixMatch) {
-        optionalSuffix = suffixMatch[2].trim();
-        baseText = suffixMatch[1].trim();
+    // If we have outermost brackets, handle them as optional parts
+    if (bracketMatches.length > 0) {
+        // Process from right to left
+        bracketMatches.sort((a, b) => b.start - a.start);
+        
+        let variations = [answerText];
+        
+        for (const match of bracketMatches) {
+            const newVariations = [];
+            for (const variation of variations) {
+                // Version without the optional part (remove brackets)
+                const without = variation.substring(0, match.start) + variation.substring(match.end);
+                const withoutTrimmed = without.replace(/\s+/g, ' ').trim();
+                if (withoutTrimmed) newVariations.push(withoutTrimmed);
+                
+                // Version with the optional part (replace [X] with X)
+                const withPart = variation.substring(0, match.start) + match.content + variation.substring(match.end);
+                const withPartTrimmed = withPart.replace(/\s+/g, ' ').trim();
+                if (withPartTrimmed) newVariations.push(withPartTrimmed);
+            }
+            variations = [...new Set(newVariations)];
+        }
+        
+        // Now expand parentheses and any remaining brackets in each variation
+        const finalVariations = [];
+        for (const variation of variations) {
+            finalVariations.push(...expandInterchangeableParts(variation));
+        }
+        
+        return [...new Set(finalVariations.filter(v => v && v.trim()))];
     }
     
-    // Expand (option1/option2) syntax
-    const variations = expandInterchangeableParts(baseText);
-    
-    // Remove duplicates
-    let uniqueVariations = [...new Set(variations)];
-    
-    // Apply optional prefix if present
-    if (optionalPrefix) {
-        const withPrefix = uniqueVariations.map(v => `${optionalPrefix} ${v}`.trim());
-        uniqueVariations = [...uniqueVariations, ...withPrefix];
-    }
-    
-    // Apply optional suffix if present
-    if (optionalSuffix) {
-        const withSuffix = uniqueVariations.map(v => `${v} ${optionalSuffix}`.trim());
-        uniqueVariations = [...uniqueVariations, ...withSuffix];
-    }
-    
-    // If both prefix and suffix exist, also add combinations
-    if (optionalPrefix && optionalSuffix) {
-        const withBoth = uniqueVariations
-            .filter(v => !v.includes(optionalPrefix) && !v.includes(optionalSuffix))
-            .map(v => `${optionalPrefix} ${v} ${optionalSuffix}`.trim());
-        uniqueVariations = [...uniqueVariations, ...withBoth];
-    }
-    
-    // Remove duplicates again after all expansions
-    return [...new Set(uniqueVariations)];
+    // No outermost brackets, just expand parentheses and nested brackets
+    return expandInterchangeableParts(answerText);
 }
 
 
