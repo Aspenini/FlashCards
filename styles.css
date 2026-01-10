@@ -8,15 +8,22 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background: #0a0a0a;
     min-height: 100vh;
+    min-height: -webkit-fill-available; /* iOS Safari fix */
     padding: 0;
     margin: 0;
     color: #333;
+    /* Better scrolling on mobile */
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
 }
 
 .container {
     width: 100%;
     min-height: 100vh;
+    min-height: -webkit-fill-available; /* iOS Safari fix */
     margin: 0;
+    /* Better scrolling */
+    overflow-x: hidden;
 }
 
 .view {
@@ -1002,6 +1009,7 @@ h3 {
     }
 }
 
+/* Tablet and smaller desktop */
 @media (max-width: 768px) {
     .view {
         padding: 32px 40px;
@@ -1044,25 +1052,443 @@ h3 {
     }
 }
 
+/* Mobile optimizations */
 @media (max-width: 600px) {
+    /* Safe area insets for devices with notches (iPhone X+) */
+    @supports (padding: max(0px)) {
+        .view {
+            padding-left: max(16px, env(safe-area-inset-left));
+            padding-right: max(16px, env(safe-area-inset-right));
+            padding-top: max(20px, env(safe-area-inset-top));
+            padding-bottom: max(80px, env(safe-area-inset-bottom));
+        }
+        
+        .button-group {
+            padding-left: max(0px, env(safe-area-inset-left));
+            padding-right: max(0px, env(safe-area-inset-right));
+        }
+    }
+    
+    /* Prevent zoom on inputs (iOS Safari) */
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+    
     .view {
-        padding: 24px;
+        padding: 20px 16px;
+        min-height: 100vh;
+        padding-bottom: 80px; /* Extra space for mobile navigation */
+        padding-bottom: calc(80px + env(safe-area-inset-bottom)); /* With safe area */
     }
     
+    /* Typography */
     h1 {
-        font-size: 2rem;
+        font-size: 1.75rem;
+        margin-bottom: 24px;
+        line-height: 1.2;
     }
     
-    .editor-header h2, .setup-header h2, .results-header h2 {
+    h2 {
         font-size: 1.5rem;
+        margin-bottom: 24px;
+    }
+    
+    .editor-header h2, 
+    .setup-header h2, 
+    .results-header h2,
+    .study-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    h3 {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+    }
+    
+    /* Header adjustments */
+    .main-header {
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+    }
+    
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .header-top h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0;
+    }
+    
+    /* Buttons - Touch-friendly sizes (min 44x44px) */
+    .btn {
+        padding: 14px 24px;
+        font-size: 1rem;
+        min-height: 44px;
+        min-width: 44px;
+        touch-action: manipulation; /* Remove tap delay */
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .btn-primary {
+        font-weight: 600;
+    }
+    
+    .btn-small {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+        min-height: 40px;
+    }
+    
+    .btn-tiny {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        min-height: 36px;
+        min-width: 36px;
+    }
+    
+    .button-group {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 32px;
+    }
+    
+    /* Sets list */
+    .sets-list {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .set-item {
+        min-height: auto;
+        padding: 16px;
+    }
+    
+    .set-item .set-actions {
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
+    }
+    
+    .set-item .set-actions .btn {
+        width: 100%;
+    }
+    
+    /* Form inputs - Touch-friendly */
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+        padding: 12px 16px;
+        font-size: 16px;
+        min-height: 44px;
+        border-radius: 8px;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+    
+    select {
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 20px;
+        padding-right: 40px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        cursor: pointer;
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+    
+    .checkbox-label input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        min-width: 20px;
+        min-height: 20px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Editor */
+    .editor-header,
+    .setup-header {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #2a2a2a;
+    }
+    
+    .editor-header .btn,
+    .setup-header .btn {
+        margin-bottom: 0;
+    }
+    
+    .cards-editor {
+        margin-bottom: 24px;
+    }
+    
+    .cards-header {
+        margin-bottom: 20px;
+    }
+    
+    .card-item {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .card-item-header {
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .card-item-inputs {
+        gap: 16px;
+    }
+    
+    .questions-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .questions-header button {
+        width: 100%;
+    }
+    
+    .hints-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .hints-header button {
+        width: 100%;
+    }
+    
+    /* Flashcard - Optimized for mobile */
+    .card-container {
+        min-height: 300px;
+        margin-bottom: 32px;
+        padding: 0 8px;
+    }
+    
+    .flashcard {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        min-height: 280px;
+        max-height: 60vh;
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+    
+    .card-front,
+    .card-back {
+        padding: 24px 20px;
+    }
+    
+    .card-content {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        max-height: calc(60vh - 120px);
+    }
+    
+    .card-label {
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+    }
+    
+    .card-hints {
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+    }
+    
+    /* Study actions - Mobile optimized */
+    .study-actions {
+        gap: 16px;
+        width: 100%;
+        padding: 0 8px;
     }
     
     .answer-buttons {
         flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        max-width: 100%;
     }
     
-    .flashcard {
-        height: 300px;
+    .answer-buttons .btn {
+        flex: 1;
+        width: 100%;
+        padding: 16px 24px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        min-height: 56px; /* Large touch target */
+    }
+    
+    #flipCardBtn {
+        width: 100%;
+        max-width: 100%;
+        padding: 16px 24px;
+        font-size: 1.1rem;
+        min-height: 56px;
+    }
+    
+    .hint-button {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .hint-button .btn {
+        width: 100%;
+        padding: 14px 24px;
+        min-height: 48px;
+    }
+    
+    /* Progress bar */
+    .progress-info {
+        margin-bottom: 24px;
+    }
+    
+    .progress-bar {
+        height: 8px;
+        margin-top: 8px;
+    }
+    
+    /* Results */
+    .results-content {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .stat-card {
+        padding: 20px;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+    }
+    
+    .cards-results-container {
+        margin-bottom: 24px;
+    }
+    
+    .card-result-item {
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .card-result-header {
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    /* Version info - Hide on very small screens */
+    .version-info {
+        font-size: 0.65rem;
+        bottom: 12px;
+        right: 12px;
+    }
+    
+    /* Editor actions */
+    .editor-actions {
+        flex-direction: column;
+        gap: 12px;
+        position: sticky;
+        bottom: 0;
+        background: #0a0a0a;
+        padding: 16px 0;
+        margin-top: 24px;
+        border-top: 1px solid #2a2a2a;
+    }
+    
+    .editor-actions .btn {
+        width: 100%;
+    }
+    
+    .results-actions {
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 24px;
+    }
+    
+    .results-actions .btn {
+        width: 100%;
+    }
+    
+    /* Hide gamepad focus indicator on mobile (not needed) */
+    .gamepad-focused {
+        outline: none !important;
+        box-shadow: none !important;
+        animation: none !important;
+    }
+    
+    /* Better touch targets for set actions */
+    .set-actions {
+        gap: 8px;
+    }
+    
+    .set-actions .btn {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    /* Answer syntax hint - smaller on mobile */
+    .answer-syntax-hint {
+        font-size: 0.8rem;
+        padding: 12px;
+    }
+    
+    .answer-syntax-hint small {
+        display: block;
+        margin-bottom: 4px;
+        line-height: 1.4;
+    }
+    
+    /* Accepted answers list - better mobile layout */
+    .accepted-answers-list {
+        margin-top: 16px;
+    }
+    
+    .accepted-forms-label {
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+    }
+    
+    .accepted-forms {
+        gap: 8px;
+    }
+    
+    .accepted-form-item {
+        font-size: 0.9rem;
+        padding: 8px 12px;
     }
 }
 
