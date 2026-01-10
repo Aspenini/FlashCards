@@ -12,7 +12,10 @@
         <!-- Main Menu View -->
         <div id="mainView" class="view active">
             <div class="main-header">
-                <h1>FlashCards</h1>
+                <div class="header-top">
+                    <h1>FlashCards</h1>
+                    <button id="clearCacheBtn" class="btn btn-small btn-warning" title="Clear cache and reload fresh data">Clear Cache</button>
+                </div>
                 <div class="button-group">
                     <button id="createSetBtn" class="btn btn-primary">Create New Set</button>
                     <button id="studyBtn" class="btn btn-primary" disabled>Study</button>
@@ -171,8 +174,10 @@
         </div>
     </div>
 
-    <script src="bundled-sets.js"></script>
-    <script src="app.js"></script>
+    <!-- Cache-busting: bundled-sets.js uses content hash from build script -->
+    <!-- Update the hash after running build_bundled_sets.py (check build output) -->
+    <script src="bundled-sets.js?v=473a30b8"></script>
+    <script src="app.js?v=0.1.7"></script>
 </body>
 </html>
 
