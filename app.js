@@ -10,11 +10,24 @@ let currentCardQuestions = []; // Questions for current card in order (sorted by
 let currentCardQuestionsForCardIndex = -1; // which card the cache belongs to
 let shownQuestions = []; // Questions shown so far (for progressive mode - accumulates in order: Q1, Q2, Q3...)
 
+// Gamepad state
+let gamepadState = {
+    connected: false,
+    gamepad: null,
+    previousButtons: [],
+    previousAxes: [],
+    lastButtonPress: 0,
+    buttonDebounceDelay: 200, // ms between button presses
+    navigationIndex: 0, // For D-pad navigation
+    navigationElements: []
+};
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     loadBundledSets(); // Load bundled sets first
     loadSets(); // Load user sets
     setupEventListeners();
+    setupGamepadSupport();
     renderSets();
     
     // Handle initial hash or hash changes
@@ -166,6 +179,9 @@ function showView(viewId, updateHash = true) {
         view.classList.remove('active');
     });
     document.getElementById(viewId).classList.add('active');
+    
+    // Update navigation elements for gamepad when view changes
+    updateGamepadNavigation(viewId);
     
     // Update URL hash based on view (unless we're handling a hash change)
     if (updateHash && !isUpdatingHash) {
@@ -982,6 +998,11 @@ function updateStudyCard(showHint = false) {
     document.getElementById('flipCardBtn').style.display = 'block';
     document.getElementById('answerButtons').style.display = 'none';
     
+    // Update gamepad navigation when buttons change visibility
+    if (getCurrentViewId() === 'studyView' && gamepadState.connected) {
+        updateGamepadNavigation('studyView');
+    }
+    
     const progress = ((currentCardIndex + 1) / studyCards.length) * 100;
     document.getElementById('progressText').textContent = `Card ${currentCardIndex + 1} of ${studyCards.length}`;
     document.getElementById('progressFill').style.width = `${progress}%`;
@@ -996,6 +1017,11 @@ function flipCard() {
     
     // Hide "Add Next Question" button when flipped
     document.getElementById('hintButton').style.display = 'none';
+    
+    // Update gamepad navigation for study view when buttons change
+    if (getCurrentViewId() === 'studyView' && gamepadState.connected) {
+        updateGamepadNavigation('studyView');
+    }
 }
 
 // Mark answer
@@ -1073,6 +1099,11 @@ function markAnswer(isCorrect) {
         // Update to show the next card (progressive mode will start with Question 1)
         updateStudyCard();
         
+        // Update gamepad navigation when card state changes
+        if (getCurrentViewId() === 'studyView' && gamepadState.connected) {
+            updateGamepadNavigation('studyView');
+        }
+        
         // Slide in the new card (already face-down from updateStudyCard)
         flashcard.classList.remove('slide-out');
         flashcard.classList.add('slide-in');
@@ -1091,6 +1122,7 @@ function askForHint() {
         // Update shown questions to include the first currentQuestionIndex questions
         shownQuestions = currentCardQuestions.slice(0, currentQuestionIndex);
         updateStudyCard(true); // true = show fade animation
+        // Navigation will be updated by updateStudyCard
     }
 }
 
@@ -1303,6 +1335,495 @@ function updateQuestionIndices(questionsList) {
             textarea.setAttribute('data-question-order', (index + 1).toString());
             textarea.placeholder = `Question ${index + 1}`;
         }
+    });
+}
+
+// ============================================================================
+// Gamepad Support
+// ============================================================================
+
+// Setup gamepad support
+function setupGamepadSupport() {
+    // Listen for gamepad connect/disconnect events
+    window.addEventListener('gamepadconnected', (e) => {
+        console.log('Gamepad connected:', e.gamepad.id);
+        gamepadState.connected = true;
+        gamepadState.gamepad = e.gamepad;
+        gamepadState.previousButtons = new Array(e.gamepad.buttons.length).fill(false);
+        gamepadState.previousAxes = new Array(e.gamepad.axes.length).fill(0);
+        updateGamepadNavigation(getCurrentViewId());
+        startGamepadPolling();
+    });
+
+    window.addEventListener('gamepaddisconnected', (e) => {
+        console.log('Gamepad disconnected:', e.gamepad.id);
+        gamepadState.connected = false;
+        gamepadState.gamepad = null;
+        clearGamepadFocus();
+    });
+
+    // Check for already connected gamepads
+    if (navigator.getGamepads) {
+        const gamepads = navigator.getGamepads();
+        for (let i = 0; i < gamepads.length; i++) {
+            if (gamepads[i]) {
+                gamepadState.connected = true;
+                gamepadState.gamepad = gamepads[i];
+                gamepadState.previousButtons = new Array(gamepads[i].buttons.length).fill(false);
+                gamepadState.previousAxes = new Array(gamepads[i].axes.length).fill(0);
+                updateGamepadNavigation(getCurrentViewId());
+                startGamepadPolling();
+                break;
+            }
+        }
+    }
+}
+
+// Get current active view ID
+function getCurrentViewId() {
+    const activeView = document.querySelector('.view.active');
+    return activeView ? activeView.id : 'mainView';
+}
+
+// Start gamepad polling loop
+function startGamepadPolling() {
+    if (!gamepadState.connected) return;
+
+    function pollGamepad() {
+        if (!gamepadState.connected) return;
+
+        // Get fresh gamepad state
+        const gamepads = navigator.getGamepads();
+        const gamepad = gamepads[0]; // Use first connected gamepad
+        
+        if (!gamepad) {
+            gamepadState.connected = false;
+            gamepadState.gamepad = null;
+            clearGamepadFocus();
+            return;
+        }
+
+        gamepadState.gamepad = gamepad;
+        handleGamepadInput(gamepad);
+        
+        requestAnimationFrame(pollGamepad);
+    }
+    
+    pollGamepad();
+}
+
+// Handle gamepad input
+function handleGamepadInput(gamepad) {
+    const now = Date.now();
+    const activeViewId = getCurrentViewId();
+    
+    // Handle buttons (pressed = 1.0, not pressed = 0.0)
+    for (let i = 0; i < gamepad.buttons.length; i++) {
+        const pressed = gamepad.buttons[i].pressed || gamepad.buttons[i].value > 0.5;
+        const wasPressed = gamepadState.previousButtons[i] || false;
+        
+        if (pressed && !wasPressed && (now - gamepadState.lastButtonPress) > gamepadState.buttonDebounceDelay) {
+            handleButtonPress(i, activeViewId);
+            gamepadState.lastButtonPress = now;
+        }
+        
+        gamepadState.previousButtons[i] = pressed;
+    }
+    
+    // Handle D-pad / Left stick for navigation
+    handleDpadNavigation(gamepad, activeViewId);
+}
+
+// Handle button press
+function handleButtonPress(buttonIndex, viewId) {
+    // Xbox/Standard mapping:
+    // 0 = A (Cross on PS)
+    // 1 = B (Circle on PS)
+    // 2 = X (Square on PS)
+    // 3 = Y (Triangle on PS)
+    // 8 = Back/Select
+    // 9 = Start
+    
+    switch (viewId) {
+        case 'studyView':
+            handleStudyViewButtons(buttonIndex);
+            break;
+        case 'resultsView':
+            handleResultsViewButtons(buttonIndex);
+            break;
+        case 'mainView':
+            handleMainViewButtons(buttonIndex);
+            break;
+        case 'studySetupView':
+            handleSetupViewButtons(buttonIndex);
+            break;
+        case 'setEditorView':
+            handleEditorViewButtons(buttonIndex);
+            break;
+    }
+}
+
+// Handle buttons in study view
+function handleStudyViewButtons(buttonIndex) {
+    const flashcard = document.getElementById('flashcard');
+    const isFlipped = flashcard && flashcard.classList.contains('flipped');
+    
+    switch (buttonIndex) {
+        case 0: // A / X button - Activate focused element or default action
+            // Check if we have a focused element (navigation mode)
+            const focused = document.querySelector('.gamepad-focused');
+            if (focused) {
+                // If there's a focused element, activate it
+                activateFocusedElement();
+            } else {
+                // Fallback to default behavior
+                if (isFlipped) {
+                    markAnswer(true); // Right answer
+                } else {
+                    flipCard(); // Flip to see answer
+                }
+            }
+            break;
+        case 1: // B / Circle button - Mark wrong (when flipped) or activate focused
+            const focusedElement = document.querySelector('.gamepad-focused');
+            if (focusedElement) {
+                // If focused on wrong button, activate it
+                if (focusedElement.id === 'wrongBtn') {
+                    markAnswer(false);
+                }
+            } else if (isFlipped) {
+                markAnswer(false); // Wrong answer
+            }
+            break;
+        case 3: // Y / Triangle button - Add next question (progressive mode) or activate focused
+            const focusedHint = document.querySelector('.gamepad-focused');
+            if (focusedHint && focusedHint.id === 'askForHintBtn') {
+                askForHint();
+            } else if (!isFlipped && progressiveMode) {
+                const hintButton = document.getElementById('hintButton');
+                if (hintButton && hintButton.style.display !== 'none') {
+                    askForHint();
+                }
+            }
+            break;
+        case 8: // Back button - Go back to main
+            showView('mainView');
+            break;
+    }
+}
+
+// Handle buttons in results view
+function handleResultsViewButtons(buttonIndex) {
+    switch (buttonIndex) {
+        case 0: // A / X button - Study again
+            document.getElementById('studyAgainBtn').click();
+            break;
+        case 1: // B / Circle button - Back to main
+        case 8: // Back button
+            document.getElementById('backToMainFromResultsBtn').click();
+            break;
+    }
+}
+
+// Handle buttons in main view
+function handleMainViewButtons(buttonIndex) {
+    switch (buttonIndex) {
+        case 0: // A / X button - Activate focused element
+            activateFocusedElement();
+            break;
+    }
+}
+
+// Handle buttons in setup view
+function handleSetupViewButtons(buttonIndex) {
+    switch (buttonIndex) {
+        case 0: // A / X button - Activate focused element
+            activateFocusedElement();
+            break;
+        case 1: // B / Circle button - Back
+        case 8: // Back button
+            document.getElementById('backToMainFromSetupBtn').click();
+            break;
+    }
+}
+
+// Activate the currently focused element (handles buttons, inputs, selects, checkboxes)
+function activateFocusedElement() {
+    const focused = document.querySelector('.gamepad-focused');
+    if (focused) {
+        if (focused.tagName === 'BUTTON') {
+            focused.click();
+        } else if (focused.tagName === 'INPUT') {
+            if (focused.type === 'checkbox') {
+                focused.checked = !focused.checked;
+                focused.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                focused.focus();
+                // For number inputs, don't select all text, just focus
+                if (focused.type === 'number') {
+                    focused.focus();
+                } else {
+                    focused.select();
+                }
+            }
+        } else if (focused.tagName === 'SELECT') {
+            // For SELECT dropdowns, cycle through options when A is pressed
+            // Don't try to open the dropdown - just cycle through options
+            if (focused.options.length > 0) {
+                const currentIndex = focused.selectedIndex >= 0 ? focused.selectedIndex : 0;
+                const nextIndex = (currentIndex + 1) % focused.options.length;
+                focused.selectedIndex = nextIndex;
+                focused.dispatchEvent(new Event('change', { bubbles: true }));
+                // Also trigger input event for compatibility
+                focused.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        } else {
+            // Default: click if it's clickable
+            focused.click();
+        }
+    } else if (gamepadState.navigationElements.length > 0) {
+        // Fallback: activate element at current navigation index
+        const element = gamepadState.navigationElements[gamepadState.navigationIndex];
+        if (element) {
+            if (element.tagName === 'BUTTON') {
+                element.click();
+            } else if (element.tagName === 'INPUT' && element.type === 'checkbox') {
+                element.checked = !element.checked;
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                element.focus();
+            }
+        }
+    }
+}
+
+// Handle buttons in editor view
+function handleEditorViewButtons(buttonIndex) {
+    switch (buttonIndex) {
+        case 1: // B / Circle button - Back
+        case 8: // Back button
+            document.getElementById('backToMainBtn').click();
+            break;
+        case 0: // A / X button - Save (if focused)
+            const focused = document.querySelector('.gamepad-focused');
+            if (focused && focused.id === 'saveSetBtn') {
+                focused.click();
+            }
+            break;
+    }
+}
+
+// Handle D-pad / Left stick navigation
+function handleDpadNavigation(gamepad, viewId) {
+    // D-pad: axes 6 and 7 (if available), or use button mapping
+    // Left stick: axes 0 (horizontal) and 1 (vertical)
+    
+    const deadzone = 0.5; // Deadzone for analog sticks
+    let horizontal = 0;
+    let vertical = 0;
+    
+    // Check left stick first
+    if (gamepad.axes.length >= 2) {
+        horizontal = Math.abs(gamepad.axes[0]) > deadzone ? gamepad.axes[0] : 0;
+        vertical = Math.abs(gamepad.axes[1]) > deadzone ? gamepad.axes[1] : 0;
+    }
+    
+    // Check D-pad buttons (if stick isn't active)
+    if (Math.abs(horizontal) < 0.1 && Math.abs(vertical) < 0.1 && gamepad.buttons.length >= 15) {
+        // D-pad is usually buttons 12-15 on standard controllers
+        // 12 = D-pad up, 13 = D-pad down, 14 = D-pad left, 15 = D-pad right
+        if (gamepad.buttons[12] && gamepad.buttons[12].pressed) vertical = -1;
+        if (gamepad.buttons[13] && gamepad.buttons[13].pressed) vertical = 1;
+        if (gamepad.buttons[14] && gamepad.buttons[14].pressed) horizontal = -1;
+        if (gamepad.buttons[15] && gamepad.buttons[15].pressed) horizontal = 1;
+    }
+    
+    // Handle navigation based on view
+    if (Math.abs(horizontal) > 0.1 || Math.abs(vertical) > 0.1) {
+        const now = Date.now();
+        if (now - gamepadState.lastButtonPress > 300) { // Throttle navigation
+            if (viewId === 'mainView' || viewId === 'studySetupView' || viewId === 'resultsView' || viewId === 'setEditorView' || viewId === 'studyView') {
+                // Normal navigation
+                navigateWithDpad(vertical, horizontal);
+            }
+            gamepadState.lastButtonPress = now;
+        }
+    }
+}
+
+// Navigate with D-pad
+function navigateWithDpad(vertical, horizontal) {
+    if (gamepadState.navigationElements.length === 0) return;
+    
+    const currentIndex = gamepadState.navigationIndex;
+    const currentElement = gamepadState.navigationElements[currentIndex];
+    
+    // If horizontal input is present, always navigate (allows navigating away from inputs/selects)
+    const hasHorizontalInput = Math.abs(horizontal) > 0.1;
+    
+    // If focused element is a number input, handle up/down as increment/decrement (unless navigating horizontally)
+    if (!hasHorizontalInput && currentElement && currentElement.tagName === 'INPUT' && currentElement.type === 'number') {
+        if (vertical < -0.5) { // Up - increment
+            const step = parseFloat(currentElement.step) || 1;
+            const max = currentElement.max ? parseFloat(currentElement.max) : Infinity;
+            const currentValue = parseFloat(currentElement.value) || 0;
+            const newValue = Math.min(max, currentValue + step);
+            currentElement.value = newValue;
+            currentElement.dispatchEvent(new Event('input', { bubbles: true }));
+            currentElement.dispatchEvent(new Event('change', { bubbles: true }));
+            return; // Don't navigate away
+        } else if (vertical > 0.5) { // Down - decrement
+            const step = parseFloat(currentElement.step) || 1;
+            const min = currentElement.min ? parseFloat(currentElement.min) : -Infinity;
+            const currentValue = parseFloat(currentElement.value) || 0;
+            const newValue = Math.max(min, currentValue - step);
+            currentElement.value = newValue;
+            currentElement.dispatchEvent(new Event('input', { bubbles: true }));
+            currentElement.dispatchEvent(new Event('change', { bubbles: true }));
+            return; // Don't navigate away
+        }
+    }
+    
+    // SELECT dropdowns - don't auto-cycle on D-pad, just navigate past them
+    // User needs to press A to open/interact with the dropdown
+    
+    // Default navigation behavior - navigate between elements
+    let newIndex = currentIndex;
+    
+    // For form layouts, use single-column navigation
+    // Vertical navigation (up/down) - navigate between elements
+    if (vertical < -0.5) { // Up
+        newIndex = Math.max(0, currentIndex - 1);
+    } else if (vertical > 0.5) { // Down
+        newIndex = Math.min(gamepadState.navigationElements.length - 1, currentIndex + 1);
+    }
+    
+    // Horizontal navigation (left/right) - for single column, left goes up, right goes down
+    // This allows navigating away from number inputs and selects
+    if (horizontal < -0.5) { // Left - navigate up
+        newIndex = Math.max(0, currentIndex - 1);
+    } else if (horizontal > 0.5) { // Right - navigate down
+        newIndex = Math.min(gamepadState.navigationElements.length - 1, currentIndex + 1);
+    }
+    
+    if (newIndex !== currentIndex) {
+        setGamepadFocus(newIndex);
+    }
+}
+
+// Update gamepad navigation elements based on current view
+function updateGamepadNavigation(viewId) {
+    gamepadState.navigationElements = [];
+    gamepadState.navigationIndex = 0;
+    clearGamepadFocus();
+    
+    switch (viewId) {
+        case 'mainView':
+            // Main action buttons
+            const mainButtons = ['createSetBtn', 'studyBtn', 'importSetBtn'];
+            mainButtons.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn && !btn.disabled) {
+                    gamepadState.navigationElements.push(btn);
+                }
+            });
+            break;
+            
+        case 'studySetupView':
+            // Setup elements in order (top to bottom)
+            const setupElements = [
+                'backToMainFromSetupBtn',
+                'selectedSet',
+                'cardCount',
+                'progressiveMode',
+                'startStudyBtn'
+            ];
+            setupElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element && (element.tagName === 'BUTTON' ? !element.disabled : true)) {
+                    gamepadState.navigationElements.push(element);
+                }
+            });
+            break;
+            
+        case 'resultsView':
+            // Results buttons
+            const resultsButtons = ['studyAgainBtn', 'backToMainFromResultsBtn'];
+            resultsButtons.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    gamepadState.navigationElements.push(btn);
+                }
+            });
+            break;
+            
+        case 'setEditorView':
+            // Editor buttons
+            const editorButtons = ['saveSetBtn', 'backToMainBtn'];
+            editorButtons.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    gamepadState.navigationElements.push(btn);
+                }
+            });
+            break;
+            
+        case 'studyView':
+            // Study view buttons - dynamically based on what's visible
+            const flipBtn = document.getElementById('flipCardBtn');
+            const wrongBtn = document.getElementById('wrongBtn');
+            const rightBtn = document.getElementById('rightBtn');
+            const hintBtn = document.getElementById('askForHintBtn');
+            const hintButton = document.getElementById('hintButton');
+            
+            // Check if card is flipped
+            const flashcard = document.getElementById('flashcard');
+            const isFlipped = flashcard && flashcard.classList.contains('flipped');
+            
+            if (isFlipped) {
+                // When flipped, show wrong and right buttons
+                if (wrongBtn && wrongBtn.offsetParent !== null) {
+                    gamepadState.navigationElements.push(wrongBtn);
+                }
+                if (rightBtn && rightBtn.offsetParent !== null) {
+                    gamepadState.navigationElements.push(rightBtn);
+                }
+            } else {
+                // When not flipped, show flip button and hint button if available
+                if (flipBtn && flipBtn.offsetParent !== null) {
+                    gamepadState.navigationElements.push(flipBtn);
+                }
+                if (hintBtn && hintButton && hintButton.style.display !== 'none' && hintButton.offsetParent !== null) {
+                    gamepadState.navigationElements.push(hintBtn);
+                }
+            }
+            break;
+    }
+    
+    // Set initial focus
+    if (gamepadState.navigationElements.length > 0) {
+        setGamepadFocus(0);
+    }
+}
+
+// Set gamepad focus on an element
+function setGamepadFocus(index) {
+    if (index < 0 || index >= gamepadState.navigationElements.length) return;
+    
+    clearGamepadFocus();
+    gamepadState.navigationIndex = index;
+    const element = gamepadState.navigationElements[index];
+    if (element) {
+        element.classList.add('gamepad-focused');
+        // Scroll element into view if needed
+        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+// Clear gamepad focus
+function clearGamepadFocus() {
+    document.querySelectorAll('.gamepad-focused').forEach(el => {
+        el.classList.remove('gamepad-focused');
     });
 }
 
