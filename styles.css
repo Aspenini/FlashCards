@@ -402,6 +402,31 @@ h3 {
     font-weight: 500;
 }
 
+.round-item label {
+    margin: 0;
+    color: #e0e0e0;
+    font-weight: 500;
+}
+
+.round-number-input {
+    width: 80px;
+    padding: 6px 10px;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: #1a1a1a;
+    color: #ffffff;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+.round-number-input:focus {
+    outline: none;
+    border-color: #ffffff;
+    background: #2a2a2a;
+}
+
 .card-round-select-wrapper {
     display: flex;
     align-items: center;

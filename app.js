@@ -767,16 +767,38 @@ function removeRound(roundId) {
     updateAllCardRoundDropdowns();
 }
 
+// Update round number
+function updateRoundNumber(roundId, newNumber) {
+    const numValue = parseInt(newNumber);
+    if (isNaN(numValue) || numValue < 1) {
+        alert('Round number must be a positive integer');
+        // Restore previous value
+        renderRounds();
+        return;
+    }
+    
+    const round = rounds.find(r => r.id === roundId);
+    if (round) {
+        round.number = numValue;
+        renderRounds();
+        updateAllCardRoundDropdowns();
+    }
+}
+
 // Render rounds list
 function renderRounds() {
     const roundsList = document.getElementById('roundsList');
     roundsList.innerHTML = '';
     
-    rounds.forEach(round => {
+    // Sort rounds by number for display
+    const sortedRounds = [...rounds].sort((a, b) => a.number - b.number);
+    
+    sortedRounds.forEach(round => {
         const roundItem = document.createElement('div');
         roundItem.className = 'round-item';
         roundItem.innerHTML = `
-            <span>Round ${round.number}</span>
+            <label>Round</label>
+            <input type="number" class="round-number-input" value="${round.number}" min="1" data-round-id="${round.id}" onchange="updateRoundNumber('${round.id}', this.value)">
             <button class="btn btn-danger btn-tiny" onclick="removeRoundById('${round.id}')">×</button>
         `;
         roundsList.appendChild(roundItem);
@@ -787,6 +809,9 @@ function renderRounds() {
 function removeRoundById(roundId) {
     removeRound(roundId);
 }
+
+// Update round number (for onclick handlers)
+window.updateRoundNumber = updateRoundNumber;
 
 // Update all card round dropdowns
 function updateAllCardRoundDropdowns() {
