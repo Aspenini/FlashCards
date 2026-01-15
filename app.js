@@ -708,10 +708,7 @@ function toggleRounds() {
     
     if (enabled) {
         roundsSection.style.display = 'block';
-        if (rounds.length === 0) {
-            // Add first round automatically
-            addRound();
-        }
+        // Don't auto-add rounds - user must click "Add Round" manually
         renderRounds();
         updateAllCardRoundDropdowns();
     } else {
@@ -740,8 +737,14 @@ function addRound() {
     // Get existing round numbers to check for duplicates
     const existingNumbers = rounds.map(r => r.number);
     
-    // Prompt for round number
-    const input = prompt('Enter round number:');
+    // Find the next available number starting from 1
+    let suggestedNumber = 1;
+    while (existingNumbers.includes(suggestedNumber)) {
+        suggestedNumber++;
+    }
+    
+    // Prompt for round number with suggested default
+    const input = prompt(`Enter round number:`, suggestedNumber);
     
     if (input === null) {
         // User cancelled
@@ -803,10 +806,51 @@ function renderRounds() {
         roundItem.className = 'round-item';
         roundItem.innerHTML = `
             <span>Round ${round.number}</span>
+            <button class="btn btn-secondary btn-tiny" onclick="editRoundNumber('${round.id}')" title="Edit round number">Edit</button>
             <button class="btn btn-danger btn-tiny" onclick="removeRoundById('${round.id}')">×</button>
         `;
         roundsList.appendChild(roundItem);
     });
+}
+
+// Edit round number
+function editRoundNumber(roundId) {
+    const round = rounds.find(r => r.id === roundId);
+    if (!round) return;
+    
+    // Get existing round numbers (excluding current round)
+    const existingNumbers = rounds.filter(r => r.id !== roundId).map(r => r.number);
+    
+    // Prompt for new round number
+    const input = prompt(`Enter new number for Round ${round.number}:`, round.number);
+    
+    if (input === null) {
+        // User cancelled
+        return;
+    }
+    
+    const roundNumber = parseInt(input, 10);
+    
+    // Validate input
+    if (isNaN(roundNumber) || roundNumber < 1) {
+        alert('Please enter a valid positive number');
+        return;
+    }
+    
+    // Check for duplicates
+    if (existingNumbers.includes(roundNumber)) {
+        alert(`Round ${roundNumber} already exists. Please choose a different number.`);
+        return;
+    }
+    
+    // Update round number
+    round.number = roundNumber;
+    
+    // Sort rounds by number for display
+    rounds.sort((a, b) => a.number - b.number);
+    
+    renderRounds();
+    updateAllCardRoundDropdowns();
 }
 
 // Remove round by ID (for onclick handlers)
@@ -2046,4 +2090,5 @@ window.removeCard = removeCard;
 window.addQuestion = addQuestion;
 window.removeQuestion = removeQuestion;
 window.removeRoundById = removeRoundById;
+window.editRoundNumber = editRoundNumber;
 
