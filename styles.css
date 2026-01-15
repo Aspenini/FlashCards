@@ -650,6 +650,19 @@ h3 {
     z-index: 10;
 }
 
+.card-do-not-accept {
+    position: absolute;
+    top: 48px;
+    right: 16px;
+    font-size: 0.75rem;
+    color: rgba(255, 100, 100, 0.8);
+    font-style: italic;
+    text-align: right;
+    max-width: 60%;
+    line-height: 1.4;
+    z-index: 10;
+}
+
 .answer-syntax-hint {
     margin-top: 8px;
     display: flex;
@@ -1402,6 +1415,11 @@ h3 {
     }
     
     .card-hints {
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+    }
+    
+    .card-do-not-accept {
         font-size: 0.85rem;
         margin-bottom: 12px;
     }

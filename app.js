@@ -392,8 +392,9 @@ function editSet(index) {
         const hints = card.hints || [];
         // Convert hints array to single string (for backward compatibility)
         const hintText = Array.isArray(hints) && hints.length > 0 ? hints[0] : (typeof hints === 'string' ? hints : '');
+        const doNotAccept = card.doNotAccept || '';
         const roundId = card.roundId || null;
-        addCardToEditor(questions, card.answer, hintText, cardIndex, roundId);
+        addCardToEditor(questions, card.answer, hintText, cardIndex, roundId, doNotAccept);
     });
 }
 
@@ -547,7 +548,7 @@ function expandAnswerVariations(answerText) {
 
 
 // Add card to editor
-function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', index = null, roundId = null) {
+function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', index = null, roundId = null, doNotAccept = '') {
     const cardsList = document.getElementById('cardsList');
     const cardIndex = index !== null ? index : cardsList.children.length;
     
@@ -558,6 +559,9 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
     
     // Hints is now a single optional string
     const hintText = typeof hint === 'string' ? hint : '';
+    
+    // DoNotAccept is a single optional string
+    const doNotAcceptText = typeof doNotAccept === 'string' ? doNotAccept : '';
     
     const cardItem = document.createElement('div');
     cardItem.className = 'card-item';
@@ -626,6 +630,10 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
             <div class="hints-section">
                 <label>Hint (optional, always visible, doesn't affect points)</label>
                 <input type="text" placeholder="Hint (e.g., multi-word answer)" class="card-hint" value="${escapeHtml(hintText)}" maxlength="100">
+            </div>
+            <div class="hints-section">
+                <label>DO NOT ACCEPT (optional, always visible, doesn't affect points)</label>
+                <input type="text" placeholder="DO NOT ACCEPT (e.g., incorrect answer variation)" class="card-do-not-accept" value="${escapeHtml(doNotAcceptText)}" maxlength="100">
             </div>
         </div>
     `;
@@ -975,6 +983,10 @@ function saveSet() {
         const hintInput = cardItem.querySelector('.card-hint');
         const hint = hintInput ? hintInput.value.trim() : '';
         
+        // Get doNotAccept (single optional field)
+        const doNotAcceptInput = cardItem.querySelector('.card-do-not-accept');
+        const doNotAccept = doNotAcceptInput ? doNotAcceptInput.value.trim() : '';
+        
         // Get card-level round ID if rounds are enabled
         let cardRoundId = null;
         if (roundsEnabled) {
@@ -988,6 +1000,9 @@ function saveSet() {
             const cardData = { questions, answer };
             if (hint) {
                 cardData.hints = [hint]; // Store as array for backward compatibility
+            }
+            if (doNotAccept) {
+                cardData.doNotAccept = doNotAccept;
             }
             if (cardRoundId) {
                 cardData.roundId = cardRoundId;
@@ -1277,6 +1292,20 @@ function updateStudyCard(showHint = false) {
     } else {
         if (hintsFront) hintsFront.textContent = '';
         if (hintsBack) hintsBack.textContent = '';
+    }
+    
+    // Display doNotAccept
+    const doNotAccept = card.doNotAccept || '';
+    const doNotAcceptFront = document.getElementById('doNotAcceptFront');
+    const doNotAcceptBack = document.getElementById('doNotAcceptBack');
+    
+    if (doNotAccept) {
+        const doNotAcceptText = `DO NOT ACCEPT: ${doNotAccept}`;
+        if (doNotAcceptFront) doNotAcceptFront.textContent = doNotAcceptText;
+        if (doNotAcceptBack) doNotAcceptBack.textContent = doNotAcceptText;
+    } else {
+        if (doNotAcceptFront) doNotAcceptFront.textContent = '';
+        if (doNotAcceptBack) doNotAcceptBack.textContent = '';
     }
     
     // Fade animation for question change (only in random mode, progressive mode handled above)
