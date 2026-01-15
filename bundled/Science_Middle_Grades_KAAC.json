@@ -17,7 +17,7 @@
         }
       ],
       "answer": "COVALENT [BONDS]",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -37,7 +37,8 @@
       "answer": "[LAW OF] CONSERVATION OF (MASS/MATTER)",
       "hints": [
         "multi-word answer"
-      ]
+      ],
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -55,7 +56,7 @@
         }
       ],
       "answer": "(CHORDATE/CHORDATA)",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -73,7 +74,7 @@
         }
       ],
       "answer": "BASALT",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -91,7 +92,7 @@
         }
       ],
       "answer": "LIMESTONE",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -109,7 +110,7 @@
         }
       ],
       "answer": "[NICOLAUS] COPERNICUS",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -127,7 +128,7 @@
         }
       ],
       "answer": "LIGHT [ENERGY]",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -145,7 +146,7 @@
         }
       ],
       "answer": "(HYPHAE/HYPHA)",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -163,7 +164,7 @@
         }
       ],
       "answer": "PHOTOPERIODISM",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -181,7 +182,7 @@
         }
       ],
       "answer": "CARBOHYDRATE[S]",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -199,7 +200,7 @@
         }
       ],
       "answer": "BAT[S]",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -217,7 +218,7 @@
         }
       ],
       "answer": "GOLGI [(APPARATUS/BODY/COMPLEX)]",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -235,7 +236,7 @@
         }
       ],
       "answer": "PLANET[S]",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -253,7 +254,7 @@
         }
       ],
       "answer": "SICKLE CELL [AMEMIA]",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -271,7 +272,7 @@
         }
       ],
       "answer": "(GAMETE[S]/SEX CELLS)",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -289,7 +290,7 @@
         }
       ],
       "answer": "FOOD CHAIN",
-      "hints": []
+      "roundId": "round_1768438625969"
     },
     {
       "questions": [
@@ -309,8 +310,330 @@
       "answer": "TASTE BUD[S]",
       "hints": [
         "two-word answer"
-      ]
+      ],
+      "roundId": "round_1768438625969"
+    },
+    {
+      "questions": [
+        {
+          "text": "There are different rules in chemistry for writing these molecular representations depending on the type of bond portrayed.",
+          "order": 1
+        },
+        {
+          "text": "Chemical symbols are used with the corresponding capital and lowercase letters with the right amount of numbers and numerical subscripts which must be balanced in a chemical equation.",
+          "order": 2
+        },
+        {
+          "text": "What do we call these expressions in chemistry that show the elements in a compound and their proportional amounts?",
+          "order": 3
+        }
+      ],
+      "answer": "[CHEMICAL] FORMULA[S]",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "Not all compounds that contain hydrogen are these but these substances are created by the donation of hydrogen ions, its protons, or acceptance of electron pairs.",
+          "order": 1
+        },
+        {
+          "text": "Its name comes from the Latin for sour which is how it tastes, though strong ones of these substances can burn the skin.",
+          "order": 2
+        },
+        {
+          "text": "What is this substance that turns litmus paper red, has a pH less than 7, and reacts with bases?",
+          "order": 3
+        }
+      ],
+      "answer": "ACID[S]",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "These organs in aquatic insects may be found along the abdomen.",
+          "order": 1
+        },
+        {
+          "text": "In fish, these organs are covered by a hard plate called the operculum and long strands of tissue making up these organs are called filaments.",
+          "order": 2
+        },
+        {
+          "text": "What are these organs that fish and other aquatic animals use to extract oxygen from water?",
+          "order": 3
+        }
+      ],
+      "answer": "GILL[S]",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "In an ecosystem, this factor includes heterotrophs, autotrophs, detritivores, predation, and symbiosis.",
+          "order": 1
+        },
+        {
+          "text": "One way to classify this factor is by how they obtain their nutritional needs such as producers or consumers and these factors do not include nonliving entities.",
+          "order": 2
+        },
+        {
+          "text": "What do we call any living factor within an environment?",
+          "order": 3
+        }
+      ],
+      "answer": "BIOTIC [FACTOR[S]]",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "This form of lava moves the fastest but it is the most viscous.",
+          "order": 1
+        },
+        {
+          "text": "This lava rock cools quickly and it is made of sharp particles called clinkers.",
+          "order": 2
+        },
+        {
+          "text": "Name this rough, jagged lava that is more viscous than pahoehoe.",
+          "order": 3
+        }
+      ],
+      "answer": "A'A [LAVA]",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "This scientist, though his work with cell theory, realized that fermentation is caused by microorganisms and disproved spontaneous generation.",
+          "order": 1
+        },
+        {
+          "text": "Through this research, he developed vaccines for rabies and anthrax, but he is most noted for his food preparation process that killed microbes.",
+          "order": 2
+        },
+        {
+          "text": "Who was this French scientist that through his research on microorganisms developed a process to remove bacteria from raw milk.",
+          "order": 3
+        }
+      ],
+      "answer": "[LOUIS] PASTEUR",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "A version of this law of motion is the rocket equation which explains how the thrust of a rocket changes as the mass of the rocket fuel decreases.",
+          "order": 1
+        },
+        {
+          "text": "Numerically, this law follows the Law of Inertia.",
+          "order": 2
+        },
+        {
+          "text": "Which law of motion defines force as the product of mass and acceleration?",
+          "order": 3
+        }
+      ],
+      "answer": "[NEWTON'S] SECOND [LAW OF MOTION]",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "This is the part of the fungus that does most of the decomposing in their environment.",
+          "order": 1
+        },
+        {
+          "text": "This makes up the majority of a fungus and it consists of a network of underground hyphae.",
+          "order": 2
+        },
+        {
+          "text": "What is the vegetative part of a fungus?",
+          "order": 3
+        }
+      ],
+      "answer": "MYCELIUM",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "This plant hormone was first noted by Charles Darwin when he noticed the phototropism of a grass plant.",
+          "order": 1
+        },
+        {
+          "text": "This hormone will congregate on the dark side of a plant's stem and leaves, elongate, and the plant then grows toward the light.",
+          "order": 2
+        },
+        {
+          "text": "Name this plant hormone that causes an increase in plant growth.",
+          "order": 3
+        }
+      ],
+      "answer": "AUXIN",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "This geographic theme helps explain why Louisville has a community called Germantown, and why Georgetown, Kentucky, has a Toyota plant.",
+          "order": 1
+        },
+        {
+          "text": "It also helps explain the popularity of holidays such as St. Patrick's Day and Cinco de Mayo in the U.S.",
+          "order": 2
+        },
+        {
+          "text": "Which geographic theme explains how people, goods, and ideas get from one place to another?",
+          "order": 3
+        }
+      ],
+      "answer": "MOVEMENT",
+      "doNotAccept": "MIGRATION, ETC.",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "This quantity, often symbolized with \"Q\", depends on the thermal conductivity of a material.",
+          "order": 1
+        },
+        {
+          "text": "This quantity is not internal thermal energy because it is transferred between two systems due to a temperature difference.",
+          "order": 2
+        },
+        {
+          "text": "What is this flow of energy from a hotter object to a colder one?",
+          "order": 3
+        }
+      ],
+      "answer": "HEAT",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "This classification of organic compounds are synthesized by the smooth endoplasmic reticulum, and when combined with proteins, are the essential constituents of a cell's membranes.",
+          "order": 1
+        },
+        {
+          "text": "As a nonpolar molecule, they are not soluble in polar molecules such as water, and are obtained usually through the consumption of other animals.",
+          "order": 2
+        },
+        {
+          "text": "Name this group of compounds that are composed of fats and oils which are used to store energy.",
+          "order": 3
+        }
+      ],
+      "answer": "LIPID[S]",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "The amount a person needs of these daily depends in sex, age, and levels of activity, and some people count how many they intake daily.",
+          "order": 1
+        },
+        {
+          "text": "We get them from the foods we eat and if you have a higher level of activity, you need more than a person that is more sedentary.",
+          "order": 2
+        },
+        {
+          "text": "What are these units of energy that we get from our food that if we intake too much will lead to being overwieght?",
+          "order": 3
+        }
+      ],
+      "answer": "CALORIE[S]",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "The name of this animal can translate literally from the Greek as \"a 'fish' with a womb.\"",
+          "order": 1
+        },
+        {
+          "text": "These animals have flippers, a dorsal fin, and, like whales, a small blowhole.",
+          "order": 2
+        },
+        {
+          "text": "Give the name of these aquatic mammals that include Amazon River, orcas, and bottlenose.",
+          "order": 3
+        }
+      ],
+      "answer": "DOLPHIN[S]",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "These round membrane-bound organelles are found only in animal cells and contain hydrolytic enzymes that are created in the Golgi apparatus.",
+          "order": 1
+        },
+        {
+          "text": "Their function is to find unwanted components within a cell, use their acidic environment, and dispose of it.",
+          "order": 2
+        },
+        {
+          "text": "Name this type of vesicle that is responsible for the digestion and dissolving of unwanted parts or wastes of a cell.",
+          "order": 3
+        }
+      ],
+      "answer": "LYSOSOME[S]",
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "We often think of these changes as detrimental, but they can also be positive and enhance an individual's adaptive ability.",
+          "order": 1
+        },
+        {
+          "text": "These alterations to genetic material are only passed on to offspring if they occur in the production of gametes.",
+          "order": 2
+        },
+        {
+          "text": "What is any change in the genetic code of an organism occurring naturally or through environmental factors like radiation?",
+          "order": 3
+        }
+      ],
+      "answer": "MUTATION",
+      "hints": [
+        "accept any form of the word"
+      ],
+      "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "This body structure can become abnormally dilated in individuals with Marfan Syndrome.",
+          "order": 1
+        },
+        {
+          "text": "This structure begins at the left ventricular semilunar valve and begins branching almost immediately into smaller arteries.",
+          "order": 2
+        },
+        {
+          "text": "Name this largest artery of the body.",
+          "order": 3
+        }
+      ],
+      "answer": "AORTA",
+      "roundId": "round_1768438740833"
     }
   ],
-  "exportedAt": "2026-01-09T01:40:47.144Z"
+  "exportedAt": "2026-01-15T02:03:39.787Z",
+  "year": 2025,
+  "rounds": [
+    {
+      "id": "round_1768438625969",
+      "number": 9
+    },
+    {
+      "id": "round_1768438740833",
+      "number": 10
+    }
+  ]
 }
