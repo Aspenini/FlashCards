@@ -8,7 +8,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>FlashCards</title>
     <link rel="icon" type="image/x-icon" href="img/sandy-bowling-approved.ico">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -39,7 +38,7 @@
                 </div>
             </div>
             
-            <div class="version-info">v0.2.1</div>
+            <div class="version-info">v0.2.2</div>
         </div>
 
         <!-- Create/Edit Set View -->
@@ -52,6 +51,21 @@
             <div class="form-group">
                 <label for="setName">Set Name</label>
                 <input type="text" id="setName" placeholder="Enter set name" maxlength="50">
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="roundsEnabled">
+                    <span>Enable Rounds (group cards into rounds)</span>
+                </label>
+            </div>
+
+            <div id="roundsSection" style="display: none;" class="rounds-section">
+                <div class="rounds-header">
+                    <h3>Rounds</h3>
+                    <button id="addRoundBtn" class="btn btn-secondary btn-small">+ Add Round</button>
+                </div>
+                <div id="roundsList" class="rounds-list"></div>
             </div>
 
             <div class="cards-editor">
@@ -83,10 +97,11 @@
                     <select id="selectedSet" class="select-input"></select>
                 </div>
                 
-                <div class="form-group">
-                    <label for="cardCount">Number of Cards</label>
-                    <input type="number" id="cardCount" min="1" value="10">
-                    <span class="hint" id="maxCardsHint"></span>
+                <div class="form-group" id="roundSelectGroup" style="display: none;">
+                    <label for="selectedRound">Select Round</label>
+                    <select id="selectedRound" class="select-input">
+                        <option value="">All Rounds</option>
+                    </select>
                 </div>
                 
                 <div class="form-group">

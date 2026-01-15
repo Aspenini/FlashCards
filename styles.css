@@ -363,6 +363,82 @@ h3 {
     color: #999;
 }
 
+.rounds-section {
+    margin-top: 32px;
+    margin-bottom: 32px;
+    padding: 20px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+}
+
+.rounds-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.rounds-header h3 {
+    margin: 0;
+    color: #ffffff;
+}
+
+.rounds-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.round-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #252525;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.card-round-select-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #252525;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+}
+
+.card-round-select-wrapper label {
+    color: #e0e0e0;
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.card-round-select-wrapper select {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: #1a1a1a;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.card-round-select-wrapper select:focus {
+    outline: none;
+    border-color: #ffffff;
+    background: #2a2a2a;
+}
+
+
 .cards-editor {
     margin-top: 48px;
 }
@@ -478,17 +554,27 @@ h3 {
     color: #666;
     font-size: 12px;
     line-height: 1;
-    padding: 4px 2px;
+    padding: 4px 8px;
     user-select: none;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-width: 20px;
+    min-width: 24px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    margin-right: 4px;
+    touch-action: none;
 }
 
 .question-drag-handle:active {
     cursor: grabbing;
+    background: #e0e0e0;
+}
+
+.question-item:not(.dragging) .question-drag-handle:hover {
+    background: #ebebeb;
 }
 
 .question-input-wrapper {
@@ -518,36 +604,19 @@ h3 {
 
 
 .hints-section {
-    display: grid;
-    gap: 12px;
     margin-top: 16px;
 }
 
-.hints-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.hints-header label {
+.hints-section label {
+    display: block;
+    margin-bottom: 8px;
     font-size: 0.9rem;
     color: #e0e0e0;
     font-weight: 500;
 }
 
-.hints-list {
-    display: grid;
-    gap: 8px;
-}
-
-.hint-item {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.hint-item input {
-    flex: 1;
+.hints-section input.card-hint {
+    width: 100%;
     padding: 8px 12px;
     border: 1px solid #3a3a3a;
     border-radius: 6px;
@@ -558,13 +627,13 @@ h3 {
     transition: border-color 0.2s;
 }
 
-.hint-item input:focus {
+.hints-section input.card-hint:focus {
     outline: none;
     border-color: #ffffff;
     background: #2a2a2a;
 }
 
-.hint-item input::placeholder {
+.hints-section input.card-hint::placeholder {
     color: #666;
 }
 

@@ -9,6 +9,8 @@ let progressiveMode = false;
 let currentCardQuestions = []; // Questions for current card in order (sorted by order property)
 let currentCardQuestionsForCardIndex = -1; // which card the cache belongs to
 let shownQuestions = []; // Questions shown so far (for progressive mode - accumulates in order: Q1, Q2, Q3...)
+let rounds = []; // Rounds for current set being edited
+let nextRoundNumber = 10; // Starting round number
 
 // Gamepad state
 let gamepadState = {
@@ -116,6 +118,12 @@ function clearCacheAndReload() {
         document.getElementById('deleteSetBtn').style.display = 'none';
         document.getElementById('setName').value = '';
         document.getElementById('cardsList').innerHTML = '';
+        // Reset rounds
+        rounds = [];
+        nextRoundNumber = 10;
+        document.getElementById('roundsEnabled').checked = false;
+        document.getElementById('roundsSection').style.display = 'none';
+        document.getElementById('roundsList').innerHTML = '';
     });
 
     document.getElementById('studyBtn').addEventListener('click', () => {
@@ -140,13 +148,16 @@ function clearCacheAndReload() {
     document.getElementById('saveSetBtn').addEventListener('click', saveSet);
     document.getElementById('deleteSetBtn').addEventListener('click', deleteSet);
     
+    // Rounds management
+    document.getElementById('roundsEnabled').addEventListener('change', toggleRounds);
+    document.getElementById('addRoundBtn').addEventListener('click', addRound);
 
     // Study setup
     document.getElementById('backToMainFromSetupBtn').addEventListener('click', () => {
         showView('mainView');
     });
 
-    document.getElementById('selectedSet').addEventListener('change', updateCardCount);
+    document.getElementById('selectedSet').addEventListener('change', updateRoundSelect);
     document.getElementById('startStudyBtn').addEventListener('click', startStudy);
 
     // Study view
@@ -312,6 +323,21 @@ function editSet(index) {
     document.getElementById('deleteSetBtn').style.display = 'block';
     document.getElementById('setName').value = set.name;
     
+    // Load rounds if they exist
+    if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
+        rounds = [...set.rounds];
+        nextRoundNumber = Math.max(...rounds.map(r => r.number)) + 1;
+        document.getElementById('roundsEnabled').checked = true;
+        document.getElementById('roundsSection').style.display = 'block';
+        renderRounds();
+    } else {
+        rounds = [];
+        nextRoundNumber = 10;
+        document.getElementById('roundsEnabled').checked = false;
+        document.getElementById('roundsSection').style.display = 'none';
+        document.getElementById('roundsList').innerHTML = '';
+    }
+    
     const cardsList = document.getElementById('cardsList');
     cardsList.innerHTML = '';
     set.cards.forEach((card, cardIndex) => {
@@ -332,7 +358,10 @@ function editSet(index) {
         questions.sort((a, b) => (a.order || 999) - (b.order || 999));
         
         const hints = card.hints || [];
-        addCardToEditor(questions, card.answer, hints, cardIndex);
+        // Convert hints array to single string (for backward compatibility)
+        const hintText = Array.isArray(hints) && hints.length > 0 ? hints[0] : (typeof hints === 'string' ? hints : '');
+        const roundId = card.roundId || null;
+        addCardToEditor(questions, card.answer, hintText, cardIndex, roundId);
     });
 }
 
@@ -486,7 +515,7 @@ function expandAnswerVariations(answerText) {
 
 
 // Add card to editor
-function addCardToEditor(questions = [{ text: '' }], answer = '', hints = [], index = null) {
+function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', index = null, roundId = null) {
     const cardsList = document.getElementById('cardsList');
     const cardIndex = index !== null ? index : cardsList.children.length;
     
@@ -495,13 +524,8 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hints = [], in
         questions = [{ text: '' }];
     }
     
-    // Ensure hints is an array
-    if (!Array.isArray(hints)) {
-        hints = [];
-    }
-    if (hints.length === 0) {
-        hints = [''];
-    }
+    // Hints is now a single optional string
+    const hintText = typeof hint === 'string' ? hint : '';
     
     const cardItem = document.createElement('div');
     cardItem.className = 'card-item';
@@ -516,9 +540,10 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hints = [], in
     const questionsHtml = sortedQuestions.map((q, qIndex) => {
         const questionText = typeof q === 'string' ? q : (q.text || '');
         const questionOrder = (q && q.order) ? q.order : (qIndex + 1);
+        
         return `
-            <div class="question-item" draggable="true" data-question-index="${qIndex}">
-                <div class="question-drag-handle">⋮⋮</div>
+            <div class="question-item" data-question-index="${qIndex}">
+                <div class="question-drag-handle" draggable="true">⋮⋮</div>
                 <div class="question-input-wrapper">
                     <textarea placeholder="Question ${questionOrder}" class="card-question" data-question-order="${questionOrder}">${escapeHtml(questionText)}</textarea>
                 </div>
@@ -527,12 +552,31 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hints = [], in
         `;
     }).join('');
     
+    // Build card-level round dropdown if rounds are enabled
+    let cardRoundDropdownHtml = '';
+    const roundsEnabled = document.getElementById('roundsEnabled').checked;
+    if (roundsEnabled && rounds.length > 0) {
+        const roundOptions = rounds.map(r => 
+            `<option value="${r.id}" ${roundId === r.id ? 'selected' : ''}>Round ${r.number}</option>`
+        ).join('');
+        cardRoundDropdownHtml = `
+            <div class="card-round-select-wrapper">
+                <label>Round:</label>
+                <select class="card-round-select">
+                    <option value="">No Round</option>
+                    ${roundOptions}
+                </select>
+            </div>
+        `;
+    }
+    
     cardItem.innerHTML = `
         <div class="card-item-header">
             <span class="card-item-number">Card ${cardIndex + 1}</span>
             <button class="btn btn-danger btn-small" onclick="removeCard(this)">Remove</button>
         </div>
         <div class="card-item-inputs">
+            ${cardRoundDropdownHtml}
             <div class="questions-section">
                 <div class="questions-header">
                     <label>Questions (randomly selected during study)</label>
@@ -548,18 +592,8 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hints = [], in
                 <small>Examples: Conservation of (mass/matter), [Law of] Conservation of (mass/matter), (Chordate/Chordata), Answer [Law]</small>
             </div>
             <div class="hints-section">
-                <div class="hints-header">
-                    <label>Hints (always visible, don't affect points)</label>
-                    <button class="btn btn-secondary btn-tiny" onclick="addHint(this)">+ Add Hint</button>
-                </div>
-                <div class="hints-list">
-                    ${hints.map((hint, hIndex) => `
-                        <div class="hint-item">
-                            <input type="text" placeholder="Hint ${hIndex + 1} (e.g., multi-word answer)" class="card-hint" value="${escapeHtml(hint)}" maxlength="100">
-                            ${hIndex > 0 ? '<button class="btn btn-danger btn-tiny" onclick="removeHint(this)">×</button>' : ''}
-                        </div>
-                    `).join('')}
-                </div>
+                <label>Hint (optional, always visible, doesn't affect points)</label>
+                <input type="text" placeholder="Hint (e.g., multi-word answer)" class="card-hint" value="${escapeHtml(hintText)}" maxlength="100">
             </div>
         </div>
     `;
@@ -642,10 +676,9 @@ function addQuestion(button) {
     
     const questionItem = document.createElement('div');
     questionItem.className = 'question-item';
-    questionItem.draggable = true;
     questionItem.setAttribute('data-question-index', questionCount.toString());
     questionItem.innerHTML = `
-        <div class="question-drag-handle">⋮⋮</div>
+        <div class="question-drag-handle" draggable="true">⋮⋮</div>
         <div class="question-input-wrapper">
             <textarea placeholder="Question ${nextOrder}" class="card-question" data-question-order="${nextOrder}"></textarea>
         </div>
@@ -670,6 +703,131 @@ function removeQuestion(button) {
     }
 }
 
+// Toggle rounds mode
+function toggleRounds() {
+    const enabled = document.getElementById('roundsEnabled').checked;
+    const roundsSection = document.getElementById('roundsSection');
+    
+    if (enabled) {
+        roundsSection.style.display = 'block';
+        if (rounds.length === 0) {
+            // Add first round automatically
+            addRound();
+        }
+        renderRounds();
+        updateAllCardRoundDropdowns();
+    } else {
+        // Check if any cards are assigned to rounds
+        const cardItems = document.querySelectorAll('.card-item');
+        let hasAssignedRounds = false;
+        cardItems.forEach(cardItem => {
+            const roundSelect = cardItem.querySelector('.card-round-select');
+            if (roundSelect && roundSelect.value) {
+                hasAssignedRounds = true;
+            }
+        });
+        
+        if (hasAssignedRounds) {
+            alert('Cannot disable rounds. Please remove round assignments from all cards first.');
+            document.getElementById('roundsEnabled').checked = true;
+            return;
+        }
+        
+        roundsSection.style.display = 'none';
+    }
+}
+
+// Add a new round
+function addRound() {
+    const roundId = 'round_' + Date.now();
+    rounds.push({ id: roundId, number: nextRoundNumber });
+    nextRoundNumber++;
+    renderRounds();
+    updateAllCardRoundDropdowns();
+}
+
+// Remove a round
+function removeRound(roundId) {
+    if (rounds.length <= 1) {
+        alert('You must have at least one round');
+        return;
+    }
+    
+    // Remove round from array
+    rounds = rounds.filter(r => r.id !== roundId);
+    
+    // Clear round selection from all cards
+    document.querySelectorAll('.card-round-select').forEach(select => {
+        if (select.value === roundId) {
+            select.value = '';
+        }
+    });
+    
+    renderRounds();
+    updateAllCardRoundDropdowns();
+}
+
+// Render rounds list
+function renderRounds() {
+    const roundsList = document.getElementById('roundsList');
+    roundsList.innerHTML = '';
+    
+    rounds.forEach(round => {
+        const roundItem = document.createElement('div');
+        roundItem.className = 'round-item';
+        roundItem.innerHTML = `
+            <span>Round ${round.number}</span>
+            <button class="btn btn-danger btn-tiny" onclick="removeRoundById('${round.id}')">×</button>
+        `;
+        roundsList.appendChild(roundItem);
+    });
+}
+
+// Remove round by ID (for onclick handlers)
+function removeRoundById(roundId) {
+    removeRound(roundId);
+}
+
+// Update all card round dropdowns
+function updateAllCardRoundDropdowns() {
+    const roundsEnabled = document.getElementById('roundsEnabled').checked;
+    
+    // Update card-level dropdowns
+    document.querySelectorAll('.card-round-select').forEach(select => {
+        const currentValue = select.value;
+        const roundOptions = rounds.map(r => 
+            `<option value="${r.id}" ${currentValue === r.id ? 'selected' : ''}>Round ${r.number}</option>`
+        ).join('');
+        select.innerHTML = '<option value="">No Round</option>' + roundOptions;
+    });
+    
+    // If rounds were just enabled, add dropdowns to existing cards
+    if (roundsEnabled && rounds.length > 0) {
+        document.querySelectorAll('.card-item').forEach(cardItem => {
+            // Check if card already has round dropdown
+            if (!cardItem.querySelector('.card-round-select-wrapper')) {
+                const cardInputs = cardItem.querySelector('.card-item-inputs');
+                const roundOptions = rounds.map(r => 
+                    `<option value="${r.id}">Round ${r.number}</option>`
+                ).join('');
+                const roundDropdownHtml = `
+                    <div class="card-round-select-wrapper">
+                        <label>Round:</label>
+                        <select class="card-round-select">
+                            <option value="">No Round</option>
+                            ${roundOptions}
+                        </select>
+                    </div>
+                `;
+                cardInputs.insertAdjacentHTML('afterbegin', roundDropdownHtml);
+            }
+        });
+    } else if (!roundsEnabled) {
+        // Remove all round dropdowns when rounds are disabled
+        document.querySelectorAll('.card-round-select-wrapper').forEach(el => el.remove());
+    }
+}
+
 // Save set
 function saveSet() {
     const name = document.getElementById('setName').value.trim();
@@ -680,6 +838,7 @@ function saveSet() {
 
     const cards = [];
     const cardItems = document.querySelectorAll('.card-item');
+    const roundsEnabled = document.getElementById('roundsEnabled').checked;
     
     cardItems.forEach(cardItem => {
         const questionInputs = cardItem.querySelectorAll('.card-question');
@@ -707,8 +866,24 @@ function saveSet() {
             .map(input => input.value.trim())
             .filter(hint => hint.length > 0);
         
+        // Get card-level round ID if rounds are enabled
+        let cardRoundId = null;
+        if (roundsEnabled) {
+            const cardRoundSelect = cardItem.querySelector('.card-round-select');
+            if (cardRoundSelect && cardRoundSelect.value) {
+                cardRoundId = cardRoundSelect.value;
+            }
+        }
+        
         if (questions.length > 0 && answer) {
-            cards.push({ questions, answer, hints });
+            const cardData = { questions, answer };
+            if (hint) {
+                cardData.hints = [hint]; // Store as array for backward compatibility
+            }
+            if (cardRoundId) {
+                cardData.roundId = cardRoundId;
+            }
+            cards.push(cardData);
         }
     });
 
@@ -718,6 +893,11 @@ function saveSet() {
     }
 
     const setData = { name, cards };
+    
+    // Save rounds if enabled
+    if (roundsEnabled && rounds.length > 0) {
+        setData.rounds = rounds;
+    }
     
     // Preserve bundled status if editing a bundled set
     if (currentSetId !== null) {
@@ -802,35 +982,48 @@ function populateSetSelect() {
         select.appendChild(option);
     });
     
-    updateCardCount();
+    updateRoundSelect();
 }
 
-// Update card count
-function updateCardCount() {
+// Update round select based on selected set
+function updateRoundSelect() {
     const select = document.getElementById('selectedSet');
-    const cardCountInput = document.getElementById('cardCount');
-    const hint = document.getElementById('maxCardsHint');
+    const roundSelect = document.getElementById('selectedRound');
+    const roundSelectGroup = document.getElementById('roundSelectGroup');
     
     if (select.value === '') {
-        cardCountInput.max = 1;
-        cardCountInput.value = 1;
-        hint.textContent = '';
+        roundSelectGroup.style.display = 'none';
+        roundSelect.innerHTML = '<option value="">All Rounds</option>';
         return;
     }
     
     const setIndex = parseInt(select.value);
     const set = sets[setIndex];
-    const maxCards = set.cards.length;
     
-    cardCountInput.max = maxCards;
-    cardCountInput.value = maxCards; // Always default to max cards
-    hint.textContent = `Maximum: ${maxCards} cards`;
+    // Check if set has rounds
+    if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
+        roundSelectGroup.style.display = 'block';
+        roundSelect.innerHTML = '<option value="">All Rounds</option>';
+        
+        // Sort rounds by number
+        const sortedRounds = [...set.rounds].sort((a, b) => a.number - b.number);
+        
+        sortedRounds.forEach(round => {
+            const option = document.createElement('option');
+            option.value = round.id;
+            option.textContent = `Round ${round.number}`;
+            roundSelect.appendChild(option);
+        });
+    } else {
+        roundSelectGroup.style.display = 'none';
+        roundSelect.innerHTML = '<option value="">All Rounds</option>';
+    }
 }
 
 // Start study
 function startStudy() {
     const select = document.getElementById('selectedSet');
-    const cardCount = parseInt(document.getElementById('cardCount').value);
+    const roundSelect = document.getElementById('selectedRound');
     // Set progressiveMode once at the start - it persists for the entire study session
     progressiveMode = document.getElementById('progressiveMode').checked;
     
@@ -842,14 +1035,22 @@ function startStudy() {
     const setIndex = parseInt(select.value);
     const set = sets[setIndex];
     
-    if (cardCount < 1 || cardCount > set.cards.length) {
-        alert('Invalid number of cards');
-        return;
+    // Filter cards by round if a specific round is selected
+    let cardsToStudy = [...set.cards];
+    const selectedRoundId = roundSelect.value;
+    
+    if (selectedRoundId) {
+        // Filter to only cards in the selected round
+        cardsToStudy = cardsToStudy.filter(card => card.roundId === selectedRoundId);
+        
+        if (cardsToStudy.length === 0) {
+            alert('No cards found in the selected round');
+            return;
+        }
     }
     
-    // Shuffle and select cards
-    const shuffled = [...set.cards].sort(() => Math.random() - 0.5);
-    studyCards = shuffled.slice(0, cardCount);
+    // Shuffle all cards (or filtered cards)
+    studyCards = cardsToStudy.sort(() => Math.random() - 0.5);
     currentCardIndex = 0;
     currentQuestionIndex = progressiveMode ? 1 : 0; // Start with 1 question shown in progressive mode
     shownQuestions = []; // Reset shown questions
@@ -1222,57 +1423,40 @@ function handleImport(event) {
     event.target.value = ''; // Reset input
 }
 
-// Add hint to a card
-function addHint(button) {
-    const hintsList = button.closest('.hints-section').querySelector('.hints-list');
-    const hintCount = hintsList.children.length;
-    
-    const hintItem = document.createElement('div');
-    hintItem.className = 'hint-item';
-    hintItem.innerHTML = `
-        <input type="text" placeholder="Hint ${hintCount + 1} (e.g., multi-word answer)" class="card-hint" value="" maxlength="100">
-        <button class="btn btn-danger btn-tiny" onclick="removeHint(this)">×</button>
-    `;
-    hintsList.appendChild(hintItem);
-}
-
-// Remove hint from a card
-function removeHint(button) {
-    const hintsList = button.closest('.hints-list');
-    if (hintsList.children.length > 1) {
-        button.closest('.hint-item').remove();
-    } else {
-        alert('Each card must have at least one hint field (can be empty)');
-    }
-}
 
 // Setup drag and drop for question reordering
 function setupQuestionDragAndDrop() {
     let draggedElement = null;
     let placeholder = null;
+    let draggedQuestionItem = null;
 
     document.addEventListener('dragstart', (e) => {
-        if (e.target.classList.contains('question-item')) {
-            draggedElement = e.target;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', e.target.outerHTML);
+        // Only allow dragging from the drag handle
+        if (e.target.classList.contains('question-drag-handle')) {
+            draggedQuestionItem = e.target.closest('.question-item');
+            if (draggedQuestionItem) {
+                draggedElement = draggedQuestionItem;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', draggedQuestionItem.outerHTML);
 
-            // Add dragging class for visual feedback
-            draggedElement.classList.add('dragging');
+                // Add dragging class for visual feedback
+                draggedQuestionItem.classList.add('dragging');
 
-            // Create placeholder
-            placeholder = document.createElement('div');
-            placeholder.className = 'question-item question-placeholder';
-            placeholder.innerHTML = '<div class="question-drag-handle">⋮⋮</div><div class="question-input-wrapper"><div class="placeholder-text">Drop here</div></div>';
+                // Create placeholder
+                placeholder = document.createElement('div');
+                placeholder.className = 'question-item question-placeholder';
+                placeholder.innerHTML = '<div class="question-drag-handle" draggable="true">⋮⋮</div><div class="question-input-wrapper"><div class="placeholder-text">Drop here</div></div>';
 
-            e.target.style.opacity = '0.5';
+                draggedQuestionItem.style.opacity = '0.5';
+            }
         }
     });
 
     document.addEventListener('dragend', (e) => {
-        if (draggedElement) {
-            draggedElement.classList.remove('dragging');
-            draggedElement.style.opacity = '';
+        if (draggedQuestionItem) {
+            draggedQuestionItem.classList.remove('dragging');
+            draggedQuestionItem.style.opacity = '';
+            draggedQuestionItem = null;
             draggedElement = null;
 
             if (placeholder && placeholder.parentNode) {
@@ -1283,12 +1467,12 @@ function setupQuestionDragAndDrop() {
     });
 
     document.addEventListener('dragover', (e) => {
-        if (draggedElement) {
+        if (draggedQuestionItem) {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
 
             const target = e.target.closest('.question-item');
-            if (target && target !== draggedElement && target !== placeholder) {
+            if (target && target !== draggedQuestionItem && target !== placeholder) {
                 const rect = target.getBoundingClientRect();
                 const midpoint = rect.top + rect.height / 2;
 
@@ -1310,14 +1494,15 @@ function setupQuestionDragAndDrop() {
     document.addEventListener('drop', (e) => {
         e.preventDefault();
 
-        if (draggedElement && placeholder && placeholder.parentNode) {
+        if (draggedQuestionItem && placeholder && placeholder.parentNode) {
             // Replace placeholder with dragged element
-            placeholder.parentNode.replaceChild(draggedElement, placeholder);
+            placeholder.parentNode.replaceChild(draggedQuestionItem, placeholder);
 
             // Update question indices and order properties
-            updateQuestionIndices(draggedElement.closest('.questions-list'));
+            updateQuestionIndices(draggedQuestionItem.closest('.questions-list'));
 
             placeholder = null;
+            draggedQuestionItem = null;
             draggedElement = null;
         }
     });
@@ -1834,6 +2019,5 @@ window.exportSet = exportSet;
 window.removeCard = removeCard;
 window.addQuestion = addQuestion;
 window.removeQuestion = removeQuestion;
-window.addHint = addHint;
-window.removeHint = removeHint;
+window.removeRoundById = removeRoundById;
 
