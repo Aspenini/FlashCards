@@ -637,6 +637,7 @@ h3 {
     color: #666;
 }
 
+input.card-do-not-accept,
 .hints-section input.card-do-not-accept {
     width: 100%;
     padding: 8px 12px;
@@ -647,14 +648,24 @@ h3 {
     background: #252525;
     color: #ffffff;
     transition: border-color 0.2s;
+    box-sizing: border-box;
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    max-width: 100% !important;
+    text-align: left !important;
+    font-style: normal !important;
+    z-index: auto !important;
 }
 
+input.card-do-not-accept:focus,
 .hints-section input.card-do-not-accept:focus {
     outline: none;
     border-color: #ffffff;
     background: #2a2a2a;
 }
 
+input.card-do-not-accept::placeholder,
 .hints-section input.card-do-not-accept::placeholder {
     color: #666;
 }
@@ -672,7 +683,8 @@ h3 {
     z-index: 10;
 }
 
-.card-do-not-accept {
+/* Display element on flashcards (not input fields) */
+.card-do-not-accept:not(input) {
     position: absolute;
     top: 48px;
     right: 16px;
