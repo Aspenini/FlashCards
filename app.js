@@ -930,11 +930,9 @@ function saveSet() {
         
         const answer = cardItem.querySelector('.card-answer').value.trim();
         
-        // Get hints
-        const hintInputs = cardItem.querySelectorAll('.card-hint');
-        const hints = Array.from(hintInputs)
-            .map(input => input.value.trim())
-            .filter(hint => hint.length > 0);
+        // Get hint (single optional field)
+        const hintInput = cardItem.querySelector('.card-hint');
+        const hint = hintInput ? hintInput.value.trim() : '';
         
         // Get card-level round ID if rounds are enabled
         let cardRoundId = null;
@@ -964,7 +962,7 @@ function saveSet() {
 
     const setData = { name, cards };
     
-    // Save rounds if enabled
+    // Save rounds if enabled and has rounds
     if (roundsEnabled && rounds.length > 0) {
         setData.rounds = rounds;
     }
