@@ -116,6 +116,7 @@ function clearCacheAndReload() {
         document.getElementById('editorTitle').textContent = 'Create New Set';
         document.getElementById('deleteSetBtn').style.display = 'none';
         document.getElementById('setName').value = '';
+        document.getElementById('setYear').value = '';
         document.getElementById('cardsList').innerHTML = '';
         // Reset rounds
         rounds = [];
@@ -227,6 +228,7 @@ function handleHashChange() {
             document.getElementById('editorTitle').textContent = 'Create New Set';
             document.getElementById('deleteSetBtn').style.display = 'none';
             document.getElementById('setName').value = '';
+            document.getElementById('setYear').value = '';
             document.getElementById('cardsList').innerHTML = '';
         } else {
             // Already in editor, just show the view
@@ -266,10 +268,22 @@ function renderSets() {
             const index = sets.indexOf(set); // Get original index in full sets array
             const setItem = document.createElement('div');
             setItem.className = 'set-item bundled-set';
+            
+            // Build meta string with cards, rounds, and year
+            const metaParts = [];
+            metaParts.push(`${set.cards.length} card${set.cards.length !== 1 ? 's' : ''}`);
+            if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
+                metaParts.push(`${set.rounds.length} round${set.rounds.length !== 1 ? 's' : ''}`);
+            }
+            if (set.year) {
+                metaParts.push(`${set.year}`);
+            }
+            const metaText = metaParts.join(' • ');
+            
             setItem.innerHTML = `
                 <div class="set-info">
                     <div class="set-name">${escapeHtml(set.name)}</div>
-                    <div class="set-meta">${set.cards.length} card${set.cards.length !== 1 ? 's' : ''}</div>
+                    <div class="set-meta">${metaText}</div>
                 </div>
                 <div class="set-actions">
                 </div>
@@ -289,10 +303,22 @@ function renderSets() {
             const index = sets.indexOf(set); // Get original index in full sets array
             const setItem = document.createElement('div');
             setItem.className = 'set-item';
+            
+            // Build meta string with cards, rounds, and year
+            const metaParts = [];
+            metaParts.push(`${set.cards.length} card${set.cards.length !== 1 ? 's' : ''}`);
+            if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
+                metaParts.push(`${set.rounds.length} round${set.rounds.length !== 1 ? 's' : ''}`);
+            }
+            if (set.year) {
+                metaParts.push(`${set.year}`);
+            }
+            const metaText = metaParts.join(' • ');
+            
             setItem.innerHTML = `
                 <div class="set-info" onclick="editSet(${index})">
                     <div class="set-name">${escapeHtml(set.name)}</div>
-                    <div class="set-meta">${set.cards.length} card${set.cards.length !== 1 ? 's' : ''}</div>
+                    <div class="set-meta">${metaText}</div>
                 </div>
                 <div class="set-actions">
                     <button class="btn btn-secondary btn-icon" onclick="editSet(${index})">Edit</button>
@@ -320,6 +346,14 @@ function editSet(index) {
     document.getElementById('editorTitle').textContent = 'Edit Set';
     document.getElementById('deleteSetBtn').style.display = 'block';
     document.getElementById('setName').value = set.name;
+    
+    // Load year if it exists
+    const yearInput = document.getElementById('setYear');
+    if (set.year) {
+        yearInput.value = set.year;
+    } else {
+        yearInput.value = '';
+    }
     
     // Load rounds if they exist
     if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
@@ -906,6 +940,13 @@ function saveSet() {
         return;
     }
 
+    const yearInput = document.getElementById('setYear');
+    const year = yearInput.value.trim() ? parseInt(yearInput.value, 10) : null;
+    if (year && (isNaN(year) || year < 1900 || year > 2100)) {
+        alert('Please enter a valid year between 1900 and 2100');
+        return;
+    }
+
     const cards = [];
     const cardItems = document.querySelectorAll('.card-item');
     const roundsEnabled = document.getElementById('roundsEnabled').checked;
@@ -961,6 +1002,11 @@ function saveSet() {
     }
 
     const setData = { name, cards };
+    
+    // Save year if provided
+    if (year) {
+        setData.year = year;
+    }
     
     // Save rounds if enabled and has rounds
     if (roundsEnabled && rounds.length > 0) {
@@ -1027,6 +1073,16 @@ function exportSet(index) {
         cards: set.cards,
         exportedAt: new Date().toISOString()
     };
+    
+    // Include year if it exists
+    if (set.year) {
+        exportData.year = set.year;
+    }
+    
+    // Include rounds if they exist
+    if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
+        exportData.rounds = set.rounds;
+    }
     
     const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -1478,6 +1534,16 @@ function handleImport(event) {
                 name: importData.name,
                 cards: importData.cards
             };
+            
+            // Include year if it exists
+            if (importData.year) {
+                setData.year = importData.year;
+            }
+            
+            // Include rounds if they exist
+            if (importData.rounds && Array.isArray(importData.rounds) && importData.rounds.length > 0) {
+                setData.rounds = importData.rounds;
+            }
 
             sets.push(setData);
             saveSets();
