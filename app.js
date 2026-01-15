@@ -10,7 +10,6 @@ let currentCardQuestions = []; // Questions for current card in order (sorted by
 let currentCardQuestionsForCardIndex = -1; // which card the cache belongs to
 let shownQuestions = []; // Questions shown so far (for progressive mode - accumulates in order: Q1, Q2, Q3...)
 let rounds = []; // Rounds for current set being edited
-let nextRoundNumber = 10; // Starting round number
 
 // Gamepad state
 let gamepadState = {
@@ -120,7 +119,6 @@ function clearCacheAndReload() {
         document.getElementById('cardsList').innerHTML = '';
         // Reset rounds
         rounds = [];
-        nextRoundNumber = 10;
         document.getElementById('roundsEnabled').checked = false;
         document.getElementById('roundsSection').style.display = 'none';
         document.getElementById('roundsList').innerHTML = '';
@@ -326,13 +324,13 @@ function editSet(index) {
     // Load rounds if they exist
     if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
         rounds = [...set.rounds];
-        nextRoundNumber = Math.max(...rounds.map(r => r.number)) + 1;
+        // Sort rounds by number
+        rounds.sort((a, b) => a.number - b.number);
         document.getElementById('roundsEnabled').checked = true;
         document.getElementById('roundsSection').style.display = 'block';
         renderRounds();
     } else {
         rounds = [];
-        nextRoundNumber = 10;
         document.getElementById('roundsEnabled').checked = false;
         document.getElementById('roundsSection').style.display = 'none';
         document.getElementById('roundsList').innerHTML = '';
@@ -739,9 +737,37 @@ function toggleRounds() {
 
 // Add a new round
 function addRound() {
+    // Get existing round numbers to check for duplicates
+    const existingNumbers = rounds.map(r => r.number);
+    
+    // Prompt for round number
+    const input = prompt('Enter round number:');
+    
+    if (input === null) {
+        // User cancelled
+        return;
+    }
+    
+    const roundNumber = parseInt(input, 10);
+    
+    // Validate input
+    if (isNaN(roundNumber) || roundNumber < 1) {
+        alert('Please enter a valid positive number');
+        return;
+    }
+    
+    // Check for duplicates
+    if (existingNumbers.includes(roundNumber)) {
+        alert(`Round ${roundNumber} already exists. Please choose a different number.`);
+        return;
+    }
+    
     const roundId = 'round_' + Date.now();
-    rounds.push({ id: roundId, number: nextRoundNumber });
-    nextRoundNumber++;
+    rounds.push({ id: roundId, number: roundNumber });
+    
+    // Sort rounds by number for display
+    rounds.sort((a, b) => a.number - b.number);
+    
     renderRounds();
     updateAllCardRoundDropdowns();
 }
@@ -767,38 +793,16 @@ function removeRound(roundId) {
     updateAllCardRoundDropdowns();
 }
 
-// Update round number
-function updateRoundNumber(roundId, newNumber) {
-    const numValue = parseInt(newNumber);
-    if (isNaN(numValue) || numValue < 1) {
-        alert('Round number must be a positive integer');
-        // Restore previous value
-        renderRounds();
-        return;
-    }
-    
-    const round = rounds.find(r => r.id === roundId);
-    if (round) {
-        round.number = numValue;
-        renderRounds();
-        updateAllCardRoundDropdowns();
-    }
-}
-
 // Render rounds list
 function renderRounds() {
     const roundsList = document.getElementById('roundsList');
     roundsList.innerHTML = '';
     
-    // Sort rounds by number for display
-    const sortedRounds = [...rounds].sort((a, b) => a.number - b.number);
-    
-    sortedRounds.forEach(round => {
+    rounds.forEach(round => {
         const roundItem = document.createElement('div');
         roundItem.className = 'round-item';
         roundItem.innerHTML = `
-            <label>Round</label>
-            <input type="number" class="round-number-input" value="${round.number}" min="1" data-round-id="${round.id}" onchange="updateRoundNumber('${round.id}', this.value)">
+            <span>Round ${round.number}</span>
             <button class="btn btn-danger btn-tiny" onclick="removeRoundById('${round.id}')">×</button>
         `;
         roundsList.appendChild(roundItem);
@@ -809,9 +813,6 @@ function renderRounds() {
 function removeRoundById(roundId) {
     removeRound(roundId);
 }
-
-// Update round number (for onclick handlers)
-window.updateRoundNumber = updateRoundNumber;
 
 // Update all card round dropdowns
 function updateAllCardRoundDropdowns() {
@@ -1070,7 +1071,7 @@ function startStudy() {
         
         if (cardsToStudy.length === 0) {
             alert('No cards found in the selected round');
-            return;
+        return;
         }
     }
     
@@ -1461,15 +1462,15 @@ function setupQuestionDragAndDrop() {
             draggedQuestionItem = e.target.closest('.question-item');
             if (draggedQuestionItem) {
                 draggedElement = draggedQuestionItem;
-                e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/html', draggedQuestionItem.outerHTML);
 
-                // Add dragging class for visual feedback
+            // Add dragging class for visual feedback
                 draggedQuestionItem.classList.add('dragging');
 
-                // Create placeholder
-                placeholder = document.createElement('div');
-                placeholder.className = 'question-item question-placeholder';
+            // Create placeholder
+            placeholder = document.createElement('div');
+            placeholder.className = 'question-item question-placeholder';
                 placeholder.innerHTML = '<div class="question-drag-handle" draggable="true">⋮⋮</div><div class="question-input-wrapper"><div class="placeholder-text">Drop here</div></div>';
 
                 draggedQuestionItem.style.opacity = '0.5';
