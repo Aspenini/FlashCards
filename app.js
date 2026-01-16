@@ -206,9 +206,12 @@ function clearCacheAndReload() {
         document.getElementById('cardsList').innerHTML = '';
         // Reset rounds
         rounds = [];
-        document.getElementById('roundsEnabled').checked = false;
-        document.getElementById('roundsSection').style.display = 'none';
-        document.getElementById('roundsList').innerHTML = '';
+        const roundsEnabledCheckbox = document.getElementById('roundsEnabled');
+        const roundsSection = document.getElementById('roundsSection');
+        const roundsList = document.getElementById('roundsList');
+        if (roundsEnabledCheckbox) roundsEnabledCheckbox.checked = false;
+        if (roundsSection) roundsSection.style.display = 'none';
+        if (roundsList) roundsList.innerHTML = '';
         // Reset mode selector - enable it for new sets
         const modeSelect = document.getElementById('setModeSelect');
         modeSelect.value = 'normal';
@@ -458,18 +461,22 @@ function editSet(index) {
     }
     
     // Load rounds if they exist
+    const roundsEnabledCheckbox = document.getElementById('roundsEnabled');
+    const roundsSection = document.getElementById('roundsSection');
+    const roundsList = document.getElementById('roundsList');
+    
     if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
         rounds = [...set.rounds];
         // Sort rounds by number
         rounds.sort((a, b) => a.number - b.number);
-        document.getElementById('roundsEnabled').checked = true;
-        document.getElementById('roundsSection').style.display = 'block';
+        if (roundsEnabledCheckbox) roundsEnabledCheckbox.checked = true;
+        if (roundsSection) roundsSection.style.display = 'block';
         renderRounds();
     } else {
         rounds = [];
-        document.getElementById('roundsEnabled').checked = false;
-        document.getElementById('roundsSection').style.display = 'none';
-        document.getElementById('roundsList').innerHTML = '';
+        if (roundsEnabledCheckbox) roundsEnabledCheckbox.checked = false;
+        if (roundsSection) roundsSection.style.display = 'none';
+        if (roundsList) roundsList.innerHTML = '';
     }
     
     // Load multiple choice mode if it exists
@@ -481,36 +488,54 @@ function editSet(index) {
     }
     isNewSet = false; // Existing set
     
-    const cardsList = document.getElementById('cardsList');
-    cardsList.innerHTML = '';
-    set.cards.forEach((card, cardIndex) => {
-        let questions = card.questions || [{ text: '' }];
+    // Clear and load cards - use setTimeout to ensure DOM is ready
+    setTimeout(() => {
+        const cardsList = document.getElementById('cardsList');
+        if (!cardsList) {
+            console.error('cardsList element not found');
+            return;
+        }
+        cardsList.innerHTML = '';
         
-        // Ensure all questions have order property (migrate old data)
-        questions = questions.map((q, index) => {
-            if (typeof q === 'string') {
-                return { text: q, order: index + 1 };
+        if (!set.cards || !Array.isArray(set.cards)) {
+            console.warn('Set has no cards or cards is not an array');
+            return;
+        }
+        
+        set.cards.forEach((card, cardIndex) => {
+            try {
+                let questions = card.questions || [{ text: '' }];
+                
+                // Ensure all questions have order property (migrate old data)
+                questions = questions.map((q, index) => {
+                    if (typeof q === 'string') {
+                        return { text: q, order: index + 1 };
+                    }
+                    if (!q.order) {
+                        return { ...q, order: index + 1 };
+                    }
+                    return q;
+                });
+                
+                // Sort by order to ensure correct sequence
+                questions.sort((a, b) => (a.order || 999) - (b.order || 999));
+                
+                const hints = card.hints || [];
+                // Convert hints array to single string (for backward compatibility)
+                const hintText = Array.isArray(hints) && hints.length > 0 ? hints[0] : (typeof hints === 'string' ? hints : '');
+                const doNotAccept = card.doNotAccept || '';
+                const image = card.image || '';
+                const roundId = card.roundId || null;
+                // Load MC options if they exist
+                const mcOptions = card.mcOptions || [];
+                const correctAnswerIndex = card.correctAnswerIndex !== undefined ? card.correctAnswerIndex : null;
+                const answer = card.answer || '';
+                addCardToEditor(questions, answer, hintText, cardIndex, roundId, doNotAccept, image, mcOptions, correctAnswerIndex);
+            } catch (error) {
+                console.error(`Error loading card ${cardIndex}:`, error);
             }
-            if (!q.order) {
-                return { ...q, order: index + 1 };
-            }
-            return q;
         });
-        
-        // Sort by order to ensure correct sequence
-        questions.sort((a, b) => (a.order || 999) - (b.order || 999));
-        
-        const hints = card.hints || [];
-        // Convert hints array to single string (for backward compatibility)
-        const hintText = Array.isArray(hints) && hints.length > 0 ? hints[0] : (typeof hints === 'string' ? hints : '');
-        const doNotAccept = card.doNotAccept || '';
-        const image = card.image || '';
-        const roundId = card.roundId || null;
-        // Load MC options if they exist
-        const mcOptions = card.mcOptions || [];
-        const correctAnswerIndex = card.correctAnswerIndex !== undefined ? card.correctAnswerIndex : null;
-        addCardToEditor(questions, card.answer, hintText, cardIndex, roundId, doNotAccept, image, mcOptions, correctAnswerIndex);
-    });
+    }, 0);
 }
 
 // Expand square brackets within text (e.g., GAMETE[S] -> GAMETE, GAMETES)
@@ -1308,7 +1333,8 @@ function toggleRounds() {
         
         if (hasAssignedRounds) {
             alert('Cannot disable rounds. Please remove round assignments from all cards first.');
-            document.getElementById('roundsEnabled').checked = true;
+            const roundsEnabledCheckbox = document.getElementById('roundsEnabled');
+            if (roundsEnabledCheckbox) roundsEnabledCheckbox.checked = true;
             return;
         }
         
