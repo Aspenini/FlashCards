@@ -266,6 +266,10 @@ function clearCacheAndReload() {
     // Study view
     document.getElementById('flipCardBtn').addEventListener('click', flipCard);
     document.getElementById('flashcard').addEventListener('click', () => {
+        // Don't allow clicking card to flip in multiple choice mode
+        if (studyMultipleChoiceMode) {
+            return;
+        }
         if (!document.getElementById('flashcard').classList.contains('flipped')) {
             flipCard();
         }
@@ -2038,6 +2042,9 @@ function updateStudyCard(showHint = false) {
     const isFlipped = flashcard.classList.contains('flipped');
     
     if (studyMultipleChoiceMode) {
+        // Add MC mode class to flashcard
+        flashcard.classList.add('mc-mode');
+        
         // MC Mode: Show options on front, result on back
         const mcOptions = card.mcOptions || [];
         const correctAnswerIndex = card.correctAnswerIndex !== undefined ? card.correctAnswerIndex : null;
@@ -2093,19 +2100,12 @@ function updateStudyCard(showHint = false) {
                     cardFront.style.setProperty('--mc-btn-width', `${estimatedWidth}px`);
                 }
                 
-                // Create or update MC options container
+                // Use external MC options container (below the card)
                 let container = document.getElementById('mcOptionsContainer');
-                if (!container) {
-                    container = document.createElement('div');
-                    container.id = 'mcOptionsContainer';
-                    container.className = 'mc-options-container';
-                    const cardMainContent = document.querySelector('.card-front .card-main-content');
-                    if (cardMainContent) {
-                        cardMainContent.appendChild(container);
-                    }
+                if (container) {
+                    container.innerHTML = mcHtml;
+                    container.style.display = 'block';
                 }
-                container.innerHTML = mcHtml;
-                container.style.display = 'block';
                 
                 // After rendering, measure all buttons and set them to the width of the widest
                 setTimeout(() => {
@@ -2154,9 +2154,15 @@ function updateStudyCard(showHint = false) {
             
             // Hide MC options container on back
             const container = document.getElementById('mcOptionsContainer');
-            if (container) container.style.display = 'none';
+            if (container) {
+                container.style.display = 'none';
+                container.innerHTML = ''; // Clear options
+            }
         }
     } else {
+        // Remove MC mode class in regular mode
+        flashcard.classList.remove('mc-mode');
+        
         // Regular mode: Show answer text
         // Expand answer variations
         const answerText = card.answer || '';
@@ -2184,7 +2190,10 @@ function updateStudyCard(showHint = false) {
         
         // Hide MC options container if it exists
         const mcContainer = document.getElementById('mcOptionsContainer');
-        if (mcContainer) mcContainer.style.display = 'none';
+        if (mcContainer) {
+            mcContainer.style.display = 'none';
+            mcContainer.innerHTML = ''; // Clear options
+        }
     }
     
     // Always ensure card starts face-down (not flipped) on new card

@@ -745,8 +745,7 @@ input.card-do-not-accept::placeholder,
     gap: 16px;
     min-width: 0;
     margin-top: 48px; /* Space for label and hint/doNotAccept at top */
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     min-height: 0; /* Allow flex item to shrink below content size */
 }
 
@@ -755,8 +754,7 @@ input.card-do-not-accept::placeholder,
     flex-direction: row;
     align-items: flex-start;
     gap: 24px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 .card-front.has-image .card-text-content,
@@ -764,8 +762,7 @@ input.card-do-not-accept::placeholder,
     flex: 1;
     min-width: 0;
     max-width: 50%; /* Ensure text doesn't get too narrow */
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 .card-front.has-image .card-image,
@@ -780,15 +777,13 @@ input.card-do-not-accept::placeholder,
     display: flex;
     flex-direction: column;
     min-height: 0; /* Allow flex item to shrink */
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 .card-text-content #questionText {
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     word-wrap: break-word;
 }
 
@@ -800,8 +795,7 @@ input.card-do-not-accept::placeholder,
 
 .card-front .card-text-content #questionText {
     margin-bottom: 16px; /* Space before MC options */
-    max-height: 200px; /* Limit question height so options are visible */
-    overflow-y: auto;
+    overflow: hidden;
     display: block !important; /* Ensure question is always visible */
     visibility: visible !important;
     opacity: 1 !important;
@@ -890,6 +884,14 @@ input.card-do-not-accept::placeholder,
     width: 100%;
     margin-top: 24px;
     flex-shrink: 0; /* Prevent options from being compressed */
+}
+
+/* External MC options container (below the card) */
+.mc-options-container-external {
+    width: 100%;
+    max-width: 700px;
+    margin: 24px auto 0;
+    padding: 0 32px;
 }
 
 .mc-options-study {
@@ -1076,6 +1078,7 @@ input.card-do-not-accept::placeholder,
     margin-bottom: 48px;
     min-height: 400px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
 }
@@ -1089,6 +1092,11 @@ input.card-do-not-accept::placeholder,
     transition: transform 0.6s;
     cursor: pointer;
     margin: 0 auto;
+}
+
+/* Disable card clicking in MC mode */
+.flashcard.mc-mode {
+    cursor: default;
 }
 
 .flashcard.flipped {
@@ -1136,9 +1144,10 @@ input.card-do-not-accept::placeholder,
     display: flex;
     flex-direction: column;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
 }
+
+/* All cards have no scrollbars - overflow is hidden on all card elements */
 
 .card-front {
     background: #0a0a0a;
@@ -1176,8 +1185,7 @@ input.card-do-not-accept::placeholder,
     line-height: 1.6;
     text-align: center;
     word-wrap: break-word;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     min-height: 0; /* Allow flex item to shrink */
 }
 
@@ -1702,19 +1710,15 @@ input.card-do-not-accept::placeholder,
     .card-content {
         font-size: 1.1rem;
         line-height: 1.6;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        max-height: calc(60vh - 120px);
+        overflow: hidden;
     }
     
     .card-main-content {
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        overflow: hidden;
     }
     
     .card-text-content {
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        overflow: hidden;
     }
     
     .card-front.has-image .card-text-content,
