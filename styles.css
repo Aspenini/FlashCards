@@ -472,6 +472,16 @@ h3 {
     accent-color: #ffffff;
 }
 
+.checkbox-label input[type="checkbox"]:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.checkbox-label:has(input[type="checkbox"]:disabled) {
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
 .cards-list {
     display: grid;
     gap: 20px;
@@ -821,6 +831,112 @@ input.card-do-not-accept::placeholder,
     background: rgba(255, 255, 255, 0.05);
     border-radius: 6px;
     border-left: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Multiple Choice Options */
+.mc-options-container {
+    width: 100%;
+    margin-top: 24px;
+}
+
+.mc-options-study {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.mc-option-btn {
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    width: 100%;
+}
+
+.mc-option-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.mc-option-btn:active {
+    transform: translateY(0);
+}
+
+.mc-result {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.mc-result-correct {
+    color: #4caf50;
+}
+
+.mc-result-incorrect {
+    color: #f44336;
+}
+
+.mc-correct-answer {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    margin-top: 12px;
+}
+
+/* MC options in editor */
+.mc-options-section {
+    display: grid;
+    gap: 12px;
+}
+
+.mc-options-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mc-options-header label {
+    font-size: 0.9rem;
+    color: #e0e0e0;
+    font-weight: 500;
+}
+
+.mc-options-list {
+    display: grid;
+    gap: 10px;
+}
+
+.mc-option-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #e1e5e9;
+    border-radius: 4px;
+    background: white;
+}
+
+.mc-correct-radio {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.mc-option-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem;
 }
 
 .btn-tiny {
@@ -1737,3 +1853,66 @@ input.card-do-not-accept::placeholder,
     }
 }
 
+/* Mode Selection Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #1a1a1a;
+    border: 2px solid #ffffff;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    color: white;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: white;
+}
+
+.modal-content p {
+    margin-bottom: 24px;
+    color: #e0e0e0;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.modal-buttons .btn {
+    flex: 1;
+    padding: 16px 24px;
+    font-size: 1.1rem;
+    min-width: 140px;
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        padding: 24px;
+        width: 85%;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+    }
+    
+    .modal-buttons .btn {
+        width: 100%;
+    }
+}
