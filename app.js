@@ -393,8 +393,9 @@ function editSet(index) {
         // Convert hints array to single string (for backward compatibility)
         const hintText = Array.isArray(hints) && hints.length > 0 ? hints[0] : (typeof hints === 'string' ? hints : '');
         const doNotAccept = card.doNotAccept || '';
+        const image = card.image || '';
         const roundId = card.roundId || null;
-        addCardToEditor(questions, card.answer, hintText, cardIndex, roundId, doNotAccept);
+        addCardToEditor(questions, card.answer, hintText, cardIndex, roundId, doNotAccept, image);
     });
 }
 
@@ -548,7 +549,7 @@ function expandAnswerVariations(answerText) {
 
 
 // Add card to editor
-function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', index = null, roundId = null, doNotAccept = '') {
+function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', index = null, roundId = null, doNotAccept = '', image = '') {
     const cardsList = document.getElementById('cardsList');
     const cardIndex = index !== null ? index : cardsList.children.length;
     
@@ -562,6 +563,9 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
     
     // DoNotAccept is a single optional string
     const doNotAcceptText = typeof doNotAccept === 'string' ? doNotAccept : '';
+    
+    // Image is SVG code or data URI
+    const imageText = typeof image === 'string' ? image : '';
     
     const cardItem = document.createElement('div');
     cardItem.className = 'card-item';
@@ -635,6 +639,14 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
                 <label>DO NOT ACCEPT (optional, always visible, doesn't affect points)</label>
                 <input type="text" placeholder="DO NOT ACCEPT (e.g., incorrect answer variation)" class="card-do-not-accept" value="${escapeHtml(doNotAcceptText)}" maxlength="100">
             </div>
+            <div class="hints-section">
+                <label>Image (optional - SVG, JPG, PNG, or WebP)</label>
+                <div class="image-input-wrapper">
+                    <textarea placeholder="Paste SVG code or base64 data URI here, or use file upload below" class="card-image-svg" rows="4">${escapeHtml(imageText)}</textarea>
+                    <input type="file" accept=".svg,.jpg,.jpeg,.png,.webp,image/svg+xml,image/jpeg,image/png,image/webp" class="card-image-file" style="margin-top: 8px;">
+                    <button type="button" class="btn btn-secondary btn-tiny card-image-clear" style="margin-top: 8px;">Clear Image</button>
+                </div>
+            </div>
         </div>
     `;
     cardsList.appendChild(cardItem);
@@ -644,6 +656,230 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
     questionTextareas.forEach(textarea => {
         setupQuestionEnterHandler(textarea);
     });
+    
+    // Setup image file upload handler
+    const imageFileInput = cardItem.querySelector('.card-image-file');
+    if (imageFileInput) {
+        imageFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const svgTextarea = cardItem.querySelector('.card-image-svg');
+            if (!svgTextarea) return;
+            
+            // Check file type
+            const isSVG = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
+            const isImage = file.type.startsWith('image/') && (
+                file.type === 'image/jpeg' || 
+                file.type === 'image/png' || 
+                file.type === 'image/webp' ||
+                isSVG
+            );
+            
+            if (!isImage) {
+                alert('Please select an image file (SVG, JPG, PNG, or WebP).');
+                e.target.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            if (isSVG) {
+                // SVG: read as text and store as SVG code in JSON (not data URI)
+                reader.onload = function(e) {
+                    svgTextarea.value = e.target.result; // Raw SVG code like "<svg>...</svg>"
+                };
+                reader.readAsText(file);
+            } else {
+                // JPG/PNG/WebP: check dimensions and resize if needed, then convert to base64
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const MAX_WIDTH = 1280;
+                        const MAX_HEIGHT = 720;
+                        const MAX_SIZE_KB = 50; // Increased to 50 KB for better compatibility
+                        
+                        // Function to get size of data URI in KB
+                        function getDataURISize(dataURI) {
+                            const base64Length = dataURI.length - dataURI.indexOf(',') - 1;
+                            const bytes = (base64Length * 3) / 4;
+                            return bytes / 1024;
+                        }
+                        
+                        // Function to compress image to fit size limit using binary search
+                        function compressImageToSize(canvas, targetSizeKB) {
+                            // Try WebP first (better compression - 25-35% smaller than JPEG)
+                            let mimeType = 'image/webp';
+                            let testDataURI = canvas.toDataURL(mimeType, 0.8);
+                            
+                            // Fallback to JPEG if WebP fails or if browser doesn't support it
+                            if (!testDataURI || testDataURI.substring(5, 15) !== 'image/webp') {
+                                mimeType = 'image/jpeg';
+                            }
+                            
+                            // Binary search for optimal quality
+                            function findOptimalQuality(canvas, mimeType, targetSizeKB) {
+                                let minQuality = 0.1;
+                                let maxQuality = 0.9;
+                                let bestQuality = 0.5;
+                                let bestDataURI = null;
+                                let bestSizeKB = Infinity;
+                                
+                                // Binary search with up to 8 iterations for precision
+                                for (let i = 0; i < 8; i++) {
+                                    const testQuality = (minQuality + maxQuality) / 2;
+                                    const testDataURI = canvas.toDataURL(mimeType, testQuality);
+                                    const testSizeKB = getDataURISize(testDataURI);
+                                    
+                                    if (testSizeKB <= targetSizeKB) {
+                                        // This quality works, try higher
+                                        if (testSizeKB < bestSizeKB) {
+                                            bestQuality = testQuality;
+                                            bestDataURI = testDataURI;
+                                            bestSizeKB = testSizeKB;
+                                        }
+                                        minQuality = testQuality;
+                                    } else {
+                                        // Too large, need lower quality
+                                        maxQuality = testQuality;
+                                    }
+                                }
+                                
+                                return { 
+                                    dataURI: bestDataURI || canvas.toDataURL(mimeType, bestQuality), 
+                                    sizeKB: bestSizeKB, 
+                                    quality: Math.round(bestQuality * 100) 
+                                };
+                            }
+                            
+                            let result = findOptimalQuality(canvas, mimeType, targetSizeKB);
+                            let finalCanvas = canvas;
+                            
+                            // If still too large, reduce dimensions
+                            if (result.sizeKB > targetSizeKB) {
+                                // Calculate scale factor to reach target size
+                                // Size is roughly proportional to width * height
+                                const currentSize = result.sizeKB;
+                                const scale = Math.sqrt(targetSizeKB / currentSize) * 0.9; // 10% safety margin
+                                
+                                const newWidth = Math.max(320, Math.round(canvas.width * scale)); // Min 320px
+                                const newHeight = Math.max(240, Math.round(canvas.height * scale)); // Min 240px
+                                
+                                const tempCanvas = document.createElement('canvas');
+                                tempCanvas.width = newWidth;
+                                tempCanvas.height = newHeight;
+                                const tempCtx = tempCanvas.getContext('2d');
+                                tempCtx.drawImage(canvas, 0, 0, newWidth, newHeight);
+                                
+                                // Try again with reduced dimensions
+                                result = findOptimalQuality(tempCanvas, mimeType, targetSizeKB);
+                                finalCanvas = tempCanvas;
+                            }
+                            
+                            return { 
+                                ...result, 
+                                canvas: finalCanvas, 
+                                mimeType: mimeType 
+                            };
+                        }
+                        
+                        // Check if image exceeds 720p
+                        let canvas = document.createElement('canvas');
+                        let needsResize = false;
+                        let originalWidth = img.width;
+                        let originalHeight = img.height;
+                        
+                        if (img.width > MAX_WIDTH || img.height > MAX_HEIGHT) {
+                            needsResize = true;
+                            let newWidth = img.width;
+                            let newHeight = img.height;
+                            
+                            if (newWidth > MAX_WIDTH) {
+                                newHeight = (newHeight * MAX_WIDTH) / newWidth;
+                                newWidth = MAX_WIDTH;
+                            }
+                            
+                            if (newHeight > MAX_HEIGHT) {
+                                newWidth = (newWidth * MAX_HEIGHT) / newHeight;
+                                newHeight = MAX_HEIGHT;
+                            }
+                            
+                            canvas.width = Math.round(newWidth);
+                            canvas.height = Math.round(newHeight);
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        } else {
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, img.width, img.height);
+                        }
+                        
+                        // Check size and compress if needed
+                        const testWebP = canvas.toDataURL('image/webp', 0.8);
+                        const initialSizeKB = getDataURISize(testWebP || canvas.toDataURL('image/jpeg', 0.8));
+                        
+                        let messages = [];
+                        let dataURI, sizeKB, finalQuality, finalMimeType, finalCanvas = canvas;
+                        
+                        if (initialSizeKB > MAX_SIZE_KB) {
+                            const compressed = compressImageToSize(canvas, MAX_SIZE_KB);
+                            dataURI = compressed.dataURI;
+                            sizeKB = compressed.sizeKB;
+                            finalQuality = compressed.quality;
+                            finalMimeType = compressed.mimeType;
+                            finalCanvas = compressed.canvas; // May have been resized
+                            
+                            if (needsResize || finalCanvas.width !== canvas.width || finalCanvas.height !== canvas.height) {
+                                messages.push(`Image was resized to ${finalCanvas.width}x${finalCanvas.height} and compressed to ${sizeKB.toFixed(1)} KB (${finalMimeType}, quality: ${finalQuality}%)`);
+                            } else {
+                                messages.push(`Image was compressed to ${sizeKB.toFixed(1)} KB (${finalMimeType}, quality: ${finalQuality}%)`);
+                            }
+                        } else {
+                            // Use WebP if supported, otherwise use original format
+                            finalMimeType = (testWebP && testWebP.substring(5, 15) === 'image/webp') ? 'image/webp' : (file.type || 'image/jpeg');
+                            dataURI = finalMimeType === 'image/webp' ? testWebP : canvas.toDataURL(finalMimeType, 0.8);
+                            sizeKB = getDataURISize(dataURI);
+                            
+                            if (needsResize) {
+                                messages.push(`Image was resized from ${originalWidth}x${originalHeight} to ${canvas.width}x${canvas.height} to fit within 720p (1280x720) limit.`);
+                            }
+                        }
+                        
+                        // Final check - if still too large, reject
+                        if (sizeKB > MAX_SIZE_KB) {
+                            alert(`Image is too large (${sizeKB.toFixed(1)} KB). Even after compression, it exceeds the 50 KB limit. Please use a smaller or more compressed image.`);
+                            e.target.value = '';
+                            return;
+                        }
+                        
+                        svgTextarea.value = dataURI;
+                        
+                        if (messages.length > 0) {
+                            alert(messages.join(' '));
+                        }
+                    };
+                    img.onerror = function() {
+                        alert('Error loading image. Please try a different image file.');
+                        e.target.value = '';
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Setup clear image button
+    const clearImageBtn = cardItem.querySelector('.card-image-clear');
+    if (clearImageBtn) {
+        clearImageBtn.addEventListener('click', function() {
+            const svgTextarea = cardItem.querySelector('.card-image-svg');
+            const fileInput = cardItem.querySelector('.card-image-file');
+            if (svgTextarea) svgTextarea.value = '';
+            if (fileInput) fileInput.value = '';
+        });
+    }
 }
 
 // Remove card
@@ -987,6 +1223,10 @@ function saveSet() {
         const doNotAcceptInput = cardItem.querySelector('.card-do-not-accept');
         const doNotAccept = doNotAcceptInput ? doNotAcceptInput.value.trim() : '';
         
+        // Get image (SVG code)
+        const imageTextarea = cardItem.querySelector('.card-image-svg');
+        const image = imageTextarea ? imageTextarea.value.trim() : '';
+        
         // Get card-level round ID if rounds are enabled
         let cardRoundId = null;
         if (roundsEnabled) {
@@ -1003,6 +1243,9 @@ function saveSet() {
             }
             if (doNotAccept) {
                 cardData.doNotAccept = doNotAccept;
+            }
+            if (image) {
+                cardData.image = image;
             }
             if (cardRoundId) {
                 cardData.roundId = cardRoundId;
@@ -1280,7 +1523,7 @@ function updateStudyCard(showHint = false) {
         document.getElementById('questionText').textContent = questionText;
     }
     
-    // Display hints
+    // Display hints (only on front/question side)
     const hints = card.hints || [];
     const hintsFront = document.getElementById('hintsFront');
     const hintsBack = document.getElementById('hintsBack');
@@ -1288,24 +1531,75 @@ function updateStudyCard(showHint = false) {
     if (hints.length > 0) {
         const hintsText = hints.join(' • ');
         if (hintsFront) hintsFront.textContent = hintsText;
-        if (hintsBack) hintsBack.textContent = hintsText;
     } else {
         if (hintsFront) hintsFront.textContent = '';
-        if (hintsBack) hintsBack.textContent = '';
     }
+    // Always clear hints on back (answer side)
+    if (hintsBack) hintsBack.textContent = '';
     
-    // Display doNotAccept
+    // Display doNotAccept (only on back/answer side)
     const doNotAccept = card.doNotAccept || '';
     const doNotAcceptFront = document.getElementById('doNotAcceptFront');
     const doNotAcceptBack = document.getElementById('doNotAcceptBack');
     
+    // Always clear doNotAccept on front (question side)
+    if (doNotAcceptFront) doNotAcceptFront.textContent = '';
+    
     if (doNotAccept) {
         const doNotAcceptText = `DO NOT ACCEPT: ${doNotAccept}`;
-        if (doNotAcceptFront) doNotAcceptFront.textContent = doNotAcceptText;
         if (doNotAcceptBack) doNotAcceptBack.textContent = doNotAcceptText;
     } else {
-        if (doNotAcceptFront) doNotAcceptFront.textContent = '';
         if (doNotAcceptBack) doNotAcceptBack.textContent = '';
+    }
+    
+    // Display image (SVG, JPG, PNG, WebP)
+    const image = card.image || '';
+    const cardImageFront = document.getElementById('cardImageFront');
+    const cardImageBack = document.getElementById('cardImageBack');
+    const cardFront = document.querySelector('.card-front');
+    const cardBack = document.querySelector('.card-back');
+    
+    if (image && image.trim()) {
+        // Check if it's inline SVG, base64 data URI, or SVG code
+        let imageHtml = '';
+        const trimmedImage = image.trim();
+        
+        if (trimmedImage.startsWith('<svg')) {
+            // Inline SVG code - use directly (don't escape HTML tags)
+            imageHtml = trimmedImage;
+        } else if (trimmedImage.startsWith('data:image/')) {
+            // Base64 data URI (SVG, JPG, PNG, WebP) - use img tag
+            imageHtml = `<img src="${escapeHtml(trimmedImage)}" alt="Card image" class="card-image-content">`;
+        } else {
+            // Try to treat as SVG code
+            imageHtml = trimmedImage;
+        }
+        
+        if (cardImageFront) {
+            cardImageFront.innerHTML = imageHtml;
+            cardImageFront.style.display = 'flex';
+        }
+        if (cardImageBack) {
+            cardImageBack.innerHTML = imageHtml;
+            cardImageBack.style.display = 'flex';
+        }
+        
+        // Add class to enable side-by-side layout
+        if (cardFront) cardFront.classList.add('has-image');
+        if (cardBack) cardBack.classList.add('has-image');
+    } else {
+        if (cardImageFront) {
+            cardImageFront.innerHTML = '';
+            cardImageFront.style.display = 'none';
+        }
+        if (cardImageBack) {
+            cardImageBack.innerHTML = '';
+            cardImageBack.style.display = 'none';
+        }
+        
+        // Remove class to use normal layout
+        if (cardFront) cardFront.classList.remove('has-image');
+        if (cardBack) cardBack.classList.remove('has-image');
     }
     
     // Fade animation for question change (only in random mode, progressive mode handled above)

@@ -38,7 +38,7 @@
                 </div>
             </div>
             
-            <div class="version-info">v0.2.5</div>
+            <div class="version-info">v0.2.6</div>
         </div>
 
         <!-- Create/Edit Set View -->
@@ -136,17 +136,27 @@
                     <div class="card-front">
                         <div id="hintsFront" class="card-hints"></div>
                         <div id="doNotAcceptFront" class="card-do-not-accept"></div>
-                        <div class="card-label">
-                            <span>Question</span>
+                        <div class="card-main-content">
+                            <div class="card-text-content">
+                                <div class="card-label">
+                                    <span>Question</span>
+                                </div>
+                                <div id="questionText" class="card-content"></div>
+                            </div>
+                            <div id="cardImageFront" class="card-image"></div>
                         </div>
-                        <div id="questionText" class="card-content"></div>
                     </div>
                     <div class="card-back">
                         <div id="hintsBack" class="card-hints"></div>
                         <div id="doNotAcceptBack" class="card-do-not-accept"></div>
-                        <div class="card-label">Answer</div>
-                        <div id="answerText" class="card-content"></div>
-                        <div id="acceptedAnswersList" class="accepted-answers-list"></div>
+                        <div class="card-main-content">
+                            <div class="card-text-content">
+                                <div class="card-label">Answer</div>
+                                <div id="answerText" class="card-content"></div>
+                                <div id="acceptedAnswersList" class="accepted-answers-list"></div>
+                            </div>
+                            <div id="cardImageBack" class="card-image"></div>
+                        </div>
                     </div>
                 </div>
             </div>

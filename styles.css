@@ -686,7 +686,7 @@ input.card-do-not-accept::placeholder,
 /* Display element on flashcards (not input fields) */
 .card-do-not-accept:not(input) {
     position: absolute;
-    top: 48px;
+    top: 16px;
     right: 16px;
     font-size: 0.75rem;
     color: rgba(255, 100, 100, 0.8);
@@ -695,6 +695,91 @@ input.card-do-not-accept::placeholder,
     max-width: 60%;
     line-height: 1.4;
     z-index: 10;
+}
+
+.image-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.image-input-wrapper textarea.card-image-svg {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: 'Courier New', monospace;
+    background: #252525;
+    color: #ffffff;
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.image-input-wrapper textarea.card-image-svg:focus {
+    outline: none;
+    border-color: #ffffff;
+    background: #2a2a2a;
+}
+
+.image-input-wrapper input.card-image-file {
+    font-size: 0.85rem;
+}
+
+.card-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+    margin-top: 48px; /* Space for label and hint/doNotAccept at top */
+}
+
+.card-front.has-image .card-main-content,
+.card-back.has-image .card-main-content {
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+}
+
+.card-text-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-image {
+    flex-shrink: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    max-width: 300px;
+    width: 300px;
+    margin: 0;
+}
+
+.card-front.has-image .card-image,
+.card-back.has-image .card-image {
+    display: flex;
+}
+
+.card-image svg,
+.card-image img {
+    max-width: 100%;
+    max-height: 300px;
+    height: auto;
+    display: block;
+    width: auto;
+}
+
+.card-image-content {
+    max-width: 100%;
+    max-height: 300px;
+    height: auto;
+    width: auto;
 }
 
 .answer-syntax-hint {
@@ -892,16 +977,16 @@ input.card-do-not-accept::placeholder,
 }
 
 .card-label {
+    position: absolute;
+    top: 16px;
+    left: 32px;
     font-size: 0.9rem;
     opacity: 0.9;
-    margin-bottom: 16px;
+    margin-bottom: 0;
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    z-index: 10;
 }
 
 
@@ -1444,8 +1529,11 @@ input.card-do-not-accept::placeholder,
     }
     
     .card-label {
+        position: absolute;
+        top: 12px;
+        left: 20px;
         font-size: 0.85rem;
-        margin-bottom: 12px;
+        margin-bottom: 0;
     }
     
     .card-hints {
@@ -1456,6 +1544,27 @@ input.card-do-not-accept::placeholder,
     .card-do-not-accept {
         font-size: 0.85rem;
         margin-bottom: 12px;
+    }
+    
+    .card-main-content {
+        margin-top: 44px; /* Space for label and hint/doNotAccept at top on mobile */
+    }
+    
+    .card-main-content {
+        flex-direction: column !important;
+        gap: 16px;
+        margin-top: 44px; /* Space for label and hint/doNotAccept at top on mobile */
+    }
+    
+    .card-image {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+    }
+    
+    .card-image svg,
+    .card-image img {
+        max-height: 200px;
     }
     
     /* Study actions - Mobile optimized */
