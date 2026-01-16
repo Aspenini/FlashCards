@@ -38,7 +38,7 @@
                 </div>
             </div>
             
-            <div class="version-info">v0.2.8</div>
+            <div class="version-info">v0.2.6</div>
         </div>
 
         <!-- Create/Edit Set View -->
@@ -56,15 +56,6 @@
             <div class="form-group">
                 <label for="setYear">Year (optional)</label>
                 <input type="number" id="setYear" placeholder="e.g., 2024" min="1900" max="2100">
-            </div>
-
-            <div class="form-group">
-                <label for="setModeSelect">Set Mode</label>
-                <select id="setModeSelect" class="select-input">
-                    <option value="normal">Normal</option>
-                    <option value="multipleChoice">Multiple Choice</option>
-                </select>
-                <small style="color: #999; display: block; margin-top: 4px;">Mode can only be changed before adding the first card</small>
             </div>
 
             <div class="form-group">
@@ -168,7 +159,6 @@
                         </div>
                     </div>
                 </div>
-                <div id="mcOptionsContainer" class="mc-options-container-external" style="display: none;"></div>
             </div>
 
             <div class="study-actions">
@@ -177,7 +167,6 @@
                     <button id="wrongBtn" class="btn btn-danger">✗ Wrong</button>
                     <button id="rightBtn" class="btn btn-success">✓ Right</button>
                 </div>
-                <button id="continueBtn" class="btn btn-primary" style="display: none;">Continue</button>
                 <div id="hintButton" class="hint-button" style="display: none;">
                     <button id="askForHintBtn" class="btn btn-secondary">Add Next Question</button>
                 </div>

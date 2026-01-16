@@ -10,9 +10,6 @@ let currentCardQuestions = []; // Questions for current card in order (sorted by
 let currentCardQuestionsForCardIndex = -1; // which card the cache belongs to
 let shownQuestions = []; // Questions shown so far (for progressive mode - accumulates in order: Q1, Q2, Q3...)
 let rounds = []; // Rounds for current set being edited
-let isNewSet = true; // Track if current set is new (for free MC toggle)
-let studyMultipleChoiceMode = false; // Track if current study session is in MC mode
-let selectedMCOption = null; // Track selected MC option index for current card
 
 // Gamepad state
 let gamepadState = {
@@ -112,89 +109,6 @@ function clearCacheAndReload() {
     function setupEventListeners() {
         // Drag and drop for questions
         setupQuestionDragAndDrop();
-        
-        // Handle mode selector change
-        document.getElementById('setModeSelect').addEventListener('change', function() {
-            const modeSelect = document.getElementById('setModeSelect');
-            if (modeSelect.disabled) {
-                // Revert if disabled (cards already exist)
-                const cardsList = document.getElementById('cardsList');
-                const hasCards = cardsList && cardsList.children.length > 0;
-                if (hasCards) {
-                    // Revert to current mode
-                    const currentMode = document.querySelector('.card-item') ? 
-                        (document.querySelector('.card-item .mc-options-section') ? 'multipleChoice' : 'normal') : 'normal';
-                    modeSelect.value = currentMode;
-                }
-                return;
-            }
-            const useMC = modeSelect.value === 'multipleChoice';
-            // Update any existing cards (should be none if dropdown is enabled, but just in case)
-            updateModeForAllCards(useMC);
-        });
-        
-        // Function to update all cards when mode changes (only works before first card)
-        function updateModeForAllCards(useMC) {
-            const cardItems = document.querySelectorAll('.card-item');
-            cardItems.forEach(cardItem => {
-                const answerSection = cardItem.querySelector('.card-answer');
-                const answerHint = answerSection ? answerSection.nextElementSibling : null;
-                const mcSection = cardItem.querySelector('.mc-options-section');
-                
-                if (useMC) {
-                    // Switching to MC mode
-                    if (answerSection) {
-                        answerSection.style.display = 'none';
-                        if (answerHint && answerHint.classList.contains('answer-syntax-hint')) {
-                            answerHint.style.display = 'none';
-                        }
-                    }
-                    
-                    // If MC section doesn't exist, add it
-                    if (!mcSection) {
-                        const cardIndex = Array.from(document.querySelectorAll('.card-item')).indexOf(cardItem);
-                        const mcHtml = `
-                            <div class="mc-options-section">
-                                <div class="mc-options-header">
-                                    <label>Answer Options (at least 2 required, one must be marked correct)</label>
-                                    <button class="btn btn-secondary btn-tiny add-mc-option-btn" onclick="addMCOption(this)">+ Add Option</button>
-                                </div>
-                                <div class="mc-options-list">
-                                    <div class="mc-option-item">
-                                        <input type="radio" name="mc-correct-${cardIndex}" class="mc-correct-radio" value="0" checked>
-                                        <input type="text" placeholder="Option 1" class="mc-option-input">
-                                        <span style="width: 32px;"></span>
-                                    </div>
-                                    <div class="mc-option-item">
-                                        <input type="radio" name="mc-correct-${cardIndex}" class="mc-correct-radio" value="1">
-                                        <input type="text" placeholder="Option 2" class="mc-option-input">
-                                        <span style="width: 32px;"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        const questionsSection = cardItem.querySelector('.questions-section');
-                        if (questionsSection) {
-                            questionsSection.insertAdjacentHTML('afterend', mcHtml);
-                        }
-                    } else {
-                        mcSection.style.display = 'block';
-                    }
-                } else {
-                    // Switching from MC mode
-                    if (answerSection) {
-                        answerSection.style.display = 'block';
-                        if (answerHint && answerHint.classList.contains('answer-syntax-hint')) {
-                            answerHint.style.display = 'block';
-                        }
-                    }
-                    if (mcSection) {
-                        mcSection.style.display = 'none';
-                    }
-                }
-            });
-        }
-    
     // Main view
     document.getElementById('createSetBtn').addEventListener('click', () => {
         currentSetId = null;
@@ -206,17 +120,9 @@ function clearCacheAndReload() {
         document.getElementById('cardsList').innerHTML = '';
         // Reset rounds
         rounds = [];
-        const roundsEnabledCheckbox = document.getElementById('roundsEnabled');
-        const roundsSection = document.getElementById('roundsSection');
-        const roundsList = document.getElementById('roundsList');
-        if (roundsEnabledCheckbox) roundsEnabledCheckbox.checked = false;
-        if (roundsSection) roundsSection.style.display = 'none';
-        if (roundsList) roundsList.innerHTML = '';
-        // Reset mode selector - enable it for new sets
-        const modeSelect = document.getElementById('setModeSelect');
-        modeSelect.value = 'normal';
-        modeSelect.disabled = false;
-        isNewSet = true; // Mark as new set
+        document.getElementById('roundsEnabled').checked = false;
+        document.getElementById('roundsSection').style.display = 'none';
+        document.getElementById('roundsList').innerHTML = '';
     });
 
     document.getElementById('studyBtn').addEventListener('click', () => {
@@ -237,23 +143,13 @@ function clearCacheAndReload() {
         showView('mainView');
     });
 
-    document.getElementById('addCardBtn').addEventListener('click', () => {
-        addCardToEditor();
-        // Disable mode selector after first card is added
-        const modeSelect = document.getElementById('setModeSelect');
-        const cardsList = document.getElementById('cardsList');
-        if (cardsList && cardsList.children.length > 0 && !modeSelect.disabled) {
-            modeSelect.disabled = true;
-        }
-    });
+    document.getElementById('addCardBtn').addEventListener('click', addCardToEditor);
     document.getElementById('saveSetBtn').addEventListener('click', saveSet);
     document.getElementById('deleteSetBtn').addEventListener('click', deleteSet);
     
     // Rounds management
     document.getElementById('roundsEnabled').addEventListener('change', toggleRounds);
     document.getElementById('addRoundBtn').addEventListener('click', addRound);
-    
-    // Mode selector is handled above in setupEventListeners
 
     // Study setup
     document.getElementById('backToMainFromSetupBtn').addEventListener('click', () => {
@@ -266,17 +162,12 @@ function clearCacheAndReload() {
     // Study view
     document.getElementById('flipCardBtn').addEventListener('click', flipCard);
     document.getElementById('flashcard').addEventListener('click', () => {
-        // Don't allow clicking card to flip in multiple choice mode
-        if (studyMultipleChoiceMode) {
-            return;
-        }
         if (!document.getElementById('flashcard').classList.contains('flipped')) {
             flipCard();
         }
     });
     document.getElementById('wrongBtn').addEventListener('click', () => markAnswer(false));
     document.getElementById('rightBtn').addEventListener('click', () => markAnswer(true));
-    document.getElementById('continueBtn').addEventListener('click', continueMCOption);
     document.getElementById('askForHintBtn').addEventListener('click', askForHint);
 
     // Results view
@@ -333,12 +224,12 @@ function handleHashChange() {
     if (hash === 'creator') {
         // Check if we're creating new or editing
         if (currentSetId === null) {
-            // Reset mode selector for new set
-            const modeSelect = document.getElementById('setModeSelect');
-            if (modeSelect) {
-                modeSelect.value = 'normal';
-                modeSelect.disabled = false;
-            }
+            showView('setEditorView', false);
+            document.getElementById('editorTitle').textContent = 'Create New Set';
+            document.getElementById('deleteSetBtn').style.display = 'none';
+            document.getElementById('setName').value = '';
+            document.getElementById('setYear').value = '';
+            document.getElementById('cardsList').innerHTML = '';
         } else {
             // Already in editor, just show the view
             showView('setEditorView', false);
@@ -465,81 +356,47 @@ function editSet(index) {
     }
     
     // Load rounds if they exist
-    const roundsEnabledCheckbox = document.getElementById('roundsEnabled');
-    const roundsSection = document.getElementById('roundsSection');
-    const roundsList = document.getElementById('roundsList');
-    
     if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
         rounds = [...set.rounds];
         // Sort rounds by number
         rounds.sort((a, b) => a.number - b.number);
-        if (roundsEnabledCheckbox) roundsEnabledCheckbox.checked = true;
-        if (roundsSection) roundsSection.style.display = 'block';
+        document.getElementById('roundsEnabled').checked = true;
+        document.getElementById('roundsSection').style.display = 'block';
         renderRounds();
     } else {
         rounds = [];
-        if (roundsEnabledCheckbox) roundsEnabledCheckbox.checked = false;
-        if (roundsSection) roundsSection.style.display = 'none';
-        if (roundsList) roundsList.innerHTML = '';
+        document.getElementById('roundsEnabled').checked = false;
+        document.getElementById('roundsSection').style.display = 'none';
+        document.getElementById('roundsList').innerHTML = '';
     }
     
-    // Load multiple choice mode if it exists
-    const mcEnabled = set.multipleChoice || false;
-    const modeSelect = document.getElementById('setModeSelect');
-    if (modeSelect) {
-        modeSelect.value = mcEnabled ? 'multipleChoice' : 'normal';
-        modeSelect.disabled = true; // Disable toggle for existing sets (mode cannot be changed)
-    }
-    isNewSet = false; // Existing set
-    
-    // Clear and load cards - use setTimeout to ensure DOM is ready
-    setTimeout(() => {
-        const cardsList = document.getElementById('cardsList');
-        if (!cardsList) {
-            console.error('cardsList element not found');
-            return;
-        }
-        cardsList.innerHTML = '';
+    const cardsList = document.getElementById('cardsList');
+    cardsList.innerHTML = '';
+    set.cards.forEach((card, cardIndex) => {
+        let questions = card.questions || [{ text: '' }];
         
-        if (!set.cards || !Array.isArray(set.cards)) {
-            console.warn('Set has no cards or cards is not an array');
-            return;
-        }
-        
-        set.cards.forEach((card, cardIndex) => {
-            try {
-                let questions = card.questions || [{ text: '' }];
-                
-                // Ensure all questions have order property (migrate old data)
-                questions = questions.map((q, index) => {
-                    if (typeof q === 'string') {
-                        return { text: q, order: index + 1 };
-                    }
-                    if (!q.order) {
-                        return { ...q, order: index + 1 };
-                    }
-                    return q;
-                });
-                
-                // Sort by order to ensure correct sequence
-                questions.sort((a, b) => (a.order || 999) - (b.order || 999));
-                
-                const hints = card.hints || [];
-                // Convert hints array to single string (for backward compatibility)
-                const hintText = Array.isArray(hints) && hints.length > 0 ? hints[0] : (typeof hints === 'string' ? hints : '');
-                const doNotAccept = card.doNotAccept || '';
-                const image = card.image || '';
-                const roundId = card.roundId || null;
-                // Load MC options if they exist
-                const mcOptions = card.mcOptions || [];
-                const correctAnswerIndex = card.correctAnswerIndex !== undefined ? card.correctAnswerIndex : null;
-                const answer = card.answer || '';
-                addCardToEditor(questions, answer, hintText, cardIndex, roundId, doNotAccept, image, mcOptions, correctAnswerIndex);
-            } catch (error) {
-                console.error(`Error loading card ${cardIndex}:`, error);
+        // Ensure all questions have order property (migrate old data)
+        questions = questions.map((q, index) => {
+            if (typeof q === 'string') {
+                return { text: q, order: index + 1 };
             }
+            if (!q.order) {
+                return { ...q, order: index + 1 };
+            }
+            return q;
         });
-    }, 0);
+        
+        // Sort by order to ensure correct sequence
+        questions.sort((a, b) => (a.order || 999) - (b.order || 999));
+        
+        const hints = card.hints || [];
+        // Convert hints array to single string (for backward compatibility)
+        const hintText = Array.isArray(hints) && hints.length > 0 ? hints[0] : (typeof hints === 'string' ? hints : '');
+        const doNotAccept = card.doNotAccept || '';
+        const image = card.image || '';
+        const roundId = card.roundId || null;
+        addCardToEditor(questions, card.answer, hintText, cardIndex, roundId, doNotAccept, image);
+    });
 }
 
 // Expand square brackets within text (e.g., GAMETE[S] -> GAMETE, GAMETES)
@@ -692,7 +549,7 @@ function expandAnswerVariations(answerText) {
 
 
 // Add card to editor
-function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', index = null, roundId = null, doNotAccept = '', image = '', mcOptions = [], correctAnswerIndex = null) {
+function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', index = null, roundId = null, doNotAccept = '', image = '') {
     const cardsList = document.getElementById('cardsList');
     const cardIndex = index !== null ? index : cardsList.children.length;
     
@@ -710,26 +567,15 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
     // Image is SVG code or data URI
     const imageText = typeof image === 'string' ? image : '';
     
-    // MC options handling - get from mode selector
-    const modeSelect = document.getElementById('setModeSelect');
-    const mcEnabled = modeSelect ? (modeSelect.value === 'multipleChoice') : false;
-    const mcOptionsArray = Array.isArray(mcOptions) && mcOptions.length > 0 ? mcOptions : (mcEnabled ? ['', ''] : []);
-    const correctIndex = correctAnswerIndex !== null && correctAnswerIndex >= 0 && correctAnswerIndex < mcOptionsArray.length ? correctAnswerIndex : null;
-    
     const cardItem = document.createElement('div');
     cardItem.className = 'card-item';
     
     // Sort questions by order property (if exists) to ensure correct order
-    let sortedQuestions = [...questions].sort((a, b) => {
+    const sortedQuestions = [...questions].sort((a, b) => {
         const aOrder = (a && a.order) ? a.order : 999;
         const bOrder = (b && b.order) ? b.order : 999;
         return aOrder - bOrder;
     });
-    
-    // Multiple Choice mode only allows one question - use only the first one
-    if (mcEnabled && sortedQuestions.length > 1) {
-        sortedQuestions = [sortedQuestions[0]];
-    }
     
     const questionsHtml = sortedQuestions.map((q, qIndex) => {
         const questionText = typeof q === 'string' ? q : (q.text || '');
@@ -737,11 +583,11 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
         
         return `
             <div class="question-item" data-question-index="${qIndex}">
-                ${!mcEnabled ? '<div class="question-drag-handle" draggable="true">⋮⋮</div>' : '<span style="width: 24px;"></span>'}
+                <div class="question-drag-handle" draggable="true">⋮⋮</div>
                 <div class="question-input-wrapper">
-                    <textarea placeholder="${mcEnabled ? 'Question' : 'Question ' + questionOrder}" class="card-question" data-question-order="${questionOrder}">${escapeHtml(questionText)}</textarea>
+                    <textarea placeholder="Question ${questionOrder}" class="card-question" data-question-order="${questionOrder}">${escapeHtml(questionText)}</textarea>
                 </div>
-                ${!mcEnabled && qIndex > 0 ? '<button class="btn btn-danger btn-tiny" onclick="removeQuestion(this)">×</button>' : (mcEnabled ? '<span style="width: 32px;"></span>' : '')}
+                ${qIndex > 0 ? '<button class="btn btn-danger btn-tiny" onclick="removeQuestion(this)">×</button>' : ''}
             </div>
         `;
     }).join('');
@@ -773,36 +619,18 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
             ${cardRoundDropdownHtml}
             <div class="questions-section">
                 <div class="questions-header">
-                    <label>${mcEnabled ? 'Question' : 'Questions (randomly selected during study)'}</label>
-                    ${!mcEnabled ? '<button class="btn btn-secondary btn-tiny" onclick="addQuestion(this)">+ Add Question</button>' : ''}
+                    <label>Questions (randomly selected during study)</label>
+                    <button class="btn btn-secondary btn-tiny" onclick="addQuestion(this)">+ Add Question</button>
                 </div>
                 <div class="questions-list">
                     ${questionsHtml}
                 </div>
             </div>
-            ${!mcEnabled ? `
             <textarea placeholder="Answer" class="card-answer">${escapeHtml(answer)}</textarea>
             <div class="answer-syntax-hint">
                 <small>Tip: Use (option1/option2) for interchangeable words, [optional] for optional prefixes or suffixes</small>
                 <small>Examples: Conservation of (mass/matter), [Law of] Conservation of (mass/matter), (Chordate/Chordata), Answer [Law]</small>
             </div>
-            ` : `
-            <div class="mc-options-section">
-                <div class="mc-options-header">
-                    <label>Answer Options (at least 2 required, one must be marked correct)</label>
-                    <button class="btn btn-secondary btn-tiny add-mc-option-btn" onclick="addMCOption(this)">+ Add Option</button>
-                </div>
-                <div class="mc-options-list">
-                    ${mcOptionsArray.map((option, optIndex) => `
-                        <div class="mc-option-item">
-                            <input type="radio" name="mc-correct-${cardIndex}" class="mc-correct-radio" value="${optIndex}" ${optIndex === correctIndex ? 'checked' : ''}>
-                            <input type="text" placeholder="Option ${optIndex + 1}" class="mc-option-input" value="${escapeHtml(option)}">
-                            ${mcOptionsArray.length > 2 ? '<button class="btn btn-danger btn-tiny" onclick="removeMCOption(this)">×</button>' : '<span style="width: 32px;"></span>'}
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            `}
             <div class="hints-section">
                 <label>Hint (optional, always visible, doesn't affect points)</label>
                 <input type="text" placeholder="Hint (e.g., multi-word answer)" class="card-hint" value="${escapeHtml(hintText)}" maxlength="100">
@@ -1133,13 +961,6 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
 function removeCard(button) {
     button.closest('.card-item').remove();
     updateCardNumbers();
-    
-    // Re-enable mode selector if no cards remain
-    const cardsList = document.getElementById('cardsList');
-    const modeSelect = document.getElementById('setModeSelect');
-    if (cardsList && cardsList.children.length === 0 && isNewSet && modeSelect) {
-        modeSelect.disabled = false;
-    }
 }
 
 // Update card numbers
@@ -1189,15 +1010,6 @@ function setupQuestionEnterHandler(textarea) {
 // Add question to a card
 function addQuestion(button) {
     const cardItem = button.closest('.card-item');
-    const modeSelect = document.getElementById('setModeSelect');
-    const mcEnabled = modeSelect ? (modeSelect.value === 'multipleChoice') : false;
-    
-    // Multiple Choice mode only allows one question
-    if (mcEnabled) {
-        alert('Multiple Choice cards can only have one question.');
-        return;
-    }
-    
     const questionsList = button.closest('.questions-section').querySelector('.questions-list');
     const questionItems = questionsList.querySelectorAll('.question-item');
     const questionCount = questionItems.length;
@@ -1235,83 +1047,11 @@ function addQuestion(button) {
 // Remove question from a card
 function removeQuestion(button) {
     const questionsList = button.closest('.questions-list');
-    const cardItem = button.closest('.card-item');
-    const modeSelect = document.getElementById('setModeSelect');
-    const mcEnabled = modeSelect ? (modeSelect.value === 'multipleChoice') : false;
-    
-    // Multiple Choice mode only allows one question, so don't allow removal
-    if (mcEnabled && questionsList.children.length === 1) {
-        alert('Multiple Choice cards must have exactly one question.');
-        return;
-    }
-    
     if (questionsList.children.length > 1) {
         button.closest('.question-item').remove();
     } else {
         alert('Each card must have at least one question');
     }
-}
-
-// Add MC option to a card
-function addMCOption(button) {
-    const cardItem = button.closest('.card-item');
-    const mcOptionsList = cardItem.querySelector('.mc-options-list');
-    const cardIndex = Array.from(document.querySelectorAll('.card-item')).indexOf(cardItem);
-    const optionCount = mcOptionsList.children.length;
-    
-    const optionItem = document.createElement('div');
-    optionItem.className = 'mc-option-item';
-    optionItem.innerHTML = `
-        <input type="radio" name="mc-correct-${cardIndex}" class="mc-correct-radio" value="${optionCount}">
-        <input type="text" placeholder="Option ${optionCount + 1}" class="mc-option-input">
-        <button class="btn btn-danger btn-tiny" onclick="removeMCOption(this)">×</button>
-    `;
-    mcOptionsList.appendChild(optionItem);
-    
-    // Focus the new input
-    const newInput = optionItem.querySelector('.mc-option-input');
-    if (newInput) newInput.focus();
-}
-
-// Remove MC option from a card
-function removeMCOption(button) {
-    const mcOptionsList = button.closest('.mc-options-list');
-    const optionItem = button.closest('.mc-option-item');
-    const radioButton = optionItem.querySelector('.mc-correct-radio');
-    const wasChecked = radioButton && radioButton.checked;
-    
-    if (mcOptionsList.children.length > 2) {
-        optionItem.remove();
-        
-        // If the removed option was checked, check the first option
-        if (wasChecked) {
-            const firstRadio = mcOptionsList.querySelector('.mc-correct-radio');
-            if (firstRadio) firstRadio.checked = true;
-        }
-        
-        // Renumber options
-        const cardItem = button.closest('.card-item');
-        const cardIndex = Array.from(document.querySelectorAll('.card-item')).indexOf(cardItem);
-        const options = mcOptionsList.querySelectorAll('.mc-option-item');
-        options.forEach((item, index) => {
-            const radio = item.querySelector('.mc-correct-radio');
-            const input = item.querySelector('.mc-option-input');
-            if (radio) {
-                radio.name = `mc-correct-${cardIndex}`;
-                radio.value = index;
-            }
-            if (input) {
-                input.placeholder = `Option ${index + 1}`;
-            }
-        });
-    } else {
-        alert('Each card must have at least two answer options');
-    }
-}
-
-// Toggle Multiple Choice mode - now handled by dropdown, this function is kept for compatibility but does nothing
-function toggleMultipleChoice() {
-    // Mode is now controlled by dropdown, this function is deprecated
 }
 
 // Toggle rounds mode
@@ -1337,8 +1077,7 @@ function toggleRounds() {
         
         if (hasAssignedRounds) {
             alert('Cannot disable rounds. Please remove round assignments from all cards first.');
-            const roundsEnabledCheckbox = document.getElementById('roundsEnabled');
-            if (roundsEnabledCheckbox) roundsEnabledCheckbox.checked = true;
+            document.getElementById('roundsEnabled').checked = true;
             return;
         }
         
@@ -1530,8 +1269,6 @@ function saveSet() {
     const cards = [];
     const cardItems = document.querySelectorAll('.card-item');
     const roundsEnabled = document.getElementById('roundsEnabled').checked;
-    const modeSelect = document.getElementById('setModeSelect');
-    const mcEnabled = modeSelect ? (modeSelect.value === 'multipleChoice') : false;
     
     cardItems.forEach(cardItem => {
         const questionInputs = cardItem.querySelectorAll('.card-question');
@@ -1550,6 +1287,8 @@ function saveSet() {
         questions.sort((a, b) => a.order - b.order);
         // Renumber to keep orders contiguous (prevents weird Q1/Q3 jumps later)
         questions.forEach((q, idx) => { q.order = idx + 1; });
+        
+        const answer = cardItem.querySelector('.card-answer').value.trim();
         
         // Get hint (single optional field)
         const hintInput = cardItem.querySelector('.card-hint');
@@ -1572,86 +1311,30 @@ function saveSet() {
             }
         }
         
-        // Handle MC mode vs regular mode
-        if (mcEnabled) {
-            // Multiple Choice mode
-            const mcOptionInputs = cardItem.querySelectorAll('.mc-option-input');
-            const mcOptions = [];
-            let correctAnswerIndex = null;
-            
-            mcOptionInputs.forEach((input, index) => {
-                const optionText = input.value.trim();
-                if (optionText) {
-                    mcOptions.push(optionText);
-                    // Check if this option is marked as correct
-                    const radioButton = cardItem.querySelector(`input[name^="mc-correct"][value="${index}"]`);
-                    if (radioButton && radioButton.checked) {
-                        correctAnswerIndex = mcOptions.length - 1; // Index in filtered array
-                    }
-                }
-            });
-            
-            if (questions.length > 0 && mcOptions.length >= 2) {
-                if (correctAnswerIndex === null) {
-                    alert(`Card ${cards.length + 1}: Please mark one answer option as correct.`);
-                    return;
-                }
-                const cardData = { questions, mcOptions, correctAnswerIndex };
-                if (hint) {
-                    cardData.hints = [hint];
-                }
-                if (doNotAccept) {
-                    cardData.doNotAccept = doNotAccept;
-                }
-                if (image) {
-                    cardData.image = image;
-                }
-                if (cardRoundId) {
-                    cardData.roundId = cardRoundId;
-                }
-                cards.push(cardData);
-            } else if (questions.length > 0 && mcOptions.length < 2) {
-                alert(`Card ${cards.length + 1}: Multiple Choice cards must have at least 2 answer options.`);
-                return;
+        if (questions.length > 0 && answer) {
+            const cardData = { questions, answer };
+            if (hint) {
+                cardData.hints = [hint]; // Store as array for backward compatibility
             }
-        } else {
-            // Regular mode
-            const answerInput = cardItem.querySelector('.card-answer');
-            const answer = answerInput ? answerInput.value.trim() : '';
-            
-            if (questions.length > 0 && answer) {
-                const cardData = { questions, answer };
-                if (hint) {
-                    cardData.hints = [hint]; // Store as array for backward compatibility
-                }
-                if (doNotAccept) {
-                    cardData.doNotAccept = doNotAccept;
-                }
-                if (image) {
-                    cardData.image = image;
-                }
-                if (cardRoundId) {
-                    cardData.roundId = cardRoundId;
-                }
-                cards.push(cardData);
+            if (doNotAccept) {
+                cardData.doNotAccept = doNotAccept;
             }
+            if (image) {
+                cardData.image = image;
+            }
+            if (cardRoundId) {
+                cardData.roundId = cardRoundId;
+            }
+            cards.push(cardData);
         }
     });
 
     if (cards.length === 0) {
-        const errorMsg = mcEnabled 
-            ? 'Please add at least one card with at least one question and 2+ answer options'
-            : 'Please add at least one card with at least one question and an answer';
-        alert(errorMsg);
+        alert('Please add at least one card with at least one question and an answer');
         return;
     }
 
     const setData = { name, cards };
-    
-    // Save multiple choice mode
-    if (mcEnabled) {
-        setData.multipleChoice = true;
-    }
     
     // Save year if provided
     if (year) {
@@ -1734,11 +1417,6 @@ function exportSet(index) {
         exportData.rounds = set.rounds;
     }
     
-    // Include multiple choice mode if it exists
-    if (set.multipleChoice) {
-        exportData.multipleChoice = true;
-    }
-    
     const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -1769,32 +1447,15 @@ function updateRoundSelect() {
     const select = document.getElementById('selectedSet');
     const roundSelect = document.getElementById('selectedRound');
     const roundSelectGroup = document.getElementById('roundSelectGroup');
-    const progressiveModeCheckbox = document.getElementById('progressiveMode');
-    const progressiveModeGroup = progressiveModeCheckbox ? progressiveModeCheckbox.closest('.form-group') : null;
     
     if (select.value === '') {
         roundSelectGroup.style.display = 'none';
         roundSelect.innerHTML = '<option value="">All Rounds</option>';
-        if (progressiveModeGroup) {
-            progressiveModeGroup.style.display = 'block';
-        }
         return;
     }
     
     const setIndex = parseInt(select.value);
     const set = sets[setIndex];
-    
-    // Hide progressive mode checkbox for multiple choice sets
-    if (progressiveModeGroup) {
-        if (set.multipleChoice) {
-            progressiveModeGroup.style.display = 'none';
-            if (progressiveModeCheckbox) {
-                progressiveModeCheckbox.checked = false; // Uncheck it
-            }
-        } else {
-            progressiveModeGroup.style.display = 'block';
-        }
-    }
     
     // Check if set has rounds
     if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
@@ -1820,6 +1481,8 @@ function updateRoundSelect() {
 function startStudy() {
     const select = document.getElementById('selectedSet');
     const roundSelect = document.getElementById('selectedRound');
+    // Set progressiveMode once at the start - it persists for the entire study session
+    progressiveMode = document.getElementById('progressiveMode').checked;
     
     if (select.value === '') {
         alert('Please select a set');
@@ -1828,14 +1491,6 @@ function startStudy() {
     
     const setIndex = parseInt(select.value);
     const set = sets[setIndex];
-    
-    // Disable progressive mode for multiple choice sets
-    if (set.multipleChoice) {
-        progressiveMode = false;
-    } else {
-        // Set progressiveMode once at the start - it persists for the entire study session
-        progressiveMode = document.getElementById('progressiveMode').checked;
-    }
     
     // Filter cards by round if a specific round is selected
     let cardsToStudy = [...set.cards];
@@ -1859,8 +1514,6 @@ function startStudy() {
     currentCardQuestions = []; // Reset cached questions
     currentCardQuestionsForCardIndex = -1;
     studyResults = { correct: 0, wrong: 0, points: 0, cards: [] };
-    studyMultipleChoiceMode = set.multipleChoice || false; // Store MC mode for study session
-    selectedMCOption = null; // Reset selected option
     
     showView('studyView');
     updateStudyCard();
@@ -1957,7 +1610,7 @@ function updateStudyCard(showHint = false) {
         if (hintsFront) hintsFront.textContent = '';
     }
     // Always clear hints on back (answer side)
-        if (hintsBack) hintsBack.textContent = '';
+    if (hintsBack) hintsBack.textContent = '';
     
     // Display doNotAccept (only on back/answer side)
     const doNotAccept = card.doNotAccept || '';
@@ -2037,190 +1690,36 @@ function updateStudyCard(showHint = false) {
         }
     }
     
-    // Handle MC mode vs regular mode
+    // Expand answer variations
+    const answerText = card.answer || '';
+    const expandedAnswers = expandAnswerVariations(answerText);
+    
+    // Primary answer (first variation, or original if no expansion)
+    const primaryAnswer = expandedAnswers.length > 0 ? expandedAnswers[0] : answerText;
+    
+    document.getElementById('answerText').textContent = primaryAnswer;
+    
+    // Show other variations if there are multiple
+    const acceptedAnswersList = document.getElementById('acceptedAnswersList');
+    if (expandedAnswers.length > 1) {
+        acceptedAnswersList.innerHTML = `
+            <div class="accepted-forms-label">Also accepted:</div>
+            <div class="accepted-forms">
+                ${expandedAnswers.slice(1).map(answer => 
+                    `<div class="accepted-form-item">${escapeHtml(answer)}</div>`
+                ).join('')}
+            </div>
+        `;
+    } else {
+        acceptedAnswersList.innerHTML = '';
+    }
+    
     const flashcard = document.getElementById('flashcard');
-    const isFlipped = flashcard.classList.contains('flipped');
+    // Always ensure card starts face-down (not flipped)
+    flashcard.classList.remove('flipped');
     
-    if (studyMultipleChoiceMode) {
-        // Add MC mode class to flashcard
-        flashcard.classList.add('mc-mode');
-        
-        // MC Mode: Show options on front, result on back
-        const mcOptions = card.mcOptions || [];
-        const correctAnswerIndex = card.correctAnswerIndex !== undefined ? card.correctAnswerIndex : null;
-        const mcOptionsContainer = document.getElementById('mcOptionsContainer');
-        
-        if (!isFlipped) {
-            // Front: Show question and MC options
-            selectedMCOption = null; // Reset selection
-            
-            // Ensure question text container is visible and question is set
-            const cardTextContent = document.querySelector('.card-front .card-text-content');
-            if (cardTextContent) {
-                cardTextContent.style.display = 'flex';
-                cardTextContent.style.visibility = 'visible';
-            }
-            const questionTextElement = document.getElementById('questionText');
-            if (questionTextElement) {
-                questionTextElement.style.display = 'block';
-                questionTextElement.style.visibility = 'visible';
-                // If question text is empty, try to get it from the card
-                if (!questionTextElement.textContent || questionTextElement.textContent.trim() === '') {
-                    const questions = card.questions || [];
-                    if (questions.length > 0) {
-                        const firstQuestion = questions[0];
-                        const questionText = (typeof firstQuestion === 'string') ? firstQuestion : (firstQuestion.text || '');
-                        if (questionText) {
-                            questionTextElement.textContent = questionText;
-                        }
-                    }
-                }
-            }
-            
-            if (mcOptions.length >= 2) {
-                // Calculate optimal button width based on longest option
-                const longestOption = mcOptions.reduce((a, b) => {
-                    const aLen = typeof a === 'string' ? a.length : String(a).length;
-                    const bLen = typeof b === 'string' ? b.length : String(b).length;
-                    return aLen > bLen ? a : b;
-                }, '');
-                const longestLength = typeof longestOption === 'string' ? longestOption.length : String(longestOption).length;
-                // Estimate width: roughly 8-10px per character, with padding
-                const estimatedWidth = Math.max(200, Math.min(400, longestLength * 9 + 40));
-                
-                let mcHtml = '<div class="mc-options-study">';
-                mcOptions.forEach((option, index) => {
-                    mcHtml += `<button class="mc-option-btn" onclick="selectMCOption(${index})" data-option-index="${index}">${escapeHtml(option)}</button>`;
-                });
-                mcHtml += '</div>';
-                
-                // Set a CSS variable for button width
-                const cardFront = document.querySelector('.card-front');
-                if (cardFront) {
-                    cardFront.style.setProperty('--mc-btn-width', `${estimatedWidth}px`);
-                }
-                
-                // Use external MC options container (below the card)
-                let container = document.getElementById('mcOptionsContainer');
-                if (container) {
-                    container.innerHTML = mcHtml;
-                    container.style.display = 'block';
-                }
-                
-                // After rendering, measure all buttons and set them to the width of the widest
-                setTimeout(() => {
-                    const buttons = container.querySelectorAll('.mc-option-btn');
-                    if (buttons.length > 0) {
-                        let maxWidth = 200; // minimum width
-                        // First pass: measure natural width of each button
-                        buttons.forEach(btn => {
-                            // Save original width style
-                            const originalWidth = btn.style.width;
-                            // Set to auto to measure natural content width
-                            btn.style.width = 'auto';
-                            btn.style.maxWidth = 'none';
-                            const width = btn.getBoundingClientRect().width;
-                            if (width > maxWidth) {
-                                maxWidth = width;
-                            }
-                            // Restore original
-                            btn.style.width = originalWidth;
-                        });
-                        // Add some padding for safety
-                        maxWidth = Math.ceil(maxWidth) + 10;
-                        // Second pass: set all buttons to the max width
-                        buttons.forEach(btn => {
-                            btn.style.width = `${maxWidth}px`;
-                            btn.style.maxWidth = '100%'; // But still respect container width
-                        });
-                    }
-                }, 10);
-            }
-            
-            document.getElementById('flipCardBtn').style.display = 'none';
-        } else {
-            // Back: Show if correct/wrong and correct answer
-            const isCorrect = selectedMCOption !== null && selectedMCOption === correctAnswerIndex;
-            const resultText = isCorrect ? '✓ Correct!' : '✗ Incorrect';
-            const resultClass = isCorrect ? 'mc-result-correct' : 'mc-result-incorrect';
-            
-            let answerHtml = `<div class="mc-result ${resultClass}">${resultText}</div>`;
-            if (correctAnswerIndex !== null && correctAnswerIndex < mcOptions.length) {
-                answerHtml += `<div class="mc-correct-answer">Correct Answer: ${escapeHtml(mcOptions[correctAnswerIndex])}</div>`;
-            }
-            
-            document.getElementById('answerText').innerHTML = answerHtml;
-            document.getElementById('acceptedAnswersList').innerHTML = '';
-            
-            // Hide MC options container on back
-            const container = document.getElementById('mcOptionsContainer');
-            if (container) {
-                container.style.display = 'none';
-                container.innerHTML = ''; // Clear options
-            }
-        }
-    } else {
-        // Remove MC mode class in regular mode
-        flashcard.classList.remove('mc-mode');
-        
-        // Regular mode: Show answer text
-        // Expand answer variations
-        const answerText = card.answer || '';
-        const expandedAnswers = expandAnswerVariations(answerText);
-        
-        // Primary answer (first variation, or original if no expansion)
-        const primaryAnswer = expandedAnswers.length > 0 ? expandedAnswers[0] : answerText;
-        
-        document.getElementById('answerText').textContent = primaryAnswer;
-        
-        // Show other variations if there are multiple
-        const acceptedAnswersList = document.getElementById('acceptedAnswersList');
-        if (expandedAnswers.length > 1) {
-            acceptedAnswersList.innerHTML = `
-                <div class="accepted-forms-label">Also accepted:</div>
-                <div class="accepted-forms">
-                    ${expandedAnswers.slice(1).map(answer => 
-                        `<div class="accepted-form-item">${escapeHtml(answer)}</div>`
-                    ).join('')}
-                </div>
-            `;
-        } else {
-            acceptedAnswersList.innerHTML = '';
-        }
-        
-        // Hide MC options container if it exists
-        const mcContainer = document.getElementById('mcOptionsContainer');
-        if (mcContainer) {
-            mcContainer.style.display = 'none';
-            mcContainer.innerHTML = ''; // Clear options
-        }
-    }
-    
-    // Always ensure card starts face-down (not flipped) on new card
-    // Only keep flipped state if already flipped and in MC mode (showing result)
-    if (!isFlipped || !studyMultipleChoiceMode) {
-        flashcard.classList.remove('flipped');
-        if (!isFlipped) {
-            selectedMCOption = null; // Reset selection on new card
-        }
-    }
-    
-    // Show/hide buttons based on mode and flip state
-    if (studyMultipleChoiceMode) {
-        if (isFlipped) {
-            document.getElementById('flipCardBtn').style.display = 'none';
-            document.getElementById('answerButtons').style.display = 'none';
-            document.getElementById('continueBtn').style.display = 'block';
-        } else {
-            document.getElementById('flipCardBtn').style.display = 'none';
-            document.getElementById('answerButtons').style.display = 'none';
-            document.getElementById('continueBtn').style.display = 'none';
-        }
-    } else {
-        document.getElementById('flipCardBtn').style.display = 'block';
-        document.getElementById('answerButtons').style.display = isFlipped ? 'flex' : 'none';
-        document.getElementById('continueBtn').style.display = 'none';
-    }
+    document.getElementById('flipCardBtn').style.display = 'block';
+    document.getElementById('answerButtons').style.display = 'none';
     
     // Update gamepad navigation when buttons change visibility
     if (getCurrentViewId() === 'studyView' && gamepadState.connected) {
@@ -2232,24 +1731,15 @@ function updateStudyCard(showHint = false) {
     document.getElementById('progressFill').style.width = `${progress}%`;
 }
 
-// Select MC option (triggers flip)
-function selectMCOption(optionIndex) {
-    if (studyMultipleChoiceMode && currentCardIndex < studyCards.length) {
-        selectedMCOption = optionIndex;
-        flipCard();
-    }
-}
-
 // Flip card
 function flipCard() {
     const flashcard = document.getElementById('flashcard');
     flashcard.classList.add('flipped');
+    document.getElementById('flipCardBtn').style.display = 'none';
+    document.getElementById('answerButtons').style.display = 'flex';
     
     // Hide "Add Next Question" button when flipped
     document.getElementById('hintButton').style.display = 'none';
-    
-    // Update card display (important for MC mode to show result)
-    updateStudyCard();
     
     // Update gamepad navigation for study view when buttons change
     if (getCurrentViewId() === 'studyView' && gamepadState.connected) {
@@ -2257,29 +1747,9 @@ function flipCard() {
     }
 }
 
-// Continue from multiple choice (auto-determines correctness)
-function continueMCOption() {
-    if (!studyMultipleChoiceMode || currentCardIndex >= studyCards.length) {
-        return;
-    }
-    
-    const card = studyCards[currentCardIndex];
-    const correctAnswerIndex = card.correctAnswerIndex !== undefined ? card.correctAnswerIndex : null;
-    const isCorrect = (selectedMCOption !== null && selectedMCOption === correctAnswerIndex);
-    
-    markAnswer(isCorrect);
-}
-
 // Mark answer
 function markAnswer(isCorrect) {
     const card = studyCards[currentCardIndex];
-    
-    // In MC mode, determine correctness from selected option
-    if (studyMultipleChoiceMode) {
-        const correctAnswerIndex = card.correctAnswerIndex !== undefined ? card.correctAnswerIndex : null;
-        isCorrect = (selectedMCOption !== null && selectedMCOption === correctAnswerIndex);
-    }
-    
     let questions = card.questions || [];
     
     if (!Array.isArray(questions) || questions.length === 0) {
@@ -2472,12 +1942,7 @@ function handleImport(event) {
             if (importData.rounds && Array.isArray(importData.rounds) && importData.rounds.length > 0) {
                 setData.rounds = importData.rounds;
             }
-            
-            // Include multiple choice mode if it exists
-            if (importData.multipleChoice) {
-                setData.multipleChoice = true;
-            }
-            
+
             sets.push(setData);
             saveSets();
             renderSets();
@@ -3025,7 +2490,6 @@ function updateGamepadNavigation(viewId) {
             const flipBtn = document.getElementById('flipCardBtn');
             const wrongBtn = document.getElementById('wrongBtn');
             const rightBtn = document.getElementById('rightBtn');
-            const continueBtn = document.getElementById('continueBtn');
             const hintBtn = document.getElementById('askForHintBtn');
             const hintButton = document.getElementById('hintButton');
             
@@ -3034,18 +2498,12 @@ function updateGamepadNavigation(viewId) {
             const isFlipped = flashcard && flashcard.classList.contains('flipped');
             
             if (isFlipped) {
-                // When flipped, show continue button for MC mode, or wrong/right buttons for normal mode
-                if (studyMultipleChoiceMode) {
-                    if (continueBtn && continueBtn.offsetParent !== null) {
-                        gamepadState.navigationElements.push(continueBtn);
-                    }
-                } else {
-                    if (wrongBtn && wrongBtn.offsetParent !== null) {
-                        gamepadState.navigationElements.push(wrongBtn);
-                    }
-                    if (rightBtn && rightBtn.offsetParent !== null) {
-                        gamepadState.navigationElements.push(rightBtn);
-                    }
+                // When flipped, show wrong and right buttons
+                if (wrongBtn && wrongBtn.offsetParent !== null) {
+                    gamepadState.navigationElements.push(wrongBtn);
+                }
+                if (rightBtn && rightBtn.offsetParent !== null) {
+                    gamepadState.navigationElements.push(rightBtn);
                 }
             } else {
                 // When not flipped, show flip button and hint button if available
