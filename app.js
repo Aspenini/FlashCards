@@ -269,6 +269,7 @@ function clearCacheAndReload() {
     });
     document.getElementById('wrongBtn').addEventListener('click', () => markAnswer(false));
     document.getElementById('rightBtn').addEventListener('click', () => markAnswer(true));
+    document.getElementById('continueBtn').addEventListener('click', continueMCOption);
     document.getElementById('askForHintBtn').addEventListener('click', askForHint);
 
     // Results view
@@ -473,14 +474,10 @@ function editSet(index) {
     
     // Load multiple choice mode if it exists
     const mcEnabled = set.multipleChoice || false;
-    const mcCheckbox = document.getElementById('multipleChoiceEnabled');
-    const mcLabelText = document.getElementById('multipleChoiceLabelText');
-    mcCheckbox.checked = mcEnabled;
-    mcCheckbox.disabled = true; // Disable toggle for existing sets (mode cannot be changed)
-    if (mcLabelText) {
-        mcLabelText.textContent = mcEnabled 
-            ? 'Multiple Choice Mode (mode cannot be changed)' 
-            : 'Regular Mode (mode cannot be changed)';
+    const modeSelect = document.getElementById('setModeSelect');
+    if (modeSelect) {
+        modeSelect.value = mcEnabled ? 'multipleChoice' : 'normal';
+        modeSelect.disabled = true; // Disable toggle for existing sets (mode cannot be changed)
     }
     isNewSet = false; // Existing set
     
@@ -1163,7 +1160,8 @@ function setupQuestionEnterHandler(textarea) {
 // Add question to a card
 function addQuestion(button) {
     const cardItem = button.closest('.card-item');
-    const mcEnabled = document.getElementById('multipleChoiceEnabled').checked;
+    const modeSelect = document.getElementById('setModeSelect');
+    const mcEnabled = modeSelect ? (modeSelect.value === 'multipleChoice') : false;
     
     // Multiple Choice mode only allows one question
     if (mcEnabled) {
@@ -1741,15 +1739,32 @@ function updateRoundSelect() {
     const select = document.getElementById('selectedSet');
     const roundSelect = document.getElementById('selectedRound');
     const roundSelectGroup = document.getElementById('roundSelectGroup');
+    const progressiveModeCheckbox = document.getElementById('progressiveMode');
+    const progressiveModeGroup = progressiveModeCheckbox ? progressiveModeCheckbox.closest('.form-group') : null;
     
     if (select.value === '') {
         roundSelectGroup.style.display = 'none';
         roundSelect.innerHTML = '<option value="">All Rounds</option>';
+        if (progressiveModeGroup) {
+            progressiveModeGroup.style.display = 'block';
+        }
         return;
     }
     
     const setIndex = parseInt(select.value);
     const set = sets[setIndex];
+    
+    // Hide progressive mode checkbox for multiple choice sets
+    if (progressiveModeGroup) {
+        if (set.multipleChoice) {
+            progressiveModeGroup.style.display = 'none';
+            if (progressiveModeCheckbox) {
+                progressiveModeCheckbox.checked = false; // Uncheck it
+            }
+        } else {
+            progressiveModeGroup.style.display = 'block';
+        }
+    }
     
     // Check if set has rounds
     if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
@@ -1775,8 +1790,6 @@ function updateRoundSelect() {
 function startStudy() {
     const select = document.getElementById('selectedSet');
     const roundSelect = document.getElementById('selectedRound');
-    // Set progressiveMode once at the start - it persists for the entire study session
-    progressiveMode = document.getElementById('progressiveMode').checked;
     
     if (select.value === '') {
         alert('Please select a set');
@@ -1785,6 +1798,14 @@ function startStudy() {
     
     const setIndex = parseInt(select.value);
     const set = sets[setIndex];
+    
+    // Disable progressive mode for multiple choice sets
+    if (set.multipleChoice) {
+        progressiveMode = false;
+    } else {
+        // Set progressiveMode once at the start - it persists for the entire study session
+        progressiveMode = document.getElementById('progressiveMode').checked;
+    }
     
     // Filter cards by round if a specific round is selected
     let cardsToStudy = [...set.cards];
@@ -1999,12 +2020,52 @@ function updateStudyCard(showHint = false) {
         if (!isFlipped) {
             // Front: Show question and MC options
             selectedMCOption = null; // Reset selection
+            
+            // Ensure question text container is visible and question is set
+            const cardTextContent = document.querySelector('.card-front .card-text-content');
+            if (cardTextContent) {
+                cardTextContent.style.display = 'flex';
+                cardTextContent.style.visibility = 'visible';
+            }
+            const questionTextElement = document.getElementById('questionText');
+            if (questionTextElement) {
+                questionTextElement.style.display = 'block';
+                questionTextElement.style.visibility = 'visible';
+                // If question text is empty, try to get it from the card
+                if (!questionTextElement.textContent || questionTextElement.textContent.trim() === '') {
+                    const questions = card.questions || [];
+                    if (questions.length > 0) {
+                        const firstQuestion = questions[0];
+                        const questionText = (typeof firstQuestion === 'string') ? firstQuestion : (firstQuestion.text || '');
+                        if (questionText) {
+                            questionTextElement.textContent = questionText;
+                        }
+                    }
+                }
+            }
+            
             if (mcOptions.length >= 2) {
+                // Calculate optimal button width based on longest option
+                const longestOption = mcOptions.reduce((a, b) => {
+                    const aLen = typeof a === 'string' ? a.length : String(a).length;
+                    const bLen = typeof b === 'string' ? b.length : String(b).length;
+                    return aLen > bLen ? a : b;
+                }, '');
+                const longestLength = typeof longestOption === 'string' ? longestOption.length : String(longestOption).length;
+                // Estimate width: roughly 8-10px per character, with padding
+                const estimatedWidth = Math.max(200, Math.min(400, longestLength * 9 + 40));
+                
                 let mcHtml = '<div class="mc-options-study">';
                 mcOptions.forEach((option, index) => {
-                    mcHtml += `<button class="mc-option-btn" onclick="selectMCOption(${index})">${escapeHtml(option)}</button>`;
+                    mcHtml += `<button class="mc-option-btn" onclick="selectMCOption(${index})" data-option-index="${index}">${escapeHtml(option)}</button>`;
                 });
                 mcHtml += '</div>';
+                
+                // Set a CSS variable for button width
+                const cardFront = document.querySelector('.card-front');
+                if (cardFront) {
+                    cardFront.style.setProperty('--mc-btn-width', `${estimatedWidth}px`);
+                }
                 
                 // Create or update MC options container
                 let container = document.getElementById('mcOptionsContainer');
@@ -2019,6 +2080,35 @@ function updateStudyCard(showHint = false) {
                 }
                 container.innerHTML = mcHtml;
                 container.style.display = 'block';
+                
+                // After rendering, measure all buttons and set them to the width of the widest
+                setTimeout(() => {
+                    const buttons = container.querySelectorAll('.mc-option-btn');
+                    if (buttons.length > 0) {
+                        let maxWidth = 200; // minimum width
+                        // First pass: measure natural width of each button
+                        buttons.forEach(btn => {
+                            // Save original width style
+                            const originalWidth = btn.style.width;
+                            // Set to auto to measure natural content width
+                            btn.style.width = 'auto';
+                            btn.style.maxWidth = 'none';
+                            const width = btn.getBoundingClientRect().width;
+                            if (width > maxWidth) {
+                                maxWidth = width;
+                            }
+                            // Restore original
+                            btn.style.width = originalWidth;
+                        });
+                        // Add some padding for safety
+                        maxWidth = Math.ceil(maxWidth) + 10;
+                        // Second pass: set all buttons to the max width
+                        buttons.forEach(btn => {
+                            btn.style.width = `${maxWidth}px`;
+                            btn.style.maxWidth = '100%'; // But still respect container width
+                        });
+                    }
+                }, 10);
             }
             
             document.getElementById('flipCardBtn').style.display = 'none';
@@ -2084,14 +2174,17 @@ function updateStudyCard(showHint = false) {
     if (studyMultipleChoiceMode) {
         if (isFlipped) {
             document.getElementById('flipCardBtn').style.display = 'none';
-            document.getElementById('answerButtons').style.display = 'flex';
+            document.getElementById('answerButtons').style.display = 'none';
+            document.getElementById('continueBtn').style.display = 'block';
         } else {
             document.getElementById('flipCardBtn').style.display = 'none';
             document.getElementById('answerButtons').style.display = 'none';
+            document.getElementById('continueBtn').style.display = 'none';
         }
     } else {
         document.getElementById('flipCardBtn').style.display = 'block';
         document.getElementById('answerButtons').style.display = isFlipped ? 'flex' : 'none';
+        document.getElementById('continueBtn').style.display = 'none';
     }
     
     // Update gamepad navigation when buttons change visibility
@@ -2127,6 +2220,19 @@ function flipCard() {
     if (getCurrentViewId() === 'studyView' && gamepadState.connected) {
         updateGamepadNavigation('studyView');
     }
+}
+
+// Continue from multiple choice (auto-determines correctness)
+function continueMCOption() {
+    if (!studyMultipleChoiceMode || currentCardIndex >= studyCards.length) {
+        return;
+    }
+    
+    const card = studyCards[currentCardIndex];
+    const correctAnswerIndex = card.correctAnswerIndex !== undefined ? card.correctAnswerIndex : null;
+    const isCorrect = (selectedMCOption !== null && selectedMCOption === correctAnswerIndex);
+    
+    markAnswer(isCorrect);
 }
 
 // Mark answer
@@ -2884,6 +2990,7 @@ function updateGamepadNavigation(viewId) {
             const flipBtn = document.getElementById('flipCardBtn');
             const wrongBtn = document.getElementById('wrongBtn');
             const rightBtn = document.getElementById('rightBtn');
+            const continueBtn = document.getElementById('continueBtn');
             const hintBtn = document.getElementById('askForHintBtn');
             const hintButton = document.getElementById('hintButton');
             
@@ -2892,12 +2999,18 @@ function updateGamepadNavigation(viewId) {
             const isFlipped = flashcard && flashcard.classList.contains('flipped');
             
             if (isFlipped) {
-                // When flipped, show wrong and right buttons
-                if (wrongBtn && wrongBtn.offsetParent !== null) {
-                    gamepadState.navigationElements.push(wrongBtn);
-                }
-                if (rightBtn && rightBtn.offsetParent !== null) {
-                    gamepadState.navigationElements.push(rightBtn);
+                // When flipped, show continue button for MC mode, or wrong/right buttons for normal mode
+                if (studyMultipleChoiceMode) {
+                    if (continueBtn && continueBtn.offsetParent !== null) {
+                        gamepadState.navigationElements.push(continueBtn);
+                    }
+                } else {
+                    if (wrongBtn && wrongBtn.offsetParent !== null) {
+                        gamepadState.navigationElements.push(wrongBtn);
+                    }
+                    if (rightBtn && rightBtn.offsetParent !== null) {
+                        gamepadState.navigationElements.push(rightBtn);
+                    }
                 }
             } else {
                 // When not flipped, show flip button and hint button if available
