@@ -707,14 +707,27 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
                         }
                         
                         // Function to compress image to fit size limit using binary search
-                        function compressImageToSize(canvas, targetSizeKB) {
-                            // Try WebP first (better compression - 25-35% smaller than JPEG)
-                            let mimeType = 'image/webp';
-                            let testDataURI = canvas.toDataURL(mimeType, 0.8);
+                        function compressImageToSize(canvas, targetSizeKB, useTransparency) {
+                            // Format selection:
+                            // - PNG for images with transparency (lossless)
+                            // - WebP for photos (better compression than JPEG)
+                            // - JPEG as fallback if WebP not supported
+                            let mimeType = 'image/jpeg';
+                            let supportsWebP = false;
                             
-                            // Fallback to JPEG if WebP fails or if browser doesn't support it
-                            if (!testDataURI || testDataURI.substring(5, 15) !== 'image/webp') {
-                                mimeType = 'image/jpeg';
+                            if (useTransparency) {
+                                mimeType = 'image/png';
+                            } else {
+                                // Test WebP support
+                                try {
+                                    const testWebP = canvas.toDataURL('image/webp', 0.8);
+                                    if (testWebP && testWebP.length > 0 && testWebP.substring(5, 15) === 'image/webp') {
+                                        supportsWebP = true;
+                                        mimeType = 'image/webp';
+                                    }
+                                } catch (e) {
+                                    // WebP not supported, use JPEG
+                                }
                             }
                             
                             // Binary search for optimal quality
@@ -755,25 +768,43 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
                             let result = findOptimalQuality(canvas, mimeType, targetSizeKB);
                             let finalCanvas = canvas;
                             
-                            // If still too large, reduce dimensions
+                            // If still too large, reduce dimensions iteratively
                             if (result.sizeKB > targetSizeKB) {
-                                // Calculate scale factor to reach target size
-                                // Size is roughly proportional to width * height
-                                const currentSize = result.sizeKB;
-                                const scale = Math.sqrt(targetSizeKB / currentSize) * 0.9; // 10% safety margin
+                                let currentCanvas = canvas;
+                                const minDimension = useTransparency ? 256 : 320; // PNG needs less resizing
+                                let attempts = 0;
+                                const maxAttempts = 3; // Limit iteration attempts
                                 
-                                const newWidth = Math.max(320, Math.round(canvas.width * scale)); // Min 320px
-                                const newHeight = Math.max(240, Math.round(canvas.height * scale)); // Min 240px
+                                while (result.sizeKB > targetSizeKB && attempts < maxAttempts) {
+                                    attempts++;
+                                    // Calculate scale factor to reach target size
+                                    // Size is roughly proportional to width * height
+                                    const currentSize = result.sizeKB;
+                                    const scale = Math.sqrt(targetSizeKB / currentSize) * 0.85; // 15% safety margin
+                                    
+                                    const newWidth = Math.max(minDimension, Math.round(currentCanvas.width * scale));
+                                    const newHeight = Math.max(Math.round(minDimension * 0.75), Math.round(currentCanvas.height * scale));
+                                    
+                                    // Don't resize if already at minimum
+                                    if (newWidth >= currentCanvas.width && newHeight >= currentCanvas.height) {
+                                        break;
+                                    }
+                                    
+                                    const tempCanvas = document.createElement('canvas');
+                                    tempCanvas.width = newWidth;
+                                    tempCanvas.height = newHeight;
+                                    const tempCtx = tempCanvas.getContext('2d');
+                                    // Better quality for resizing
+                                    tempCtx.imageSmoothingEnabled = true;
+                                    tempCtx.imageSmoothingQuality = 'high';
+                                    tempCtx.drawImage(currentCanvas, 0, 0, newWidth, newHeight);
+                                    
+                                    // Try again with reduced dimensions
+                                    result = findOptimalQuality(tempCanvas, mimeType, targetSizeKB);
+                                    currentCanvas = tempCanvas;
+                                }
                                 
-                                const tempCanvas = document.createElement('canvas');
-                                tempCanvas.width = newWidth;
-                                tempCanvas.height = newHeight;
-                                const tempCtx = tempCanvas.getContext('2d');
-                                tempCtx.drawImage(canvas, 0, 0, newWidth, newHeight);
-                                
-                                // Try again with reduced dimensions
-                                result = findOptimalQuality(tempCanvas, mimeType, targetSizeKB);
-                                finalCanvas = tempCanvas;
+                                finalCanvas = currentCanvas;
                             }
                             
                             return { 
@@ -782,6 +813,25 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
                                 mimeType: mimeType 
                             };
                         }
+                        
+                        // Check if image has transparency (for format selection)
+                        const hasTransparency = (function() {
+                            try {
+                                const tempCanvas = document.createElement('canvas');
+                                tempCanvas.width = Math.min(img.width, 100);
+                                tempCanvas.height = Math.min(img.height, 100);
+                                const tempCtx = tempCanvas.getContext('2d');
+                                tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+                                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                                const pixels = imageData.data;
+                                for (let i = 3; i < pixels.length; i += 4) {
+                                    if (pixels[i] < 255) return true;
+                                }
+                            } catch (e) {
+                                // If check fails, assume no transparency
+                            }
+                            return false;
+                        })();
                         
                         // Check if image exceeds 720p
                         let canvas = document.createElement('canvas');
@@ -807,6 +857,9 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
                             canvas.width = Math.round(newWidth);
                             canvas.height = Math.round(newHeight);
                             const ctx = canvas.getContext('2d');
+                            // Better image quality for resizing
+                            ctx.imageSmoothingEnabled = true;
+                            ctx.imageSmoothingQuality = 'high';
                             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         } else {
                             canvas.width = img.width;
@@ -816,14 +869,36 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
                         }
                         
                         // Check size and compress if needed
-                        const testWebP = canvas.toDataURL('image/webp', 0.8);
-                        const initialSizeKB = getDataURISize(testWebP || canvas.toDataURL('image/jpeg', 0.8));
+                        // Select best format: PNG for transparency, WebP for photos, JPEG as fallback
+                        let bestFormat = hasTransparency ? 'image/png' : 'image/jpeg';
+                        let testDataURI = null;
+                        
+                        if (hasTransparency) {
+                            testDataURI = canvas.toDataURL('image/png');
+                        } else {
+                            // Test WebP support
+                            try {
+                                const testWebP = canvas.toDataURL('image/webp', 0.8);
+                                if (testWebP && testWebP.length > 0 && testWebP.substring(5, 15) === 'image/webp') {
+                                    bestFormat = 'image/webp';
+                                    testDataURI = testWebP;
+                                }
+                            } catch (e) {
+                                // WebP not supported
+                            }
+                        }
+                        
+                        if (!testDataURI) {
+                            testDataURI = canvas.toDataURL(bestFormat, 0.8);
+                        }
+                        
+                        const initialSizeKB = getDataURISize(testDataURI);
                         
                         let messages = [];
                         let dataURI, sizeKB, finalQuality, finalMimeType, finalCanvas = canvas;
                         
                         if (initialSizeKB > MAX_SIZE_KB) {
-                            const compressed = compressImageToSize(canvas, MAX_SIZE_KB);
+                            const compressed = compressImageToSize(canvas, MAX_SIZE_KB, hasTransparency);
                             dataURI = compressed.dataURI;
                             sizeKB = compressed.sizeKB;
                             finalQuality = compressed.quality;
@@ -836,10 +911,10 @@ function addCardToEditor(questions = [{ text: '' }], answer = '', hint = '', ind
                                 messages.push(`Image was compressed to ${sizeKB.toFixed(1)} KB (${finalMimeType}, quality: ${finalQuality}%)`);
                             }
                         } else {
-                            // Use WebP if supported, otherwise use original format
-                            finalMimeType = (testWebP && testWebP.substring(5, 15) === 'image/webp') ? 'image/webp' : (file.type || 'image/jpeg');
-                            dataURI = finalMimeType === 'image/webp' ? testWebP : canvas.toDataURL(finalMimeType, 0.8);
-                            sizeKB = getDataURISize(dataURI);
+                            // Use optimized format
+                            finalMimeType = bestFormat;
+                            dataURI = testDataURI;
+                            sizeKB = initialSizeKB;
                             
                             if (needsResize) {
                                 messages.push(`Image was resized from ${originalWidth}x${originalHeight} to ${canvas.width}x${canvas.height} to fit within 720p (1280x720) limit.`);
