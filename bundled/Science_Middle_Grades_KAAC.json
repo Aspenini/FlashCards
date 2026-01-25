@@ -622,9 +622,63 @@
       ],
       "answer": "AORTA",
       "roundId": "round_1768438740833"
+    },
+    {
+      "questions": [
+        {
+          "text": "This type of chemical bond will occur when two nonmetals share a pair of electrons and molecules are symmetrical.",
+          "order": 1
+        },
+        {
+          "text": "These types of bonds are not positive or negative because their shape causes the particles to cancel and are neutral.",
+          "order": 2
+        },
+        {
+          "text": "What is this type of covalent bond where electrons are shared equally like in carbon dioxide or methane?",
+          "order": 3
+        }
+      ],
+      "answer": "NONPOLAR [BOND]",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "Large quantities of these subatomic particles are released during nuclear fusion and fission and are located in an atom's nucleus.",
+          "order": 1
+        },
+        {
+          "text": "These particles consist of one up quark and two down quarks and are responsible for an atom's isotopes.",
+          "order": 2
+        },
+        {
+          "text": "What are these subatomic particles that are located in the nucleus of atoms and have no charge?",
+          "order": 3
+        }
+      ],
+      "answer": "NEUTRON[S]",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "Like birds and reptiles, these animals possess a cloaca which is a single opening for waste, urine, and gametes to be expelled.",
+          "order": 1
+        },
+        {
+          "text": "These mammals produce milk but have no nipples and examples include only the echidnas and platypus.",
+          "order": 2
+        },
+        {
+          "text": "What are these mammals that lay eggs?",
+          "order": 3
+        }
+      ],
+      "answer": "(MONOTREME[S]/MONOTREMATA)",
+      "roundId": "round_1769362547011"
     }
   ],
-  "exportedAt": "2026-01-15T02:03:39.787Z",
+  "exportedAt": "2026-01-25T17:49:03.418Z",
   "year": 2025,
   "rounds": [
     {
@@ -634,6 +688,10 @@
     {
       "id": "round_1768438740833",
       "number": 10
+    },
+    {
+      "id": "round_1769362547011",
+      "number": 11
     }
   ]
 }
