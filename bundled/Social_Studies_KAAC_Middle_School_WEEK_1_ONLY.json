@@ -1,0 +1,169 @@
+{
+  "name": "Social Studies KAAC Middle School WEEK 1 ONLY",
+  "cards": [
+    {
+      "questions": [
+        {
+          "text": "His memoir Hillbilly Elegy was published in 2016 and adapted into a movie directed by\nRon Howard in 2020. After a career as a lawyer and venture capitalist, he won election to the\nUnited States Senate from Ohio in 2022. Identify the person elected the 50th Vice President of\nthe United States in 2024.",
+          "order": 1
+        }
+      ],
+      "answer": "[J.D.] VANCE [ACCEPT: JAMES DAVID VANCE]"
+    },
+    {
+      "questions": [
+        {
+          "text": "This lake is named for a Native American tribe based in Quebec. The Straits of Mackinac\n(MA-kuh-naw) separate it from Lake Michigan. What is the second largest of the Great Lakes?",
+          "order": 1
+        }
+      ],
+      "answer": "LAKE HURON"
+    },
+    {
+      "questions": [
+        {
+          "text": "Ten of these figures lived in the Potala Palace, with the last one vacating it in 1959. The\ncurrent man with this title, Tenzin Gyatso, is the fourteenth. What is the title of the spiritual\nhead of Tibetan Buddhism?",
+          "order": 1
+        }
+      ],
+      "answer": "DALAI LAMA"
+    },
+    {
+      "questions": [
+        {
+          "text": "This event resulted in San Francisco’s population exploding from 1,000 to 25,000 in one\nyear. The discovery of precious metal at John Sutter’s sawmill on the American River sparked\nthis event. What event caused thousands of fortune seekers from around the globe to migrate\nto the West Coast of the United States?",
+          "order": 1
+        }
+      ],
+      "answer": "[CALIFORNIA] GOLD RUSH [ACCEPT: 1849 GOLD RUSH]"
+    },
+    {
+      "questions": [
+        {
+          "text": "This missionary was abducted early in the 5th century from his home in Britain and\nenslaved in Ireland. Another legend says that he used the shamrock to teach and illustrate the\nconcept of the Holy Trinity. Identify the Christian patron saint of Ireland, whose feast day is\ncelebrated on March 17th.",
+          "order": 1
+        }
+      ],
+      "answer": "(SAINT) PATRICK"
+    },
+    {
+      "questions": [
+        {
+          "text": "This Spanish explorer and his party were the first Europeans to see many physical\nlandmarks, including Palo Duro Canyon, the Colorado River, and the Grand Canyon. His\nexpedition consisted of 300 Spaniards, hundreds of Native Americans, herds of sheep, cattle,\npigs, and horses. Identify the Spanish explorer whose 1540 to 1542 expedition traveled over\n4,000 miles in search of the Seven Cities of Cibola.",
+          "order": 1
+        }
+      ],
+      "answer": "CORONADO"
+    },
+    {
+      "questions": [
+        {
+          "text": "Multiple answers required. One of these men believed himself to have won a contest\nafter seeing six more vultures than the other. One of these twin sons of Rhea Silva killed the\nother after he mockingly jumped over a wall. Who were these two brothers, raised by a she-\nwolf, who legendarily founded Rome?",
+          "order": 1
+        }
+      ],
+      "answer": "ROMULUS [AND] REMUS"
+    },
+    {
+      "questions": [
+        {
+          "text": "He is the only man to serve as Vice President under two different Presidents of different\nparties, namely John Quincy Adams and Andrew Jackson. He served as Secretary of War under\nJames Monroe and as Secretary of State under John Tyler. Which American political leader is\nremembered for championing states’ rights and for his support of the doctrines of nullification\nand secession?",
+          "order": 1
+        }
+      ],
+      "answer": "(JOHN C.) CALHOUN"
+    },
+    {
+      "questions": [
+        {
+          "text": "Libya borders this African nation to the west and the Red Sea to the east. Much of the\ncountry has a sparse population due to deserts in its eastern and western regions and limited\ndevelopment along its Mediterranean coast. Most of the population of which country resides\nalong the Nile River, including its capital and largest city, Cairo?",
+          "order": 1
+        }
+      ],
+      "answer": "EGYPT"
+    },
+    {
+      "questions": [
+        {
+          "text": "General Oliver O. Howard headed this government agency created in 1865. The agency\nprovided money to establish black schools and colleges, including Fisk University and Howard\nUniversity. Name the federal agency that provided aid to 4 million African Americans in their\ntransition from slavery to freedom.",
+          "order": 1
+        }
+      ],
+      "answer": "FREEDMEN’S BUREAU"
+    },
+    {
+      "questions": [
+        {
+          "text": "In 1630, the flagship Arbella and 10 others delivered 700 passengers to establish this\ncolony. John Winthrop’s sermon “A Model of Christian Charity” inspired many of the early\nsettlers in this colony. Identify the colony established by the Puritans around Boston and\nneighboring towns.",
+          "order": 1
+        }
+      ],
+      "answer": "MASSACHUSETTS BAY [COLONY]"
+    },
+    {
+      "questions": [
+        {
+          "text": "Governments use these maps to allocate resources, determine electoral districts, and\nmake urban planning and service decisions. A map of this type for New York would show lighter\nshading in the upstate or northern portion of the state and heavy shading for New York City.\nWhat type of map shows how many people live in each unit of area?",
+          "order": 1
+        }
+      ],
+      "answer": "POPULATION DENSITY [MAP]"
+    },
+    {
+      "questions": [
+        {
+          "text": "The victories of George Rogers Clark during the Revolutionary War strengthened the\nU.S. claim to this territory north of the Ohio River. Two ordinances passed by the Continental\nCongress in 1785 and 1787 dealt with this territory. The U.S. government organized the states\nof Ohio, Indiana, Illinois, Michigan, and Wisconsin from land belonging to which territory?",
+          "order": 1
+        }
+      ],
+      "answer": "NORTHWEST TERRITORY"
+    },
+    {
+      "questions": [
+        {
+          "text": "This type of climate is associated with grapes, olives, figs, and citrus fruits California is\nthe only state with this climate associated with Greece, Italy, and Spain. Identify the climate\ncharacterized by hot, dry summers and cool, wet winters, primarily between 30° and 45°\nlatitude north and south of the Equator, and takes its name from a major sea.",
+          "order": 1
+        }
+      ],
+      "answer": "MEDITERRANEAN"
+    },
+    {
+      "questions": [
+        {
+          "text": "By 1650, this Native American nation controlled approximately 40,000 square miles of\nthe Appalachian Mountains. After 1839, this Native American nation split into a western band\nin Oklahoma and an eastern band in North Carolina. Before their forced removal, which Native\nAmerican nation had its capital at New Echota, Georgia, and published the first Native American\nlanguage newspaper?",
+          "order": 1
+        }
+      ],
+      "answer": "CHEROKEE [ACCEPT: CHEROKEE NATION]"
+    },
+    {
+      "questions": [
+        {
+          "text": "While reigning only from 221 to 207 BC, this dynasty established the first great Chinese\nempire. Legalism became the official philosophy of China during the reign of this dynasty. The\nHan succeeded which dynasty that began construction on the Great Wall of China?",
+          "order": 1
+        }
+      ],
+      "answer": "QIN [CHIN] [DYNASTY]"
+    },
+    {
+      "questions": [
+        {
+          "text": "Napata and Meroe served as the capital of this ancient African kingdom at various\ntimes. This kingdom’s ruler, Piye [PIE], invaded Egypt from the south and hastened the collapse\nof the New Kingdom. Which kingdom, located in modern Sudan, also known as Nubia, ruled\nEgypt between 750 and 663 BC?",
+          "order": 1
+        }
+      ],
+      "answer": "KUSH"
+    },
+    {
+      "questions": [
+        {
+          "text": "A fifth-generation fisherman in a Japanese fishing village would exemplify this type of\neconomic system. This economic system makes minimal use of technology or market exchange.\nWhich economic system relies on traditions, customs, and beliefs to determine the goods and\nservices produced and distributed?",
+          "order": 1
+        }
+      ],
+      "answer": "TRADITIONAL (ECONOMY)"
+    }
+  ],
+  "exportedAt": "2026-01-20T21:54:35.918Z",
+  "year": 2025
+}
