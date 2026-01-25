@@ -676,9 +676,282 @@
       ],
       "answer": "(MONOTREME[S]/MONOTREMATA)",
       "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "It's not a desert, bout this biome receives very little annual precipitation, usually less than 10 inches.",
+          "order": 1
+        },
+        {
+          "text": "This biome is treeless and it is characterized permafrost in the soil.",
+          "order": 2
+        },
+        {
+          "text": "Which cold biome is primarily found in the Arctic?",
+          "order": 3
+        }
+      ],
+      "answer": "TUNDRA",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "This specific location was reached in 2012 by filmmaker James Cameron in a vessel specially built to withstand crushing pressures.",
+          "order": 1
+        },
+        {
+          "text": "This location, first visited by Walsh and Piccard, was named for a British survey ship and it is found in the Mariana Trench.",
+          "order": 2
+        },
+        {
+          "text": "What is this deepest known point of Earth's oceans?",
+          "order": 3
+        }
+      ],
+      "answer": "CHALLENGER DEEP",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "This kingdom of organisms can be classified on their form of locomotion, such as with pseudopodia, cilia, flagella, or non-motile forms.",
+          "order": 1
+        },
+        {
+          "text": "This kingdom is highly diverse with both photosynthetic and heterotrophic organisms and its member are eukaryotic and primarily unicellular.",
+          "order": 2
+        },
+        {
+          "text": "Name this kingdom of organisms that contains the protozoa and algae.",
+          "order": 3
+        }
+      ],
+      "answer": "(PROTIST[S]/PROTISTA)",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "This law of motion can be seen when escaping air from a balloon results in the balloon traveling in the other direction.",
+          "order": 1
+        },
+        {
+          "text": "This law explains how chairs hold our weight when we sit on them.",
+          "order": 2
+        },
+        {
+          "text": "What is this law of motion that suggests for each and every action there will be an equal and opposite reaction?",
+          "order": 3
+        }
+      ],
+      "answer": "[NEWTON'S] THIRD [LAW OF MOTION]",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "This specialize structure in birds consists of a stretchy, muscular pouch that some use to produce milk for their young like pigeons.",
+          "order": 1
+        },
+        {
+          "text": "In insects such as cockroaches, it is an enlarged part of the esophagus that will discharge into the gut for later digestion.",
+          "order": 2
+        },
+        {
+          "text": "What is this specialized structure where ingested food is stored for later digestion and is sometimes called a craw?",
+          "order": 3
+        }
+      ],
+      "answer": "CROP[S]",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "The rotation of these celestial objects provided Vera Rubin with evidence for dark matter in the Universe.",
+          "order": 1
+        },
+        {
+          "text": "Most of these objects have a supermassive black hole at their centers and these may be classified as elliptical or spiral types.",
+          "order": 2
+        },
+        {
+          "text": "What are these large groupings of stars and solar systems like the Milky Way?",
+          "order": 3
+        }
+      ],
+      "answer": "(GALAXY/GALAXIES)",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "The two primary varieties of this geologic feature are coastal and interior.",
+          "order": 1
+        },
+        {
+          "text": "These features cover more than one-third of the Earth's surface.",
+          "order": 2
+        },
+        {
+          "text": "Identify the large areas of the Earth's surface that are relatively flat to gently sloping, such as the great ones that extend northward from Texas to Canada.",
+          "order": 3
+        }
+      ],
+      "answer": "PLAIN[S]",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "The SI unit for this quantity was named for the inventor of the modern electric battery.",
+          "order": 1
+        },
+        {
+          "text": "This quantity is the product of electrical current and resistance and it causes electrons to flow in a circuit.",
+          "order": 2
+        },
+        {
+          "text": "What is the difference in electrical potential between two points in an electrical circuit, named for an Italian physicist?",
+          "order": 3
+        }
+      ],
+      "answer": "BRYOPHYTE[S]",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "This plant group has a dominant phase called the gametophyte stage.",
+          "order": 1
+        },
+        {
+          "text": "This plant group lacks xylem and phloem and it includes the hornworts, liverworts, and mosses.",
+          "order": 2
+        },
+        {
+          "text": "Name these nonvascular plants.",
+          "order": 3
+        }
+      ],
+      "answer": "BRYOPHYTE[S]",
+      "hints": [
+        "scientific name, please"
+      ],
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "This category of biomolecules are important for molecular transport and structural support that consist of macromolecules of polypeptides.",
+          "order": 1
+        },
+        {
+          "text": "These biomolecules make up enzymes and most tissues, and they are assembled by the cell&#39;s ribosomes.",
+          "order": 2
+        },
+        {
+          "text": "What are these groups of organic compounds that help build and repair cells through chains of amino acids?",
+          "order": 3
+        }
+      ],
+      "answer": "PROTIEN[S]",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "An incident involving one of these in 1883 destroyed the island of Krakatoa and created the loudest sound in human history.",
+          "order": 1
+        },
+        {
+          "text": "Olympus Mons is the largest one of these in the Solar System and types of them include composite, cinder cone, and shield.",
+          "order": 2
+        },
+        {
+          "text": "What are these openings or vents in Earth’s crust that spew rocks, gases, and lava onto Earth’s surface?",
+          "order": 3
+        }
+      ],
+      "answer": "VOLCANO[ES]",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "This American scientist and prolific inventor is also known for his work as a diplomat during the early years of our country.",
+          "order": 1
+        },
+        {
+          "text": "Some of his inventions were a rocking chair that moved an overhead palmetto leaf for air circulation, a stove, and bifocal glasses.",
+          "order": 2
+        },
+        {
+          "text": "Who was this American scientist and founding father known for his experiments in electricity?",
+          "order": 3
+        }
+      ],
+      "answer": "[BENJAMIN] FRANKLIN",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "This type of transportation of substances into and out of a cell’s membrane is based on the concentration gradient and can only flow one way.",
+          "order": 1
+        },
+        {
+          "text": "Substances always move down their concentration gradient in this type of transport with examples of osmosis and diffusion.",
+          "order": 2
+        },
+        {
+          "text": "What is this type of transport through a cell’s membrane that does not require using the cell’s energy?",
+          "order": 3
+        }
+      ],
+      "answer": "PASSIVE [TRANSPORT]",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "In somatic cells, this stage of mitosis occurs immediately after the Gap 2 stage.",
+          "order": 1
+        },
+        {
+          "text": "The spindle apparatus forms during this stage which occurs before metaphase.",
+          "order": 2
+        },
+        {
+          "text": "In which phase of mitosis do chromosomes tightly coil, the first stage of mitosis?",
+          "order": 3
+        }
+      ],
+      "answer": "PROPHASE",
+      "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "Macrophages [MACK-rho-fahjz-ez] are cells within this system that are nonspecific and the white pulp of the spleen houses many of this system's cells.",
+          "order": 1
+        },
+        {
+          "text": "Lymphatic vessels improve the efficiency of this system and the skin is considered the first line of defense for this system that features white blood cells.",
+          "order": 2
+        },
+        {
+          "text": "What is this body system that defends against foreign and disease-causing substances?",
+          "order": 3
+        }
+      ],
+      "answer": "IMMUNE [SYSTEM]",
+      "roundId": "round_1769362547011"
     }
   ],
-  "exportedAt": "2026-01-25T17:49:03.418Z",
+  "exportedAt": "2026-01-25T21:39:09.233Z",
   "year": 2025,
   "rounds": [
     {
