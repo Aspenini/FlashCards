@@ -286,6 +286,7 @@ function renderSets() {
                     <div class="set-meta">${metaText}</div>
                 </div>
                 <div class="set-actions">
+                    <button class="btn btn-secondary btn-icon" onclick="exportSet(${index})">Export</button>
                 </div>
             `;
             bundledSetsList.appendChild(setItem);
@@ -1397,10 +1398,6 @@ function deleteSet() {
 // Export set
 function exportSet(index) {
     const set = sets[index];
-    if (set.bundled) {
-        alert('Bundled sets cannot be exported. You can only export sets you created.');
-        return;
-    }
     const exportData = {
         name: set.name,
         cards: set.cards,
