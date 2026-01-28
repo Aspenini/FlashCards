@@ -253,7 +253,7 @@
           "order": 3
         }
       ],
-      "answer": "SICKLE CELL [AMEMIA]",
+      "answer": "SICKLE CELL [ANEMIA]",
       "roundId": "round_1768438625969"
     },
     {
@@ -818,7 +818,7 @@
           "order": 3
         }
       ],
-      "answer": "BRYOPHYTE[S]",
+      "answer": "VOLTAGE",
       "roundId": "round_1769362547011"
     },
     {
@@ -857,7 +857,7 @@
           "order": 3
         }
       ],
-      "answer": "PROTIEN[S]",
+      "answer": "PROTEIN[S]",
       "roundId": "round_1769362547011"
     },
     {
@@ -951,7 +951,7 @@
       "roundId": "round_1769362547011"
     }
   ],
-  "exportedAt": "2026-01-25T21:39:09.233Z",
+  "exportedAt": "2026-01-26T19:02:07.822Z",
   "year": 2025,
   "rounds": [
     {
