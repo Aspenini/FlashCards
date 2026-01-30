@@ -949,9 +949,153 @@
       ],
       "answer": "IMMUNE [SYSTEM]",
       "roundId": "round_1769362547011"
+    },
+    {
+      "questions": [
+        {
+          "text": "This familiar type of ionic compound is produced by the reaction of cations and anions into a crystalline lattice.",
+          "order": 1
+        },
+        {
+          "text": "This type of ionic compound is formed in the neutralization of any acid and base along with the formation of water.",
+          "order": 2
+        },
+        {
+          "text": "What is the most common ionic compound in our daily lives such as the seasoning, sodium chloride?",
+          "order": 3
+        }
+      ],
+      "answer": "SALT[S]",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "This force was redefined by Einstein's theory of general relativity as the curvature of spacetime caused by mass.",
+          "order": 1
+        },
+        {
+          "text": "This force decreases as the distance between two objects increases.",
+          "order": 2
+        },
+        {
+          "text": "What is this universal force of nature that is defined as an attraction between any two objects that have a mass?",
+          "order": 3
+        }
+      ],
+      "answer": "GRAVITY",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "This part of an animal egg can be either nearly nonexistent, toward one pole, or composing most of the egg, but is where all embryos get their energy.",
+          "order": 1
+        },
+        {
+          "text": "It is called the ooplasm of the egg which is the cytoplasm that surrounds the nucleus, is not clear, and the color depends on the type of organism.",
+          "order": 2
+        },
+        {
+          "text": "Name this part of an animal egg that contains the stored food usually rich in proteins and lipids.",
+          "order": 3
+        }
+      ],
+      "answer": "YOLK",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "This biome's soil is oxisol, which is low in nutrients due to high rates of decomposition and uptake.",
+          "order": 1
+        },
+        {
+          "text": "This biome is characterized by buttress trees and year-long growing seasons and animals found in this biome include pumas, anacondas, and toucans.",
+          "order": 2
+        },
+        {
+          "text": "What biome is located along the equator and receives the most rainfall of all Earth's biomes?",
+          "order": 3
+        }
+      ],
+      "answer": "TROPICAL RAINFOREST[S]",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "Like the mesosphere, this layer of the atmosphere cools with higher elevation.",
+          "order": 1
+        },
+        {
+          "text": "This layer is about 20 kilometers at its thickest point and it is responsible for all weather events.",
+          "order": 2
+        },
+        {
+          "text": "What is the lowest layer of Earth's atmosphere?",
+          "order": 3
+        }
+      ],
+      "answer": "TROPOSPHERE",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "When linked as cellular chains, these bacteria are known as the \"strepto-\" form.",
+          "order": 1
+        },
+        {
+          "text": "Pathogenic members of these bacteria may cause diseases such as pneumonia and MRSA and these bacteria cannot have flagella, unlike their bacillus counterparts.",
+          "order": 2
+        },
+        {
+          "text": "Name these bacteria that are spherical in shape.",
+          "order": 3
+        }
+      ],
+      "answer": "(COCCI/COCCUS)",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "This region is a highland area popular with campers and hikers, known for its beautiful lakes, caves, and peaks.",
+          "order": 1
+        },
+        {
+          "text": "The town of Branson serves as an entertainment and tourism hub that highlights the region's traditional culture.",
+          "order": 2
+        },
+        {
+          "text": "Name this region that straddles the states of Arkansas and Missouri.",
+          "order": 3
+        }
+      ],
+      "answer": "(OZARKS/OZARK MOUNTAINS/OZARK HIGHLANDS/OZARK PLATEAU)",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "This wave property can indicate the intensity of a sound wave or light wave.",
+          "order": 1
+        },
+        {
+          "text": "This property of a wave is positive for the crest and is negative for the trough.",
+          "order": 2
+        },
+        {
+          "text": "What is the maximum displacement of a wave from its equilibrium point?",
+          "order": 3
+        }
+      ],
+      "answer": "AMPLITUDE",
+      "roundId": "round_1769734264588"
     }
   ],
-  "exportedAt": "2026-01-26T19:02:07.822Z",
+  "exportedAt": "2026-01-30T01:38:23.921Z",
   "year": 2025,
   "rounds": [
     {
@@ -965,6 +1109,10 @@
     {
       "id": "round_1769362547011",
       "number": 11
+    },
+    {
+      "id": "round_1769734264588",
+      "number": 12
     }
   ]
 }
