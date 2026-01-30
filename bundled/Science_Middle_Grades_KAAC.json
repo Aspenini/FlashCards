@@ -1093,9 +1093,210 @@
       ],
       "answer": "AMPLITUDE",
       "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "In biology this word refers to the tissue between cells in which structures are embedded.",
+          "order": 1
+        },
+        {
+          "text": "In mathematics, this word names a rectangular array of quantities arranged in rows and columns.",
+          "order": 2
+        },
+        {
+          "text": "Identify this word that also names a sci-fi movies starring Keanu Reeves.",
+          "order": 3
+        }
+      ],
+      "answer": "MATRIX",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "These organisms possess one or more small ringlets of DNA called plasmids in addition to their single chromosomes.",
+          "order": 1
+        },
+        {
+          "text": "These organisms have a cell wall made of peptidoglycan and they can have cell shapes that are coccus, bacillus, or spirillum.",
+          "order": 2
+        },
+        {
+          "text": "Name these single-celled prokaryotic organisms.",
+          "order": 3
+        }
+      ],
+      "answer": "BACTERIA",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "An astronaut aboard this space mission took Holy Communion off camera during this mission that was the most watched TV event up to that time.",
+          "order": 1
+        },
+        {
+          "text": "This mission's commander announced \"the Eagle has landed\" upon touchdown and this mission was captained by Neil Armstrong.",
+          "order": 2
+        },
+        {
+          "text": "What space mission was the first to land humans on the surface of the Moon?",
+          "order": 3
+        }
+      ],
+      "answer": "APOLLO 11",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "This is the measure on multiple scales of the average kinetic energy in a substance that does not have to do with the transfer of energy between objects.",
+          "order": 1
+        },
+        {
+          "text": "This intensive physical property is independent on the amount of matter present.",
+          "order": 2
+        },
+        {
+          "text": "What do we define as the measure of the hotness or coldness of matter?",
+          "order": 3
+        }
+      ],
+      "answer": "TEMPERATURE",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "Though these structures are normally green, they are white in the flowering dogwood tree.",
+          "order": 1
+        },
+        {
+          "text": "These structures form the outermost whorl of a complete flower and collectively these structures are called the calyx.",
+          "order": 2
+        },
+        {
+          "text": "What are these modified leaves that protect the developing flower bud?",
+          "order": 3
+        }
+      ],
+      "answer": "SEPAL[S]",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "This organic compound classification are polymers that appear in all living organisms, including viruses, and whose structure differentiation depends on the sugars, bases, and phosphate groups involved.",
+          "order": 1
+        },
+        {
+          "text": "These compounds carry the genetic material needed to direct protein synthesis and the recording of hereditary information.",
+          "order": 2
+        },
+        {
+          "text": "What are these classifications of biomolecules that come in the two types of DNA and RNA?",
+          "order": 3
+        }
+      ],
+      "answer": "NUCLEIC ACID[S]",
+      "hints": [
+        "two-word answer"
+      ],
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "Because high mass stars fuse heavier elements than the average star, they have a shorter life cycle that ends in this spectacular way as the core collapses.",
+          "order": 1
+        },
+        {
+          "text": "These are the primary source of heavier elements that are dispersed into the universe for other stars to form.",
+          "order": 2
+        },
+        {
+          "text": "What is this massive explosion of high mass stars that can shine brighter than a galaxy?",
+          "order": 3
+        }
+      ],
+      "answer": "(SUPERNOVA/SUPERNOVAE)",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "This scientist was nicknamed the \"Italian navigator\" by Arthur Compton in a secret phone call sent from Chicago.",
+          "order": 1
+        },
+        {
+          "text": "This physicist was present at the dropping of the first test nuclear weapon and he is the namesake of the group of particles that make up all matter.",
+          "order": 2
+        },
+        {
+          "text": "What Italian physicist is credited with building Chicago Pile-1, the first nuclear reactor?",
+          "order": 3
+        }
+      ],
+      "answer": "[ENRICO] FERMI",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "This compound is classified as a pyrimidine and it bonds exactly twice to a complementary purine.",
+          "order": 1
+        },
+        {
+          "text": "In the RNA structure, this nucleotide base is replaced by the uracil.",
+          "order": 2
+        },
+        {
+          "text": "What is this base nucleotide that binds in the DNA process with its pair adenine and whose symbol is T?",
+          "order": 3
+        }
+      ],
+      "answer": "THYMINE",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "An example of this process is parthenogenesis [PAR-thuh-no-JEN-uh-sis], which is commonly performed in honeybees.",
+          "order": 1
+        },
+        {
+          "text": "This process is preferred for organisms that live in highly stable environments because further adaptations are not needed.",
+          "order": 2
+        },
+        {
+          "text": "What form of reproduction produces offspring that are genetically identical to the parent?",
+          "order": 3
+        }
+      ],
+      "answer": "ASEXUAL [REPRODUCTION]",
+      "roundId": "round_1769734264588"
+    },
+    {
+      "questions": [
+        {
+          "text": "Material that moves through this organ is called a bolus and this organ begins at the cricopharyngeal sphincter.",
+          "order": 1
+        },
+        {
+          "text": "If the sphincter at the end of this tube-like organ allows material to move back into it, it can cause GERD [gerhd], or acid reflux.",
+          "order": 2
+        },
+        {
+          "text": "What is muscular tube of the digestive system that sends food to the stomach?",
+          "order": 3
+        }
+      ],
+      "answer": "ESOPHAGUS",
+      "roundId": "round_1769734264588"
     }
   ],
-  "exportedAt": "2026-01-30T01:38:23.921Z",
+  "exportedAt": "2026-01-30T02:18:15.062Z",
   "year": 2025,
   "rounds": [
     {
