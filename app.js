@@ -20,8 +20,52 @@ let gamepadState = {
     lastButtonPress: 0,
     buttonDebounceDelay: 200, // ms between button presses
     navigationIndex: 0, // For D-pad navigation
-    navigationElements: []
+    navigationElements: [],
+    wiiu: false, // true when running in Wii U browser (key events + optional wiiu.gamepad)
+    wiiuLastDpad: 0
 };
+
+// ---------------------------------------------------------------------------
+// Wii U browser support (GH Pages / Wii U Internet Browser)
+// ---------------------------------------------------------------------------
+// The Wii U browser exposes:
+// - Key events: A button = keyCode 13, D-pad = 37,38,39,40 (keydown/keyup only for D-pad)
+// - window.wiiu.gamepad: optional polling API for sticks, buttons, touch, accelerometer
+// - Touch: standard touch events on GamePad screen (same page on TV and GamePad)
+// - Vibration: standard Gamepad API vibrationActuator when supported
+// - No separate "different content on TV vs GamePad" from JS; browser mirrors the page.
+function isWiiU() {
+    if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.indexOf('Nintendo WiiU') !== -1) return true;
+    if (typeof window !== 'undefined' && window.wiiu) return true;
+    return false;
+}
+
+// Vibration: use Gamepad API vibrationActuator when available (e.g. some browsers / Wii U).
+// Other devices unchanged if not supported.
+function tryGamepadVibration(options) {
+    try {
+        if (!navigator.getGamepads) return;
+        const gamepads = navigator.getGamepads();
+        for (let i = 0; i < gamepads.length; i++) {
+            const gp = gamepads[i];
+            if (!gp || !gp.vibrationActuator) continue;
+            const duration = options.duration != null ? options.duration : 100;
+            const weak = options.weak != null ? options.weak : 0.5;
+            const strong = options.strong != null ? options.strong : 0.5;
+            if (typeof gp.vibrationActuator.playEffect === 'function') {
+                gp.vibrationActuator.playEffect('dual-rumble', {
+                    startDelay: 0,
+                    duration: duration,
+                    weakMagnitude: weak,
+                    strongMagnitude: strong
+                });
+            }
+            break;
+        }
+    } catch (e) {
+        // Ignore
+    }
+}
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -30,6 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     setupSiteLogoFallback();
     setupGamepadSupport();
+    if (isWiiU()) {
+        setupWiiUSupport();
+    }
     renderSets();
     
     // Handle initial hash or hash changes
@@ -2109,6 +2156,9 @@ function flipCard() {
     // Hide "Add Next Question" button when flipped
     document.getElementById('hintButton').style.display = 'none';
     
+    // Light vibration on flip when supported (e.g. Wii U)
+    tryGamepadVibration({ duration: 40, weak: 0.3, strong: 0.3 });
+    
     // Update gamepad navigation for study view when buttons change
     if (getCurrentViewId() === 'studyView' && gamepadState.connected) {
         updateGamepadNavigation('studyView');
@@ -2170,6 +2220,9 @@ function markAnswer(isCorrect) {
             studyResults.wrong++;
         }
     }
+    
+    // Optional vibration when supported (e.g. Wii U / standard Gamepad API)
+    tryGamepadVibration(isCorrect ? { duration: 80, weak: 0.5, strong: 0.5 } : { duration: 180, weak: 1, strong: 1 });
     
     // Move to next card and reset question tracking for the new card
     currentCardIndex++;
@@ -2462,6 +2515,93 @@ function setupGamepadSupport() {
             }
         }
     }
+}
+
+// Wii U: use key events (A=13, D-pad=37-40) and optional wiiu.gamepad polling.
+// On Wii U the standard Gamepad API may not fire gamepadconnected; key events are reliable.
+function setupWiiUSupport() {
+    gamepadState.wiiu = true;
+    gamepadState.connected = true; // Enable navigation/focus UI
+    document.documentElement.classList.add('wiiu');
+    setupWiiUKeyEvents();
+    if (typeof window.wiiu !== 'undefined' && window.wiiu.gamepad) {
+        setupWiiUGamepadPolling();
+    }
+    updateGamepadNavigation(getCurrentViewId());
+}
+
+function setupWiiUKeyEvents() {
+    document.addEventListener('keydown', function wiiuKeyDown(e) {
+        if (!gamepadState.wiiu) return;
+        const keyCode = e.keyCode || e.which;
+        // A button = 13; D-pad = 37 Left, 38 Up, 39 Right, 40 Down
+        if (keyCode === 13 || (keyCode >= 37 && keyCode <= 40)) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        if (keyCode === 13) {
+            handleWiiUConfirm();
+        } else if (keyCode >= 37 && keyCode <= 40) {
+            const now = Date.now();
+            if (now - gamepadState.wiiuLastDpad < 200) return;
+            gamepadState.wiiuLastDpad = now;
+            let vertical = 0, horizontal = 0;
+            if (keyCode === 38) vertical = -1;
+            if (keyCode === 40) vertical = 1;
+            if (keyCode === 37) horizontal = -1;
+            if (keyCode === 39) horizontal = 1;
+            navigateWithDpad(vertical, horizontal);
+        }
+    }, true);
+}
+
+function handleWiiUConfirm() {
+    const now = Date.now();
+    if (now - gamepadState.lastButtonPress < gamepadState.buttonDebounceDelay) return;
+    gamepadState.lastButtonPress = now;
+    const viewId = getCurrentViewId();
+    // Map A button to same behavior as gamepad button 0 (A)
+    if (viewId === 'studyView') {
+        handleStudyViewButtons(0);
+    } else if (viewId === 'resultsView') {
+        handleResultsViewButtons(0);
+    } else if (viewId === 'mainView') {
+        handleMainViewButtons(0);
+    } else if (viewId === 'studySetupView') {
+        handleSetupViewButtons(0);
+    } else if (viewId === 'setEditorView') {
+        handleEditorViewButtons(0);
+    }
+}
+
+function setupWiiUGamepadPolling() {
+    if (!window.wiiu || !window.wiiu.gamepad) return;
+    let lastStick = 0;
+    function poll() {
+        if (!gamepadState.wiiu) return;
+        try {
+            if (typeof window.wiiu.gamepad.update === 'function') {
+                window.wiiu.gamepad.update();
+            }
+            // Optional: read stick axes from wiiu.gamepad and call navigateWithDpad
+            // API shape varies; common is .leftStickX, .leftStickY or axes array
+            const g = window.wiiu.gamepad;
+            let horizontal = 0, vertical = 0;
+            if (g.leftStickX !== undefined) horizontal = Math.abs(g.leftStickX) > 0.3 ? g.leftStickX : 0;
+            if (g.leftStickY !== undefined) vertical = Math.abs(g.leftStickY) > 0.3 ? -g.leftStickY : 0;
+            if (horizontal !== 0 || vertical !== 0) {
+                const now = Date.now();
+                if (now - lastStick > 180) {
+                    lastStick = now;
+                    navigateWithDpad(vertical, horizontal);
+                }
+            }
+        } catch (err) {
+            // wiiu.gamepad may throw if not available
+        }
+        requestAnimationFrame(poll);
+    }
+    requestAnimationFrame(poll);
 }
 
 // Get current active view ID

@@ -244,6 +244,40 @@ h3 {
     }
 }
 
+/* Wii U Internet Browser (GamePad 854x448, touch + D-pad/A) */
+.wiiu .view {
+    padding: 24px 32px;
+}
+.wiiu .btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 14px 28px;
+}
+.wiiu .button-group {
+    gap: 12px;
+    margin-bottom: 32px;
+}
+.wiiu .main-header {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+}
+.wiiu h1 {
+    font-size: 2rem;
+    margin-bottom: 24px;
+}
+.wiiu h2 {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+}
+.wiiu .flashcard {
+    touch-action: manipulation;
+}
+.wiiu .study-actions .btn,
+.wiiu .answer-buttons .btn {
+    min-height: 48px;
+    padding: 16px 32px;
+}
+
 /* Sets List */
 #bundledSetsContainer {
     margin-bottom: 48px;
