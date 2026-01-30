@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBundledSets(); // Load bundled sets first
     loadSets(); // Load user sets
     setupEventListeners();
+    setupSiteLogoFallback();
     setupGamepadSupport();
     renderSets();
     
@@ -136,7 +137,16 @@ function clearCacheAndReload() {
 
     document.getElementById('clearCacheBtn').addEventListener('click', clearCacheAndReload);
 
+    document.getElementById('printBtn').addEventListener('click', openPrintModal);
+
     document.getElementById('importFileInput').addEventListener('change', handleImport);
+
+    // Print modal
+    document.getElementById('printModalClose').addEventListener('click', closePrintModal);
+    document.getElementById('printModalBackdrop').addEventListener('click', closePrintModal);
+    document.getElementById('printModalCancel').addEventListener('click', closePrintModal);
+    document.getElementById('printSetSelect').addEventListener('change', updatePrintRoundSelect);
+    document.getElementById('printGenerateBtn').addEventListener('click', generatePrintPdf);
 
     // Editor view
     document.getElementById('backToMainBtn').addEventListener('click', () => {
@@ -179,6 +189,23 @@ function clearCacheAndReload() {
     document.getElementById('backToMainFromResultsBtn').addEventListener('click', () => {
         showView('mainView');
     });
+}
+
+function setupSiteLogoFallback() {
+    const siteLogo = document.getElementById('siteLogo');
+    const siteLogoFallback = document.getElementById('siteLogoFallback');
+    if (!siteLogo || !siteLogoFallback) return;
+    siteLogo.onerror = () => {
+        siteLogo.classList.add('failed');
+        siteLogoFallback.classList.add('visible');
+    };
+    siteLogo.onload = () => {
+        siteLogo.classList.remove('failed');
+        siteLogoFallback.classList.remove('visible');
+    };
+    if (siteLogo.complete && !siteLogo.naturalWidth) {
+        siteLogo.onerror();
+    }
 }
 
 // View management with URL hash support
@@ -1472,6 +1499,329 @@ function updateRoundSelect() {
         roundSelectGroup.style.display = 'none';
         roundSelect.innerHTML = '<option value="">All Rounds</option>';
     }
+}
+
+// Print modal
+function openPrintModal() {
+    document.getElementById('printModal').style.display = 'flex';
+    populatePrintSetSelect();
+    updatePrintRoundSelect();
+}
+
+function closePrintModal() {
+    document.getElementById('printModal').style.display = 'none';
+}
+
+function populatePrintSetSelect() {
+    const select = document.getElementById('printSetSelect');
+    select.innerHTML = '<option value="">Select a set...</option>';
+    sets.forEach((set, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${set.name} (${set.cards.length} cards)`;
+        select.appendChild(option);
+    });
+    updatePrintRoundSelect();
+}
+
+function updatePrintRoundSelect() {
+    const select = document.getElementById('printSetSelect');
+    const roundSelect = document.getElementById('printRoundSelect');
+    const roundGroup = document.getElementById('printRoundGroup');
+    if (select.value === '') {
+        roundGroup.style.display = 'none';
+        roundSelect.innerHTML = '<option value="">All Rounds</option>';
+        return;
+    }
+    const setIndex = parseInt(select.value, 10);
+    const set = sets[setIndex];
+    if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
+        roundGroup.style.display = 'block';
+        roundSelect.innerHTML = '<option value="">All Rounds</option>';
+        const sortedRounds = [...set.rounds].sort((a, b) => a.number - b.number);
+        sortedRounds.forEach(round => {
+            const option = document.createElement('option');
+            option.value = round.id;
+            option.textContent = `Round ${round.number}`;
+            roundSelect.appendChild(option);
+        });
+    } else {
+        roundGroup.style.display = 'none';
+        roundSelect.innerHTML = '<option value="">All Rounds</option>';
+    }
+}
+
+function stripHtmlForPdf(html) {
+    if (typeof html !== 'string') return '';
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return (div.textContent || div.innerText || '').trim();
+}
+
+function resolveImageToDataUri(imageStr) {
+    if (!imageStr || !imageStr.trim()) return Promise.resolve(null);
+    const s = imageStr.trim();
+    if (s.startsWith('data:image/')) {
+        if (s.startsWith('data:image/svg')) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth || img.width;
+                    canvas.height = img.naturalHeight || img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    try {
+                        resolve(canvas.toDataURL('image/png'));
+                    } catch (e) {
+                        resolve(null);
+                    }
+                };
+                img.onerror = () => resolve(null);
+                img.src = s;
+            });
+        }
+        return Promise.resolve(s);
+    }
+    if (s.startsWith('<svg')) {
+        return new Promise((resolve) => {
+            const blob = new Blob([s], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth || img.width;
+                canvas.height = img.naturalHeight || img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                try {
+                    resolve(canvas.toDataURL('image/png'));
+                } catch (e) {
+                    resolve(null);
+                }
+                URL.revokeObjectURL(url);
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                resolve(null);
+            };
+            img.src = url;
+        });
+    }
+    return Promise.resolve(null);
+}
+
+async function generatePrintPdf() {
+    const setSelect = document.getElementById('printSetSelect');
+    const roundSelect = document.getElementById('printRoundSelect');
+    if (setSelect.value === '') {
+        alert('Please select a set');
+        return;
+    }
+    const setIndex = parseInt(setSelect.value, 10);
+    const set = sets[setIndex];
+    let cards = [...set.cards];
+    const roundId = roundSelect.value;
+    if (roundId) {
+        cards = cards.filter(card => card.roundId === roundId);
+        if (cards.length === 0) {
+            alert('No cards in the selected round');
+            return;
+        }
+    }
+    if (typeof window.jspdf === 'undefined') {
+        alert('PDF library failed to load. Please refresh and try again.');
+        return;
+    }
+
+    const resolvedImages = await Promise.all(
+        cards.map(card => resolveImageToDataUri(card.image || ''))
+    );
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const maxW = pageW - margin * 2;
+    const lineHeight = 7;
+    const titleSize = 12;
+    const bodySize = 9;
+    const labelSize = 8;
+    const cardGap = 10;
+    const maxImageHeight = 40;
+    const logoMaxHeight = 25;
+    let brandingHeight = margin;
+
+    doc.setFont('helvetica', 'normal');
+
+    let logoImg = null;
+    const logoEl = document.getElementById('pdfLogo');
+    if (logoEl && logoEl.complete && logoEl.naturalWidth && logoEl.naturalHeight) {
+        logoImg = logoEl;
+    }
+    if (!logoImg) {
+        const logoUrl = new URL('img/logo.png', window.location.href).href;
+        logoImg = await new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+            img.src = logoUrl;
+        });
+    }
+    if (logoImg && logoImg.naturalWidth && logoImg.naturalHeight) {
+        try {
+            const nw = logoImg.naturalWidth;
+            const nh = logoImg.naturalHeight;
+            const scale = Math.min(maxW / nw, logoMaxHeight / nh);
+            const logoW = nw * scale;
+            const logoH = nh * scale;
+            doc.addImage(logoImg, 'PNG', margin, margin, logoW, logoH);
+            brandingHeight = margin + logoH + 8;
+        } catch (e) {
+            brandingHeight = margin;
+        }
+    }
+
+    function getWrappedLines(text, fontSize) {
+        doc.setFontSize(fontSize);
+        return doc.splitTextToSize(stripHtmlForPdf(text), maxW);
+    }
+
+    function measureCardHeight(card, imageDataUri) {
+        let h = 0;
+        h += labelSize / 10 * lineHeight + 2;
+        const questions = Array.isArray(card.questions) && card.questions.length
+            ? card.questions
+            : [{ text: '' }];
+        const sortedQ = [...questions].sort((a, b) => (a.order || 999) - (b.order || 999));
+        h += titleSize / 10 * lineHeight + (bodySize / 10 * lineHeight);
+        sortedQ.forEach(q => {
+            const t = typeof q === 'string' ? q : (q.text || '');
+            if (t) {
+                const lines = getWrappedLines(t, bodySize);
+                h += lines.length * (bodySize / 10 * lineHeight) + 4;
+            }
+        });
+        h += 6 + titleSize / 10 * lineHeight + (bodySize / 10 * lineHeight);
+        const answerLines = getWrappedLines(card.answer || '', bodySize);
+        h += answerLines.length * (bodySize / 10 * lineHeight);
+        if (card.doNotAccept && card.doNotAccept.trim()) {
+            h += 8 + labelSize / 10 * lineHeight;
+        }
+        if (imageDataUri) {
+            const imgW = maxW;
+            let imgH = maxImageHeight;
+            try {
+                const img = new Image();
+                img.src = imageDataUri;
+                if (img.naturalWidth && img.naturalHeight) {
+                    imgH = Math.min(maxImageHeight, (img.naturalHeight / img.naturalWidth) * imgW);
+                }
+            } catch (e) { }
+            h += 4 + imgH;
+        }
+        return h;
+    }
+
+    function getImageDimensions(dataUri) {
+        return new Promise((resolve) => {
+            if (!dataUri) return resolve({ w: 0, h: 0 });
+            const img = new Image();
+            img.onload = () => resolve({ w: img.naturalWidth || img.width, h: img.naturalHeight || img.height });
+            img.onerror = () => resolve({ w: 0, h: 0 });
+            img.src = dataUri;
+        });
+    }
+
+    const cardHeights = cards.map((card, i) => measureCardHeight(card, resolvedImages[i]));
+    const imageDims = await Promise.all(resolvedImages.map(uri => getImageDimensions(uri)));
+
+    let pageIndex = 0;
+    let y = brandingHeight;
+
+    for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+        const cardH = cardHeights[i];
+        if (y + cardH > pageH - margin) {
+            doc.addPage();
+            pageIndex++;
+            y = margin;
+        }
+
+        const x = margin;
+        doc.setFontSize(labelSize);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Card ${i + 1} of ${cards.length}`, x, y);
+        y += labelSize / 10 * lineHeight + 2;
+        doc.setTextColor(0, 0, 0);
+
+        const questions = Array.isArray(card.questions) && card.questions.length
+            ? card.questions
+            : [{ text: '' }];
+        const sortedQ = [...questions].sort((a, b) => (a.order || 999) - (b.order || 999));
+
+        doc.setFontSize(titleSize);
+        doc.text('Question', x, y);
+        y += titleSize / 10 * lineHeight;
+        doc.setFontSize(bodySize);
+        sortedQ.forEach(q => {
+            const t = typeof q === 'string' ? q : (q.text || '');
+            if (t) {
+                const lines = getWrappedLines(t, bodySize);
+                doc.text(lines, x, y);
+                y += lines.length * (bodySize / 10 * lineHeight) + 4;
+            }
+        });
+        y += 6;
+
+        doc.setFontSize(titleSize);
+        doc.text('Answer', x, y);
+        y += titleSize / 10 * lineHeight;
+        doc.setFontSize(bodySize);
+        const answerLines = getWrappedLines(card.answer || '', bodySize);
+        doc.text(answerLines, x, y);
+        y += answerLines.length * (bodySize / 10 * lineHeight);
+
+        if (card.doNotAccept && card.doNotAccept.trim()) {
+            y += 6;
+            doc.setFontSize(labelSize);
+            doc.setTextColor(120, 120, 120);
+            doc.text('Do not accept: ' + stripHtmlForPdf(card.doNotAccept), x, y);
+            doc.setTextColor(0, 0, 0);
+            y += labelSize / 10 * lineHeight + 2;
+        }
+
+        const imageDataUri = resolvedImages[i];
+        if (imageDataUri) {
+            y += 4;
+            try {
+                const dim = imageDims[i] || { w: 0, h: 0 };
+                let iw = maxW;
+                let ih = maxImageHeight;
+                if (dim.w && dim.h) {
+                    const scale = Math.min(maxW / dim.w, maxImageHeight / dim.h);
+                    iw = dim.w * scale;
+                    ih = dim.h * scale;
+                }
+                doc.addImage(imageDataUri, 'PNG', x, y, iw, ih);
+                y += ih;
+            } catch (e) {
+                y += 10;
+            }
+        }
+
+        y += cardGap;
+    }
+
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    closePrintModal();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
 // Start study

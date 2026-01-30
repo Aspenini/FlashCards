@@ -11,18 +11,23 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <img id="pdfLogo" src="img/logo.png" alt="" hidden>
     <div class="container">
         <!-- Main Menu View -->
         <div id="mainView" class="view active">
             <div class="main-header">
                 <div class="header-top">
-                    <h1>FlashCards</h1>
+                    <div class="site-logo">
+                        <img id="siteLogo" src="img/logo.png" alt="FlashCards">
+                        <h1 id="siteLogoFallback" class="site-logo-fallback">FlashCards</h1>
+                    </div>
                     <button id="clearCacheBtn" class="btn btn-small btn-warning" title="Clear cache and reload fresh data">Clear Cache</button>
                 </div>
                 <div class="button-group">
                     <button id="createSetBtn" class="btn btn-primary">Create New Set</button>
                     <button id="studyBtn" class="btn btn-primary" disabled>Study</button>
                     <button id="importSetBtn" class="btn btn-secondary">Import Set</button>
+                    <button id="printBtn" class="btn btn-secondary">Print</button>
                 </div>
             </div>
             <input type="file" id="importFileInput" accept=".json" style="display: none;">
@@ -38,7 +43,7 @@
                 </div>
             </div>
             
-            <div class="version-info">v0.2.7</div>
+            <div class="version-info">v0.2.8</div>
         </div>
 
         <!-- Create/Edit Set View -->
@@ -210,9 +215,39 @@
         </div>
     </div>
 
+    <!-- Print modal -->
+    <div id="printModal" class="modal" role="dialog" aria-label="Print flashcards" style="display: none;">
+        <div class="modal-backdrop" id="printModalBackdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Print Flashcards</h2>
+                <button type="button" class="modal-close" id="printModalClose" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="printSetSelect">Set</label>
+                    <select id="printSetSelect" class="select-input">
+                        <option value="">Select a set...</option>
+                    </select>
+                </div>
+                <div class="form-group" id="printRoundGroup" style="display: none;">
+                    <label for="printRoundSelect">Round</label>
+                    <select id="printRoundSelect" class="select-input">
+                        <option value="">All Rounds</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="printModalCancel" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="printGenerateBtn" class="btn btn-primary">Generate PDF</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Cache-busting: bundled-sets.js uses content hash from build script -->
     <!-- Update the hash after running build_bundled_sets.py (check build output) -->
     <script src="bundled-sets.js?v=473a30b8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="app.js?v=0.1.7"></script>
 </body>
 </html>

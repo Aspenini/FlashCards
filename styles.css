@@ -81,8 +81,37 @@ h2 {
     margin-bottom: 24px;
 }
 
-.header-top h1 {
+.header-top h1,
+.header-top .site-logo-fallback {
     margin-bottom: 0;
+}
+
+.site-logo {
+    display: flex;
+    align-items: center;
+}
+
+.site-logo img {
+    display: block;
+    max-height: 48px;
+    width: auto;
+}
+
+.site-logo-fallback {
+    display: none;
+    text-align: left;
+    color: #ffffff;
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -1px;
+}
+
+.site-logo-fallback.visible {
+    display: block;
+}
+
+.site-logo img.failed {
+    display: none;
 }
 
 .version-info {
@@ -301,6 +330,72 @@ h3 {
     color: #666;
     padding: 40px;
     font-style: italic;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+    position: relative;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.modal-close:hover {
+    color: #fff;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #2a2a2a;
 }
 
 /* Editor */
@@ -1236,8 +1331,13 @@ input.card-do-not-accept::placeholder,
         gap: 16px;
     }
     
-    .header-top h1 {
+    .header-top h1,
+    .header-top .site-logo-fallback {
         margin-bottom: 0;
+    }
+    
+    .site-logo-fallback.visible {
+        font-size: 2.5rem;
     }
     
     .button-group {
@@ -1331,7 +1431,8 @@ input.card-do-not-accept::placeholder,
         margin-bottom: 16px;
     }
     
-    .header-top h1 {
+    .header-top h1,
+    .header-top .site-logo-fallback {
         font-size: 1.75rem;
         margin-bottom: 0;
     }
