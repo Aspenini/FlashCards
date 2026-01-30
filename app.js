@@ -313,6 +313,7 @@ function renderSets() {
                     <div class="set-meta">${metaText}</div>
                 </div>
                 <div class="set-actions">
+                    <button class="btn btn-secondary btn-icon" onclick="copyBundledSetToUser(${index})">Copy</button>
                     <button class="btn btn-secondary btn-icon" onclick="exportSet(${index})">Export</button>
                 </div>
             `;
@@ -1449,6 +1450,26 @@ function exportSet(index) {
     link.download = `${set.name.replace(/[^a-z0-9]/gi, '_')}.json`;
     link.click();
     URL.revokeObjectURL(url);
+}
+
+// Copy a bundled set to "Your Sets" so it can be edited and exported
+function copyBundledSetToUser(index) {
+    const set = sets[index];
+    if (!set || !set.bundled) return;
+    const copy = JSON.parse(JSON.stringify(set));
+    delete copy.bundled;
+    delete copy.bundledFileName;
+    const existingNames = new Set(sets.map(s => s.name));
+    let name = copy.name;
+    let n = 0;
+    while (existingNames.has(name)) {
+        n++;
+        name = copy.name + ' (' + n + ')';
+    }
+    copy.name = name;
+    sets.push(copy);
+    saveSets();
+    renderSets();
 }
 
 // Populate set select
@@ -2895,6 +2916,7 @@ function clearGamepadFocus() {
 window.editSet = editSet;
 window.deleteSetFromList = deleteSetFromList;
 window.exportSet = exportSet;
+window.copyBundledSetToUser = copyBundledSetToUser;
 window.removeCard = removeCard;
 window.addQuestion = addQuestion;
 window.removeQuestion = removeQuestion;
