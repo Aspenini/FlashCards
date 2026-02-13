@@ -185,6 +185,8 @@ function updateAndReload() {
         document.getElementById('importFileInput').click();
     });
 
+    const updateBtn = document.getElementById('updateBtn');
+    if (updateBtn) updateBtn.addEventListener('click', updateAndReload);
     const updateBtnSettings = document.getElementById('updateBtnSettings');
     if (updateBtnSettings) updateBtnSettings.addEventListener('click', updateAndReload);
 
@@ -3118,7 +3120,7 @@ function updateGamepadNavigation(viewId) {
     switch (viewId) {
         case 'mainView':
             // Main action buttons
-            const mainButtons = ['createSetBtn', 'studyBtn', 'importSetBtn'];
+            const mainButtons = ['createSetBtn', 'studyBtn', 'importSetBtn', 'printBtn', 'updateBtn'];
             mainButtons.forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn && !btn.disabled) {
