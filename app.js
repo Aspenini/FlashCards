@@ -236,6 +236,7 @@ function updateAndReload() {
     document.getElementById('wrongBtn').addEventListener('click', () => markAnswer(false));
     document.getElementById('rightBtn').addEventListener('click', () => markAnswer(true));
     document.getElementById('askForHintBtn').addEventListener('click', askForHint);
+    setupReadAloud();
 
     // Results view
     document.getElementById('studyAgainBtn').addEventListener('click', () => showView('studySetupView'));
@@ -2212,6 +2213,54 @@ function flipCard() {
     }
 }
 
+// Read aloud: populate voice list and wire button (reads current card side)
+function setupReadAloud() {
+    const btn = document.getElementById('readAloudBtn');
+    const select = document.getElementById('readVoiceSelect');
+    if (!btn || !select) return;
+
+    function populateVoices() {
+        const voices = typeof speechSynthesis !== 'undefined' ? speechSynthesis.getVoices() : [];
+        const selected = select.value;
+        select.innerHTML = '';
+        voices.forEach((voice, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = voice.name || `${voice.lang} (${voice.lang})`;
+            select.appendChild(opt);
+        });
+        if (selected && voices[selected]) select.value = selected;
+        else if (voices.length > 0) select.selectedIndex = 0;
+    }
+
+    if (typeof speechSynthesis !== 'undefined') {
+        populateVoices();
+        speechSynthesis.onvoiceschanged = populateVoices;
+    }
+
+    btn.addEventListener('click', readAloudCurrentSide);
+}
+
+function readAloudCurrentSide() {
+    if (typeof speechSynthesis === 'undefined') return;
+    const flashcard = document.getElementById('flashcard');
+    const questionEl = document.getElementById('questionText');
+    const answerEl = document.getElementById('answerText');
+    const select = document.getElementById('readVoiceSelect');
+    if (!flashcard || !questionEl || !answerEl) return;
+
+    const isFlipped = flashcard.classList.contains('flipped');
+    const text = (isFlipped ? answerEl : questionEl).textContent.trim();
+    if (!text) return;
+
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const voices = speechSynthesis.getVoices();
+    const idx = select && select.value !== '' ? parseInt(select.value, 10) : 0;
+    if (voices[idx]) u.voice = voices[idx];
+    speechSynthesis.speak(u);
+}
+
 // Mark answer
 function markAnswer(isCorrect) {
     const card = studyCards[currentCardIndex];
@@ -3117,17 +3166,17 @@ function updateGamepadNavigation(viewId) {
             break;
             
         case 'studyView':
-            // Study view buttons - dynamically based on what's visible
+            const readAloudBtn = document.getElementById('readAloudBtn');
+            const readVoiceSelectEl = document.getElementById('readVoiceSelect');
+            if (readAloudBtn) gamepadState.navigationElements.push(readAloudBtn);
+            if (readVoiceSelectEl) gamepadState.navigationElements.push(readVoiceSelectEl);
             const flipBtn = document.getElementById('flipCardBtn');
             const wrongBtn = document.getElementById('wrongBtn');
             const rightBtn = document.getElementById('rightBtn');
             const hintBtn = document.getElementById('askForHintBtn');
             const hintButton = document.getElementById('hintButton');
-            
-            // Check if card is flipped
             const flashcard = document.getElementById('flashcard');
             const isFlipped = flashcard && flashcard.classList.contains('flipped');
-            
             if (isFlipped) {
                 // When flipped, show wrong and right buttons
                 if (wrongBtn && wrongBtn.offsetParent !== null) {
