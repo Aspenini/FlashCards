@@ -2257,7 +2257,11 @@ function readAloudCurrentSide() {
     const u = new SpeechSynthesisUtterance(text);
     const voices = speechSynthesis.getVoices();
     const idx = select && select.value !== '' ? parseInt(select.value, 10) : 0;
-    if (voices[idx]) u.voice = voices[idx];
+    if (voices[idx]) {
+        u.voice = voices[idx];
+    } else {
+        u.lang = 'en-US'; // iOS often has empty getVoices(); set lang so system picks a default
+    }
     speechSynthesis.speak(u);
 }
 
