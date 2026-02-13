@@ -39,6 +39,7 @@
     <link rel="apple-touch-icon" href="img/sandy-bowling-approved.png">
 
     <link rel="icon" type="image/x-icon" href="img/sandy-bowling-approved.ico">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="styles.css">
     <!-- Standalone detection: use BOTH display-mode and navigator.standalone (iOS) -->
     <script>
@@ -290,19 +291,19 @@
     <!-- PWA mobile bottom nav (visible in standalone + mobile viewport). Order: Home, Study, Create, Settings -->
     <nav class="pwa-bottom-nav" id="pwaBottomNav" aria-label="Main navigation">
         <button type="button" class="pwa-nav-btn" id="pwaNavHome" data-view="mainView" aria-label="Home">
-            <span class="pwa-nav-icon" aria-hidden="true">⌂</span>
+            <span class="material-symbols-outlined pwa-nav-icon" aria-hidden="true">home</span>
             <span class="pwa-nav-label">Home</span>
         </button>
         <button type="button" class="pwa-nav-btn" id="pwaNavStudy" data-view="studySetupView" aria-label="Study">
-            <span class="pwa-nav-icon" aria-hidden="true">✎</span>
+            <span class="material-symbols-outlined pwa-nav-icon" aria-hidden="true">menu_book</span>
             <span class="pwa-nav-label">Study</span>
         </button>
         <button type="button" class="pwa-nav-btn" id="pwaNavCreate" data-view="setEditorView" aria-label="Create set">
-            <span class="pwa-nav-icon" aria-hidden="true">+</span>
+            <span class="material-symbols-outlined pwa-nav-icon" aria-hidden="true">add_circle</span>
             <span class="pwa-nav-label">Create</span>
         </button>
         <button type="button" class="pwa-nav-btn" id="pwaNavSettings" data-view="settingsView" aria-label="Settings">
-            <span class="pwa-nav-icon" aria-hidden="true">⚙</span>
+            <span class="material-symbols-outlined pwa-nav-icon" aria-hidden="true">settings</span>
             <span class="pwa-nav-label">Settings</span>
         </button>
     </nav>

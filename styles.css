@@ -391,14 +391,22 @@ h3 {
         bottom: 0;
         left: 0;
         right: 0;
-        z-index: 500;
-        height: calc(56px + env(safe-area-inset-bottom));
+        z-index: 999;
+        min-height: 56px;
         padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+        box-sizing: border-box;
+        height: calc(56px + env(safe-area-inset-bottom));
         background: #1a1a1a;
         border-top: 1px solid #2a2a2a;
         align-items: center;
         justify-content: space-around;
         -webkit-tap-highlight-color: transparent;
+        pointer-events: auto;
+        -webkit-user-select: none;
+        user-select: none;
+        isolation: isolate;
     }
 
     html.standalone .pwa-nav-btn {
@@ -431,8 +439,14 @@ h3 {
     }
 
     html.standalone .pwa-nav-icon {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         line-height: 1;
+    }
+    html.standalone .pwa-nav-icon.material-symbols-outlined {
+        font-family: "Material Symbols Outlined", sans-serif;
+        font-weight: 400;
+        font-style: normal;
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
     }
 
     /* Content area clears the bottom nav in mobile PWA */
