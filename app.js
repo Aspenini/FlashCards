@@ -3,6 +3,23 @@ function isStandalone() {
     return (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!(typeof navigator !== 'undefined' && navigator.standalone);
 }
 
+// Theme: apply and persist (syncs dropdowns + meta theme-color)
+const THEME_META_COLORS = { dark: '#0a0a0a', light: '#1a1a1a', ocean: '#0d2137', forest: '#0f1f14', sunset: '#2d1b2e' };
+function applyTheme(theme) {
+    if (!theme) theme = localStorage.getItem('appTheme') || 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta && THEME_META_COLORS[theme]) meta.setAttribute('content', THEME_META_COLORS[theme]);
+    const mainSelect = document.getElementById('themeSelectMain');
+    const settingsSelect = document.getElementById('themeSelectSettings');
+    if (mainSelect) mainSelect.value = theme;
+    if (settingsSelect) settingsSelect.value = theme;
+}
+function setTheme(theme) {
+    localStorage.setItem('appTheme', theme);
+    applyTheme(theme);
+}
+
 // State management
 let sets = [];
 let currentSetId = null;
@@ -187,6 +204,12 @@ function updateAndReload() {
 
     const updateBtnSettings = document.getElementById('updateBtnSettings');
     if (updateBtnSettings) updateBtnSettings.addEventListener('click', updateAndReload);
+
+    applyTheme(); // Sync theme dropdowns and meta theme-color
+    const themeSelectMain = document.getElementById('themeSelectMain');
+    const themeSelectSettings = document.getElementById('themeSelectSettings');
+    if (themeSelectMain) themeSelectMain.addEventListener('change', () => setTheme(themeSelectMain.value));
+    if (themeSelectSettings) themeSelectSettings.addEventListener('change', () => setTheme(themeSelectSettings.value));
 
     document.getElementById('printBtn').addEventListener('click', openPrintModal);
 
@@ -3165,6 +3188,8 @@ function updateGamepadNavigation(viewId) {
             break;
 
         case 'settingsView':
+            const themeSelectSettingsEl = document.getElementById('themeSelectSettings');
+            if (themeSelectSettingsEl) gamepadState.navigationElements.push(themeSelectSettingsEl);
             const settingsUpdateBtn = document.getElementById('updateBtnSettings');
             if (settingsUpdateBtn) gamepadState.navigationElements.push(settingsUpdateBtn);
             break;
