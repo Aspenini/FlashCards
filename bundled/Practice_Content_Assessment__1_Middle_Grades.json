@@ -1,5 +1,5 @@
 {
-  "name": "Science Practice Content Assessment #1 MG KAAC",
+  "name": "Practice Content Assessment #1 Middle Grades",
   "cards": [
     {
       "questions": [
@@ -470,6 +470,9 @@
       "answer": "At least 50 percent"
     }
   ],
-  "exportedAt": "2026-02-10T19:48:17.909Z",
-  "year": 2025
+  "exportedAt": "2026-02-13T01:05:57.222Z",
+  "year": "2025-2026",
+  "creator": "KAAC",
+  "subject": "Science",
+  "color": "#00e604"
 }

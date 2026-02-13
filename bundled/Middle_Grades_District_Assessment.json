@@ -1,5 +1,5 @@
 {
-  "name": "KAAC Quiz District Science",
+  "name": "Middle Grades District Assessment",
   "cards": [
     {
       "questions": [
@@ -556,6 +556,9 @@
       "answer": "angina"
     }
   ],
-  "exportedAt": "2026-01-20T19:57:21.043Z",
-  "year": 2026
+  "exportedAt": "2026-02-13T01:09:59.513Z",
+  "year": 2026,
+  "creator": "KAAC",
+  "subject": "Science",
+  "color": "#00e604"
 }

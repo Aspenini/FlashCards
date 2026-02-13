@@ -165,6 +165,10 @@ function clearCacheAndReload() {
         document.getElementById('deleteSetBtn').style.display = 'none';
         document.getElementById('setName').value = '';
         document.getElementById('setYear').value = '';
+        document.getElementById('setCreator').value = '';
+        document.getElementById('setSubject').value = '';
+        document.getElementById('setColor').value = '#6b7280';
+        document.getElementById('setColorText').value = '';
         document.getElementById('cardsList').innerHTML = '';
         // Reset rounds
         rounds = [];
@@ -207,6 +211,17 @@ function clearCacheAndReload() {
     // Rounds management
     document.getElementById('roundsEnabled').addEventListener('change', toggleRounds);
     document.getElementById('addRoundBtn').addEventListener('click', addRound);
+
+    // Color picker and text sync
+    const setColorPicker = document.getElementById('setColor');
+    const setColorTextEl = document.getElementById('setColorText');
+    if (setColorPicker && setColorTextEl) {
+        setColorPicker.addEventListener('input', () => { setColorTextEl.value = setColorPicker.value; });
+        setColorTextEl.addEventListener('input', () => {
+            const v = setColorTextEl.value.trim();
+            if (/^#[0-9A-Fa-f]{6}$/.test(v)) setColorPicker.value = v;
+        });
+    }
 
     // Study setup
     document.getElementById('backToMainFromSetupBtn').addEventListener('click', () => {
@@ -303,6 +318,10 @@ function handleHashChange() {
             document.getElementById('deleteSetBtn').style.display = 'none';
             document.getElementById('setName').value = '';
             document.getElementById('setYear').value = '';
+            document.getElementById('setCreator').value = '';
+            document.getElementById('setSubject').value = '';
+            document.getElementById('setColor').value = '#6b7280';
+            document.getElementById('setColorText').value = '';
             document.getElementById('cardsList').innerHTML = '';
         } else {
             // Already in editor, just show the view
@@ -343,18 +362,21 @@ function renderSets() {
             const setItem = document.createElement('div');
             setItem.className = 'set-item bundled-set';
             
-            // Build meta string with cards, rounds, and year
             const metaParts = [];
             metaParts.push(`${set.cards.length} card${set.cards.length !== 1 ? 's' : ''}`);
             if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
                 metaParts.push(`${set.rounds.length} round${set.rounds.length !== 1 ? 's' : ''}`);
             }
-            if (set.year) {
-                metaParts.push(`${set.year}`);
-            }
+            const yearStr = formatYearDisplay(set.year);
+            if (yearStr) metaParts.push(yearStr);
+            if (set.creator) metaParts.push(escapeHtml(set.creator));
+            if (set.subject) metaParts.push(escapeHtml(set.subject));
             const metaText = metaParts.join(' • ');
+            const colorStyle = (set.color && /^#[0-9A-Fa-f]{6}$/.test(set.color)) ? ` style="background:${escapeHtml(set.color)}"` : '';
+            const colorDot = set.color ? `<div class="set-item-color"${colorStyle} aria-hidden="true"></div>` : '';
             
             setItem.innerHTML = `
+                ${colorDot}
                 <div class="set-info">
                     <div class="set-name">${escapeHtml(set.name)}</div>
                     <div class="set-meta">${metaText}</div>
@@ -380,18 +402,21 @@ function renderSets() {
             const setItem = document.createElement('div');
             setItem.className = 'set-item';
             
-            // Build meta string with cards, rounds, and year
             const metaParts = [];
             metaParts.push(`${set.cards.length} card${set.cards.length !== 1 ? 's' : ''}`);
             if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
                 metaParts.push(`${set.rounds.length} round${set.rounds.length !== 1 ? 's' : ''}`);
             }
-            if (set.year) {
-                metaParts.push(`${set.year}`);
-            }
+            const yearStr = formatYearDisplay(set.year);
+            if (yearStr) metaParts.push(yearStr);
+            if (set.creator) metaParts.push(escapeHtml(set.creator));
+            if (set.subject) metaParts.push(escapeHtml(set.subject));
             const metaText = metaParts.join(' • ');
+            const colorStyle = (set.color && /^#[0-9A-Fa-f]{6}$/.test(set.color)) ? ` style="background:${escapeHtml(set.color)}"` : '';
+            const colorDot = set.color ? `<div class="set-item-color"${colorStyle} aria-hidden="true"></div>` : '';
             
             setItem.innerHTML = `
+                ${colorDot}
                 <div class="set-info" onclick="editSet(${index})">
                     <div class="set-name">${escapeHtml(set.name)}</div>
                     <div class="set-meta">${metaText}</div>
@@ -423,13 +448,15 @@ function editSet(index) {
     document.getElementById('deleteSetBtn').style.display = 'block';
     document.getElementById('setName').value = set.name;
     
-    // Load year if it exists
+    // Load year (number or range string)
     const yearInput = document.getElementById('setYear');
-    if (set.year) {
-        yearInput.value = set.year;
-    } else {
-        yearInput.value = '';
-    }
+    yearInput.value = set.year != null && set.year !== '' ? String(set.year) : '';
+    
+    document.getElementById('setCreator').value = set.creator || '';
+    document.getElementById('setSubject').value = set.subject || '';
+    const color = set.color && /^#[0-9A-Fa-f]{6}$/.test(set.color) ? set.color : '#6b7280';
+    document.getElementById('setColor').value = color;
+    document.getElementById('setColorText').value = color;
     
     // Load rounds if they exist
     if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
@@ -1336,11 +1363,16 @@ function saveSet() {
     }
 
     const yearInput = document.getElementById('setYear');
-    const year = yearInput.value.trim() ? parseInt(yearInput.value, 10) : null;
-    if (year && (isNaN(year) || year < 1900 || year > 2100)) {
-        alert('Please enter a valid year between 1900 and 2100');
+    const year = parseYearInput(yearInput.value);
+    if (yearInput.value.trim() && year === null) {
+        alert('Please enter a valid year (e.g. 2024) or range (e.g. 2024-2025) between 1900 and 2100');
         return;
     }
+    const creator = document.getElementById('setCreator').value.trim() || null;
+    const subject = document.getElementById('setSubject').value.trim() || null;
+    const colorPicker = document.getElementById('setColor');
+    const colorText = document.getElementById('setColorText').value.trim();
+    const color = (colorText && /^#[0-9A-Fa-f]{6}$/.test(colorText)) ? colorText : (colorPicker ? colorPicker.value : null);
 
     const cards = [];
     const cardItems = document.querySelectorAll('.card-item');
@@ -1412,10 +1444,10 @@ function saveSet() {
 
     const setData = { name, cards };
     
-    // Save year if provided
-    if (year) {
-        setData.year = year;
-    }
+    if (year) setData.year = year;
+    if (creator) setData.creator = creator;
+    if (subject) setData.subject = subject;
+    if (color && color !== '#6b7280') setData.color = color;
     
     // Save rounds if enabled and has rounds
     if (roundsEnabled && rounds.length > 0) {
@@ -1479,10 +1511,10 @@ function exportSet(index) {
         exportedAt: new Date().toISOString()
     };
     
-    // Include year if it exists
-    if (set.year) {
-        exportData.year = set.year;
-    }
+    if (set.year != null && set.year !== '') exportData.year = set.year;
+    if (set.creator) exportData.creator = set.creator;
+    if (set.subject) exportData.subject = set.subject;
+    if (set.color) exportData.color = set.color;
     
     // Include rounds if they exist
     if (set.rounds && Array.isArray(set.rounds) && set.rounds.length > 0) {
@@ -2334,6 +2366,31 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Format year for display (number -> string, range string as-is)
+function formatYearDisplay(year) {
+    if (year == null || year === '') return '';
+    if (typeof year === 'number' && !isNaN(year)) return String(year);
+    return String(year).trim();
+}
+
+// Validate year input: single year (1900-2100) or range "YYYY-YYYY". Returns value to store or null.
+function parseYearInput(val) {
+    const trimmed = String(val).trim();
+    if (!trimmed) return null;
+    const rangeMatch = trimmed.match(/^(\d{4})\s*-\s*(\d{4})$/);
+    if (rangeMatch) {
+        const y1 = parseInt(rangeMatch[1], 10);
+        const y2 = parseInt(rangeMatch[2], 10);
+        if (y1 >= 1900 && y1 <= 2100 && y2 >= 1900 && y2 <= 2100 && y1 <= y2) {
+            return `${y1}-${y2}`;
+        }
+        return null;
+    }
+    const num = parseInt(trimmed, 10);
+    if (!isNaN(num) && num >= 1900 && num <= 2100) return num;
+    return null;
+}
+
 // Import set
 function handleImport(event) {
     const file = event.target.files[0];
@@ -2354,10 +2411,10 @@ function handleImport(event) {
                 cards: importData.cards
             };
             
-            // Include year if it exists
-            if (importData.year) {
-                setData.year = importData.year;
-            }
+            if (importData.year != null && importData.year !== '') setData.year = importData.year;
+            if (importData.creator) setData.creator = importData.creator;
+            if (importData.subject) setData.subject = importData.subject;
+            if (importData.color && /^#[0-9A-Fa-f]{6}$/.test(importData.color)) setData.color = importData.color;
             
             // Include rounds if they exist
             if (importData.rounds && Array.isArray(importData.rounds) && importData.rounds.length > 0) {

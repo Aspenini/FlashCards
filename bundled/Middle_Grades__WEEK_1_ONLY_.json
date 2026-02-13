@@ -1,5 +1,5 @@
 {
-  "name": "Social Studies KAAC Middle School WEEK 1 ONLY",
+  "name": "Middle Grades (WEEK 1 ONLY)",
   "cards": [
     {
       "questions": [
@@ -164,6 +164,9 @@
       "answer": "TRADITIONAL (ECONOMY)"
     }
   ],
-  "exportedAt": "2026-01-20T21:54:35.918Z",
-  "year": 2025
+  "exportedAt": "2026-02-13T01:11:41.584Z",
+  "year": 2025,
+  "creator": "KAAC",
+  "subject": "Social Studies",
+  "color": "#fff700"
 }

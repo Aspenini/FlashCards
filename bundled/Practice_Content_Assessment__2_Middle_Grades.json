@@ -1,5 +1,5 @@
 {
-  "name": "Science Practice Content Assessment #2 MG KAAC",
+  "name": "Practice Content Assessment #2 Middle Grades",
   "cards": [
     {
       "questions": [
@@ -467,6 +467,9 @@
       "answer": "aspartame"
     }
   ],
-  "exportedAt": "2026-02-12T05:06:19.151Z",
-  "year": 2025
+  "exportedAt": "2026-02-13T01:01:45.743Z",
+  "year": "2025-2026",
+  "creator": "KAAC",
+  "subject": "Science",
+  "color": "#00e604"
 }

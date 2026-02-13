@@ -44,7 +44,7 @@
                 </div>
             </div>
             
-            <div class="version-info">v0.3.0-5</div>
+            <div class="version-info">v0.3.1-6</div>
         </div>
 
         <!-- Create/Edit Set View -->
@@ -61,7 +61,27 @@
 
             <div class="form-group">
                 <label for="setYear">Year (optional)</label>
-                <input type="number" id="setYear" placeholder="e.g., 2024" min="1900" max="2100">
+                <input type="text" id="setYear" placeholder="e.g. 2024 or 2024-2025" maxlength="20">
+                <span class="hint">Single year or range like 2025-2026</span>
+            </div>
+
+            <div class="form-group">
+                <label for="setCreator">Creator (optional)</label>
+                <input type="text" id="setCreator" placeholder="e.g. Your name or organization" maxlength="80">
+            </div>
+
+            <div class="form-group">
+                <label for="setSubject">Subject (optional)</label>
+                <input type="text" id="setSubject" placeholder="e.g. Science, History" maxlength="50">
+            </div>
+
+            <div class="form-group">
+                <label for="setColor">Color (optional)</label>
+                <div class="color-input-row">
+                    <input type="color" id="setColor" value="#6b7280" title="Set card accent color">
+                    <input type="text" id="setColorText" placeholder="#6b7280" maxlength="9" class="color-text-input">
+                </div>
+                <span class="hint">Shown in the top-right corner of the set card on the homepage</span>
             </div>
 
             <div class="form-group">

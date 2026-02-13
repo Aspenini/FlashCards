@@ -1,5 +1,5 @@
 {
-  "name": "Science Middle Grades KAAC",
+  "name": "Quick Recall Practice Set Middle Grades",
   "cards": [
     {
       "questions": [
@@ -1681,8 +1681,11 @@
       "roundId": "round_1770508622253"
     }
   ],
-  "exportedAt": "2026-02-08T01:34:43.625Z",
-  "year": 2025,
+  "exportedAt": "2026-02-13T01:08:43.825Z",
+  "year": "2025-2026",
+  "creator": "KAAC",
+  "subject": "Science",
+  "color": "#00e604",
   "rounds": [
     {
       "id": "round_1768438625969",

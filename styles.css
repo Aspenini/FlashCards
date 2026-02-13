@@ -304,6 +304,7 @@ h3 {
     transition: all 0.2s ease;
     cursor: pointer;
     min-height: 140px;
+    position: relative;
 }
 
 .set-item:hover {
@@ -346,6 +347,17 @@ h3 {
 .set-meta {
     font-size: 0.9rem;
     color: #999;
+}
+
+.set-item-color {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
 }
 
 .set-actions {
@@ -483,6 +495,27 @@ h3 {
     outline: none;
     border-color: #ffffff;
     background: #2a2a2a;
+}
+
+.color-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.color-input-row input[type="color"] {
+    width: 48px;
+    height: 40px;
+    padding: 4px;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #252525;
+}
+
+.color-input-row .color-text-input {
+    flex: 1;
+    max-width: 120px;
 }
 
 .hint {
