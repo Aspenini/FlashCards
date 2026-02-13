@@ -444,6 +444,7 @@ h3 {
     html.standalone #mainView #createSetBtn,
     html.standalone #mainView #studyBtn,
     html.standalone #mainView #clearCacheBtn,
+    html.standalone #mainView #updateBtn,
     html.standalone #mainView .version-info {
         display: none;
     }

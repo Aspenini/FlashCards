@@ -72,8 +72,19 @@ function tryGamepadVibration(options) {
     }
 }
 
+// Clean URL after reload (strip nocache/update so URL bar stays clean on desktop and PWA)
+function cleanReloadQueryFromUrl() {
+    const q = window.location.search;
+    if (q && (q.includes('nocache=') || q.includes('update='))) {
+        try {
+            history.replaceState(null, '', window.location.pathname + (window.location.hash || ''));
+        } catch (e) {}
+    }
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
+    cleanReloadQueryFromUrl();
     loadBundledSets(); // Load bundled sets first
     loadSets(); // Load user sets
     setupEventListeners();
@@ -136,31 +147,25 @@ function saveSets() {
     localStorage.setItem('flashcardSets', JSON.stringify(sets));
 }
 
-// Clear cache and reload bundled sets
+// Clear cache and reload (clears localStorage; URL is cleaned after reload)
 function clearCacheAndReload() {
     if (confirm('Clear cache and reload? This will:\n• Clear all localStorage data\n• Force reload of bundled sets with fresh cache-busting\n• Refresh the page')) {
-        // Clear localStorage (removes any cached user sets, but they'll need to re-import if needed)
         localStorage.clear();
-        
-        // Update bundled-sets.js script tag with new timestamp for aggressive cache-busting
         const bundledScript = document.querySelector('script[src*="bundled-sets.js"]');
-        if (bundledScript) {
-            const timestamp = Date.now();
-            bundledScript.src = `bundled-sets.js?v=${timestamp}`;
-        }
-        
-        // Also update app.js script tag
+        if (bundledScript) bundledScript.src = `bundled-sets.js?v=${Date.now()}`;
         const appScript = document.querySelector('script[src*="app.js"]');
-        if (appScript) {
-            const timestamp = Date.now();
-            appScript.src = `app.js?v=${timestamp}`;
-        }
-        
-        // Reload page with cache-busting parameter to force fresh script loads
-        const timestamp = Date.now();
-        const currentUrl = window.location.href.split('?')[0]; // Remove any existing query params
-        window.location.href = `${currentUrl}?nocache=${timestamp}`;
+        if (appScript) appScript.src = `app.js?v=${Date.now()}`;
+        const path = window.location.pathname || '/';
+        const hash = window.location.hash || '';
+        window.location.href = `${path}?nocache=${Date.now()}${hash}`;
     }
+}
+
+// Update app (reload to get fresh assets; keeps localStorage / your sets). URL cleaned after reload.
+function updateAndReload() {
+    const path = window.location.pathname || '/';
+    const hash = window.location.hash || '';
+    window.location.href = `${path}?update=${Date.now()}${hash}`;
 }
 
     // Setup event listeners
@@ -198,6 +203,10 @@ function clearCacheAndReload() {
     });
 
     document.getElementById('clearCacheBtn').addEventListener('click', clearCacheAndReload);
+    const updateBtn = document.getElementById('updateBtn');
+    if (updateBtn) updateBtn.addEventListener('click', updateAndReload);
+    const updateBtnSettings = document.getElementById('updateBtnSettings');
+    if (updateBtnSettings) updateBtnSettings.addEventListener('click', updateAndReload);
 
     document.getElementById('printBtn').addEventListener('click', openPrintModal);
 

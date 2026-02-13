@@ -44,9 +44,12 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET
   if (request.method !== 'GET') return;
 
-  // Same-origin app assets and the jspdf CDN: cache-first so offline works
   const isAppAsset = url.origin === self.location.origin || url.href.includes('jspdf');
   if (isAppAsset) {
+    if (url.searchParams.has('nocache') || url.searchParams.has('update')) {
+      event.respondWith(fetch(request, { cache: 'reload' }));
+      return;
+    }
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
