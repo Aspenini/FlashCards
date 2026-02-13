@@ -10,7 +10,6 @@ const PRECACHE_URLS = [
   '/index.html',
   '/styles.css',
   '/app.js',
-  '/bundled-sets.js',
   '/manifest.webmanifest',
   '/img/logo.png',
   '/img/sandy-bowling-approved.png',
@@ -69,6 +68,20 @@ self.addEventListener('fetch', (event) => {
           return res;
         })
         .catch(() => caches.match(canonicalRequest))
+    );
+    return;
+  }
+
+  // Bundled sets: network-first so we get the version that matches current HTML; cache only for offline fallback
+  if (isAppAsset && (url.pathname === '/bundled-sets.js' || url.pathname.endsWith('/bundled-sets.js'))) {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return res;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
