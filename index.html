@@ -60,7 +60,6 @@
                         <h1 id="siteLogoFallback" class="site-logo-fallback">FlashCards</h1>
                     </div>
                     <button id="clearCacheBtn" class="btn btn-small btn-warning" title="Clear cache and reload fresh data">Clear Cache</button>
-                    <button id="updateBtn" class="btn btn-small btn-secondary" title="Reload app to get latest version (keeps your sets)">Update</button>
                 </div>
                 <div class="button-group">
                     <button id="createSetBtn" class="btn btn-primary">Create New Set</button>
@@ -82,7 +81,7 @@
                 </div>
             </div>
             
-            <div class="version-info">v0.3.6-8</div>
+            <div class="version-info">v0.3.7-8</div>
         </div>
 
         <!-- Create/Edit Set View -->
@@ -281,8 +280,10 @@
             </div>
             <div class="settings-content">
                 <p class="settings-version" id="settingsVersion">v0.3.3-6</p>
-                <button type="button" id="updateBtnSettings" class="btn btn-secondary">Update</button>
-                <span class="hint">Get latest app version; keeps your sets.</span>
+                <div class="settings-update-row">
+                    <button type="button" id="updateBtnSettings" class="btn btn-secondary">Update</button>
+                    <span class="hint">Get latest app version; keeps your sets.</span>
+                </div>
                 <button type="button" id="settingsClearCacheBtn" class="btn btn-warning">Clear Cache</button>
             </div>
         </div>

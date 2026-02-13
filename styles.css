@@ -444,7 +444,6 @@ h3 {
     html.standalone #mainView #createSetBtn,
     html.standalone #mainView #studyBtn,
     html.standalone #mainView #clearCacheBtn,
-    html.standalone #mainView #updateBtn,
     html.standalone #mainView .version-info {
         display: none;
     }
@@ -556,6 +555,13 @@ h3 {
     font-size: 0.9rem;
     color: #999;
     font-family: monospace;
+}
+
+.settings-update-row {
+    display: none;
+}
+html.standalone .settings-update-row {
+    display: block;
 }
 
 .form-group {

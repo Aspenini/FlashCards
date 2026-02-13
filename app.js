@@ -203,8 +203,6 @@ function updateAndReload() {
     });
 
     document.getElementById('clearCacheBtn').addEventListener('click', clearCacheAndReload);
-    const updateBtn = document.getElementById('updateBtn');
-    if (updateBtn) updateBtn.addEventListener('click', updateAndReload);
     const updateBtnSettings = document.getElementById('updateBtnSettings');
     if (updateBtnSettings) updateBtnSettings.addEventListener('click', updateAndReload);
 
