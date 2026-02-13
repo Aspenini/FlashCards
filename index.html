@@ -40,6 +40,13 @@
 
     <link rel="icon" type="image/x-icon" href="img/sandy-bowling-approved.ico">
     <link rel="stylesheet" href="styles.css">
+    <!-- Standalone detection: use BOTH display-mode and navigator.standalone (iOS) -->
+    <script>
+      (function() {
+        var isStandalone = window.matchMedia('(display-mode: standalone)').matches || !!navigator.standalone;
+        if (isStandalone) document.documentElement.classList.add('standalone');
+      })();
+    </script>
 </head>
 <body>
     <img id="pdfLogo" src="img/logo.png" alt="" hidden>
@@ -74,7 +81,7 @@
                 </div>
             </div>
             
-            <div class="version-info">v0.3.2-6</div>
+            <div class="version-info">v0.3.3-6</div>
         </div>
 
         <!-- Create/Edit Set View -->
@@ -265,6 +272,22 @@
             </div>
         </div>
     </div>
+
+    <!-- PWA mobile bottom nav (visible in standalone + mobile viewport) -->
+    <nav class="pwa-bottom-nav" id="pwaBottomNav" aria-label="Main navigation">
+        <button type="button" class="pwa-nav-btn" id="pwaNavHome" data-view="mainView" aria-label="Home">
+            <span class="pwa-nav-icon" aria-hidden="true">⌂</span>
+            <span class="pwa-nav-label">Home</span>
+        </button>
+        <button type="button" class="pwa-nav-btn" id="pwaNavCreate" data-view="setEditorView" aria-label="Create set">
+            <span class="pwa-nav-icon" aria-hidden="true">+</span>
+            <span class="pwa-nav-label">Create</span>
+        </button>
+        <button type="button" class="pwa-nav-btn" id="pwaNavStudy" data-view="studySetupView" aria-label="Study">
+            <span class="pwa-nav-icon" aria-hidden="true">✎</span>
+            <span class="pwa-nav-label">Study</span>
+        </button>
+    </nav>
 
     <!-- Print modal -->
     <div id="printModal" class="modal" role="dialog" aria-label="Print flashcards" style="display: none;">

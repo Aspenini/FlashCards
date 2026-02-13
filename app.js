@@ -1,3 +1,8 @@
+// Standalone detection: use BOTH display-mode (PWA) and navigator.standalone (iOS)
+function isStandalone() {
+    return (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!(typeof navigator !== 'undefined' && navigator.standalone);
+}
+
 // State management
 let sets = [];
 let currentSetId = null;
@@ -87,9 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.location.hash) {
             handleHashChange();
         } else {
-            // No hash, ensure main view is shown
             showView('mainView', false);
         }
+        updatePwaNavActive();
     }, 0);
 
     // PWA: register service worker for offline support (relative path works at root or subpath)
@@ -163,26 +168,20 @@ function clearCacheAndReload() {
         // Drag and drop for questions
         setupQuestionDragAndDrop();
     // Main view
-    document.getElementById('createSetBtn').addEventListener('click', () => {
-        currentSetId = null;
-        showView('setEditorView');
-        document.getElementById('editorTitle').textContent = 'Create New Set';
-        document.getElementById('deleteSetBtn').style.display = 'none';
-        document.getElementById('setName').value = '';
-        document.getElementById('setYear').value = '';
-        document.getElementById('setCreator').value = '';
-        document.getElementById('setSubject').value = '';
-        document.getElementById('setColor').value = '#6b7280';
-        document.getElementById('setColorText').value = '';
-        document.getElementById('cardsList').innerHTML = '';
-        // Reset rounds
-        rounds = [];
-        document.getElementById('roundsEnabled').checked = false;
-        document.getElementById('roundsSection').style.display = 'none';
-        document.getElementById('roundsList').innerHTML = '';
-    });
+    document.getElementById('createSetBtn').addEventListener('click', openCreateSet);
 
     document.getElementById('studyBtn').addEventListener('click', () => {
+        showView('studySetupView');
+        populateSetSelect();
+    });
+
+    // PWA bottom nav (visible in standalone + mobile)
+    const pwaNavHome = document.getElementById('pwaNavHome');
+    const pwaNavCreate = document.getElementById('pwaNavCreate');
+    const pwaNavStudy = document.getElementById('pwaNavStudy');
+    if (pwaNavHome) pwaNavHome.addEventListener('click', () => showView('mainView'));
+    if (pwaNavCreate) pwaNavCreate.addEventListener('click', openCreateSet);
+    if (pwaNavStudy) pwaNavStudy.addEventListener('click', () => {
         showView('studySetupView');
         populateSetSelect();
     });
@@ -284,7 +283,7 @@ function showView(viewId, updateHash = true) {
     });
     document.getElementById(viewId).classList.add('active');
     
-    // Update navigation elements for gamepad when view changes
+    updatePwaNavActive(viewId);
     updateGamepadNavigation(viewId);
     
     // Update URL hash based on view (unless we're handling a hash change)
@@ -2670,6 +2669,43 @@ function setupWiiUGamepadPolling() {
 function getCurrentViewId() {
     const activeView = document.querySelector('.view.active');
     return activeView ? activeView.id : 'mainView';
+}
+
+// PWA bottom nav: which tab to show as active (study/results map to Study)
+function getPwaNavActiveView(viewId) {
+    if (viewId === 'mainView') return 'mainView';
+    if (viewId === 'setEditorView') return 'setEditorView';
+    if (viewId === 'studySetupView' || viewId === 'studyView' || viewId === 'resultsView') return 'studySetupView';
+    return viewId;
+}
+
+function updatePwaNavActive(viewId) {
+    const nav = document.getElementById('pwaBottomNav');
+    if (!nav) return;
+    const activeView = getPwaNavActiveView(viewId || getCurrentViewId());
+    nav.querySelectorAll('.pwa-nav-btn').forEach(btn => {
+        const v = btn.getAttribute('data-view');
+        btn.classList.toggle('active', v === activeView);
+        btn.setAttribute('aria-current', v === activeView ? 'page' : null);
+    });
+}
+
+function openCreateSet() {
+    currentSetId = null;
+    showView('setEditorView');
+    document.getElementById('editorTitle').textContent = 'Create New Set';
+    document.getElementById('deleteSetBtn').style.display = 'none';
+    document.getElementById('setName').value = '';
+    document.getElementById('setYear').value = '';
+    document.getElementById('setCreator').value = '';
+    document.getElementById('setSubject').value = '';
+    document.getElementById('setColor').value = '#6b7280';
+    document.getElementById('setColorText').value = '';
+    document.getElementById('cardsList').innerHTML = '';
+    rounds = [];
+    document.getElementById('roundsEnabled').checked = false;
+    document.getElementById('roundsSection').style.display = 'none';
+    document.getElementById('roundsList').innerHTML = '';
 }
 
 // Start gamepad polling loop
