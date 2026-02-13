@@ -443,7 +443,6 @@ h3 {
     /* Simpler header on home when bottom nav is present: hide Create/Study; version & Clear Cache live in Settings */
     html.standalone #mainView #createSetBtn,
     html.standalone #mainView #studyBtn,
-    html.standalone #mainView #clearCacheBtn,
     html.standalone #mainView .version-info {
         display: none;
     }
@@ -557,12 +556,6 @@ h3 {
     font-family: monospace;
 }
 
-.settings-update-row {
-    display: none;
-}
-html.standalone .settings-update-row {
-    display: block;
-}
 
 .form-group {
     margin-bottom: 32px;

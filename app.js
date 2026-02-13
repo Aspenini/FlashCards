@@ -147,20 +147,6 @@ function saveSets() {
     localStorage.setItem('flashcardSets', JSON.stringify(sets));
 }
 
-// Clear cache and reload (clears localStorage; URL is cleaned after reload)
-function clearCacheAndReload() {
-    if (confirm('Clear cache and reload? This will:\n• Clear all localStorage data\n• Force reload of bundled sets with fresh cache-busting\n• Refresh the page')) {
-        localStorage.clear();
-        const bundledScript = document.querySelector('script[src*="bundled-sets.js"]');
-        if (bundledScript) bundledScript.src = `bundled-sets.js?v=${Date.now()}`;
-        const appScript = document.querySelector('script[src*="app.js"]');
-        if (appScript) appScript.src = `app.js?v=${Date.now()}`;
-        const path = window.location.pathname || '/';
-        const hash = window.location.hash || '';
-        window.location.href = `${path}?nocache=${Date.now()}${hash}`;
-    }
-}
-
 // Update app (reload to get fresh assets; keeps localStorage / your sets). URL cleaned after reload.
 function updateAndReload() {
     const path = window.location.pathname || '/';
@@ -190,9 +176,6 @@ function updateAndReload() {
     if (pwaNavCreate) pwaNavCreate.addEventListener('click', () => showView('setEditorView'));
     if (pwaNavSettings) pwaNavSettings.addEventListener('click', () => showView('settingsView'));
 
-    const settingsClearBtn = document.getElementById('settingsClearCacheBtn');
-    if (settingsClearBtn) settingsClearBtn.addEventListener('click', clearCacheAndReload);
-
     // Keep Settings version in sync with main view version
     const versionEl = document.querySelector('.version-info');
     const settingsVersionEl = document.getElementById('settingsVersion');
@@ -202,7 +185,6 @@ function updateAndReload() {
         document.getElementById('importFileInput').click();
     });
 
-    document.getElementById('clearCacheBtn').addEventListener('click', clearCacheAndReload);
     const updateBtnSettings = document.getElementById('updateBtnSettings');
     if (updateBtnSettings) updateBtnSettings.addEventListener('click', updateAndReload);
 
@@ -3130,8 +3112,8 @@ function updateGamepadNavigation(viewId) {
             break;
 
         case 'settingsView':
-            const settingsBtn = document.getElementById('settingsClearCacheBtn');
-            if (settingsBtn) gamepadState.navigationElements.push(settingsBtn);
+            const settingsUpdateBtn = document.getElementById('updateBtnSettings');
+            if (settingsUpdateBtn) gamepadState.navigationElements.push(settingsUpdateBtn);
             break;
             
         case 'studyView':

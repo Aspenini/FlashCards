@@ -41,15 +41,39 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Only handle GET
   if (request.method !== 'GET') return;
 
   const isAppAsset = url.origin === self.location.origin || url.href.includes('jspdf');
-  if (isAppAsset) {
+
+  if (isAppAsset && request.mode === 'navigate') {
+    const path = url.pathname || '/';
+    const canonicalDocUrl = url.origin + (path.startsWith('/') ? path : '/' + path);
+    const canonicalRequest = new Request(canonicalDocUrl);
+
     if (url.searchParams.has('nocache') || url.searchParams.has('update')) {
-      event.respondWith(fetch(request, { cache: 'reload' }));
+      event.respondWith(
+        fetch(request, { cache: 'reload' }).then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(canonicalRequest, clone));
+          return res;
+        })
+      );
       return;
     }
+
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(canonicalRequest, clone));
+          return res;
+        })
+        .catch(() => caches.match(canonicalRequest))
+    );
+    return;
+  }
+
+  if (isAppAsset) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
@@ -63,6 +87,5 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Everything else: network first (e.g. future API calls)
   event.respondWith(fetch(request).catch(() => caches.match(request)));
 });
