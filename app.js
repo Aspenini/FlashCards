@@ -91,6 +91,11 @@ document.addEventListener('DOMContentLoaded', () => {
             showView('mainView', false);
         }
     }, 0);
+
+    // PWA: register service worker for offline support (relative path works at root or subpath)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
+    }
 });
 
 // Load bundled sets from generated JavaScript file ONLY
