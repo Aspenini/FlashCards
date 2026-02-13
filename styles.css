@@ -448,6 +448,12 @@ h3 {
         display: none;
     }
 
+    /* Hide back buttons on Study and Create when using bottom nav (mobile PWA only) */
+    html.standalone #backToMainFromSetupBtn,
+    html.standalone #backToMainBtn {
+        display: none;
+    }
+
     html.standalone #mainView .main-header {
         margin-bottom: 24px;
     }

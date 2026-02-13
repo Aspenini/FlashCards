@@ -211,6 +211,7 @@ function clearCacheAndReload() {
     document.getElementById('printGenerateBtn').addEventListener('click', generatePrintPdf);
 
     // Editor view
+    document.getElementById('backToMainBtn').addEventListener('click', () => showView('mainView'));
     document.getElementById('newSetBtn').addEventListener('click', openCreateSet);
 
     document.getElementById('addCardBtn').addEventListener('click', addCardToEditor);
@@ -232,6 +233,7 @@ function clearCacheAndReload() {
         });
     }
 
+    document.getElementById('backToMainFromSetupBtn').addEventListener('click', () => showView('mainView'));
     document.getElementById('selectedSet').addEventListener('change', updateRoundSelect);
     document.getElementById('startStudyBtn').addEventListener('click', startStudy);
 
@@ -2896,7 +2898,7 @@ function handleSetupViewButtons(buttonIndex) {
             break;
         case 1: // B / Circle button - Back
         case 8: // Back button
-            showView('mainView');
+            document.getElementById('backToMainFromSetupBtn').click();
             break;
     }
 }
@@ -2956,7 +2958,7 @@ function handleEditorViewButtons(buttonIndex) {
     switch (buttonIndex) {
         case 1: // B / Circle button - Back
         case 8: // Back button
-            showView('mainView');
+            document.getElementById('backToMainBtn').click();
             break;
         case 0: // A / X button - Save (if focused)
             const focused = document.querySelector('.gamepad-focused');
@@ -3085,6 +3087,7 @@ function updateGamepadNavigation(viewId) {
             
         case 'studySetupView':
             const setupElements = [
+                'backToMainFromSetupBtn',
                 'selectedSet',
                 'selectedRound',
                 'progressiveMode',
@@ -3110,7 +3113,7 @@ function updateGamepadNavigation(viewId) {
             break;
             
         case 'setEditorView':
-            const editorButtons = ['saveSetBtn', 'newSetBtn'];
+            const editorButtons = ['saveSetBtn', 'backToMainBtn', 'newSetBtn'];
             editorButtons.forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) {
