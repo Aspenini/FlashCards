@@ -467,6 +467,11 @@ h3 {
         display: none;
     }
 
+    /* Hide voice read-aloud in mobile PWA */
+    html.standalone .study-read-controls {
+        display: none;
+    }
+
     html.standalone #mainView .main-header {
         margin-bottom: 24px;
     }

@@ -3174,8 +3174,10 @@ function updateGamepadNavigation(viewId) {
         case 'studyView':
             const readAloudBtn = document.getElementById('readAloudBtn');
             const readVoiceSelectEl = document.getElementById('readVoiceSelect');
-            if (readAloudBtn) gamepadState.navigationElements.push(readAloudBtn);
-            if (readVoiceSelectEl) gamepadState.navigationElements.push(readVoiceSelectEl);
+            if (!isStandalone()) {
+                if (readAloudBtn) gamepadState.navigationElements.push(readAloudBtn);
+                if (readVoiceSelectEl) gamepadState.navigationElements.push(readVoiceSelectEl);
+            }
             const flipBtn = document.getElementById('flipCardBtn');
             const wrongBtn = document.getElementById('wrongBtn');
             const rightBtn = document.getElementById('rightBtn');
