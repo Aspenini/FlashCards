@@ -440,9 +440,11 @@ h3 {
         padding-bottom: calc(80px + env(safe-area-inset-bottom));
     }
 
-    /* Simpler header on home when bottom nav is present: hide Create/Study, keep Import/Print */
+    /* Simpler header on home when bottom nav is present: hide Create/Study; version & Clear Cache live in Settings */
     html.standalone #mainView #createSetBtn,
-    html.standalone #mainView #studyBtn {
+    html.standalone #mainView #studyBtn,
+    html.standalone #mainView #clearCacheBtn,
+    html.standalone #mainView .version-info {
         display: none;
     }
 
@@ -522,7 +524,7 @@ h3 {
 }
 
 /* Editor */
-.editor-header, .setup-header, .results-header {
+.editor-header, .setup-header, .results-header, .settings-header {
     display: flex;
     align-items: center;
     gap: 24px;
@@ -531,10 +533,22 @@ h3 {
     border-bottom: 1px solid #2a2a2a;
 }
 
-.editor-header h2, .setup-header h2, .results-header h2 {
+.editor-header h2, .setup-header h2, .results-header h2, .settings-header h2 {
     margin: 0;
     flex: 1;
     font-size: 2rem;
+}
+
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 400px;
+}
+.settings-version {
+    font-size: 0.9rem;
+    color: #999;
+    font-family: monospace;
 }
 
 .form-group {

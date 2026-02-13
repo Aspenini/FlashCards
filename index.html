@@ -81,14 +81,14 @@
                 </div>
             </div>
             
-            <div class="version-info">v0.3.3-6</div>
+            <div class="version-info">v0.3.4-6</div>
         </div>
 
         <!-- Create/Edit Set View -->
         <div id="setEditorView" class="view">
             <div class="editor-header">
-                <button id="backToMainBtn" class="btn btn-secondary">← Back</button>
                 <h2 id="editorTitle">Create New Set</h2>
+                <button id="newSetBtn" class="btn btn-secondary btn-small" type="button">New set</button>
             </div>
             
             <div class="form-group">
@@ -155,7 +155,6 @@
         <!-- Study Setup View -->
         <div id="studySetupView" class="view">
             <div class="setup-header">
-                <button id="backToMainFromSetupBtn" class="btn btn-secondary">← Back</button>
                 <h2>Study Setup</h2>
             </div>
             
@@ -271,21 +270,36 @@
                 <button id="backToMainFromResultsBtn" class="btn btn-secondary">Back to Main</button>
             </div>
         </div>
+
+        <!-- Settings View (PWA mobile: version + clear cache) -->
+        <div id="settingsView" class="view">
+            <div class="settings-header">
+                <h2>Settings</h2>
+            </div>
+            <div class="settings-content">
+                <p class="settings-version" id="settingsVersion">v0.3.3-6</p>
+                <button type="button" id="settingsClearCacheBtn" class="btn btn-warning">Clear Cache</button>
+            </div>
+        </div>
     </div>
 
-    <!-- PWA mobile bottom nav (visible in standalone + mobile viewport) -->
+    <!-- PWA mobile bottom nav (visible in standalone + mobile viewport). Order: Home, Study, Create, Settings -->
     <nav class="pwa-bottom-nav" id="pwaBottomNav" aria-label="Main navigation">
         <button type="button" class="pwa-nav-btn" id="pwaNavHome" data-view="mainView" aria-label="Home">
             <span class="pwa-nav-icon" aria-hidden="true">⌂</span>
             <span class="pwa-nav-label">Home</span>
         </button>
+        <button type="button" class="pwa-nav-btn" id="pwaNavStudy" data-view="studySetupView" aria-label="Study">
+            <span class="pwa-nav-icon" aria-hidden="true">✎</span>
+            <span class="pwa-nav-label">Study</span>
+        </button>
         <button type="button" class="pwa-nav-btn" id="pwaNavCreate" data-view="setEditorView" aria-label="Create set">
             <span class="pwa-nav-icon" aria-hidden="true">+</span>
             <span class="pwa-nav-label">Create</span>
         </button>
-        <button type="button" class="pwa-nav-btn" id="pwaNavStudy" data-view="studySetupView" aria-label="Study">
-            <span class="pwa-nav-icon" aria-hidden="true">✎</span>
-            <span class="pwa-nav-label">Study</span>
+        <button type="button" class="pwa-nav-btn" id="pwaNavSettings" data-view="settingsView" aria-label="Settings">
+            <span class="pwa-nav-icon" aria-hidden="true">⚙</span>
+            <span class="pwa-nav-label">Settings</span>
         </button>
     </nav>
 

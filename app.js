@@ -175,16 +175,23 @@ function clearCacheAndReload() {
         populateSetSelect();
     });
 
-    // PWA bottom nav (visible in standalone + mobile)
+    // PWA bottom nav (visible in standalone + mobile). Order: Home, Study, Create, Settings
     const pwaNavHome = document.getElementById('pwaNavHome');
-    const pwaNavCreate = document.getElementById('pwaNavCreate');
     const pwaNavStudy = document.getElementById('pwaNavStudy');
+    const pwaNavCreate = document.getElementById('pwaNavCreate');
+    const pwaNavSettings = document.getElementById('pwaNavSettings');
     if (pwaNavHome) pwaNavHome.addEventListener('click', () => showView('mainView'));
-    if (pwaNavCreate) pwaNavCreate.addEventListener('click', openCreateSet);
-    if (pwaNavStudy) pwaNavStudy.addEventListener('click', () => {
-        showView('studySetupView');
-        populateSetSelect();
-    });
+    if (pwaNavStudy) pwaNavStudy.addEventListener('click', () => showView('studySetupView'));
+    if (pwaNavCreate) pwaNavCreate.addEventListener('click', () => showView('setEditorView'));
+    if (pwaNavSettings) pwaNavSettings.addEventListener('click', () => showView('settingsView'));
+
+    const settingsClearBtn = document.getElementById('settingsClearCacheBtn');
+    if (settingsClearBtn) settingsClearBtn.addEventListener('click', clearCacheAndReload);
+
+    // Keep Settings version in sync with main view version
+    const versionEl = document.querySelector('.version-info');
+    const settingsVersionEl = document.getElementById('settingsVersion');
+    if (versionEl && settingsVersionEl) settingsVersionEl.textContent = versionEl.textContent;
 
     document.getElementById('importSetBtn').addEventListener('click', () => {
         document.getElementById('importFileInput').click();
@@ -204,9 +211,7 @@ function clearCacheAndReload() {
     document.getElementById('printGenerateBtn').addEventListener('click', generatePrintPdf);
 
     // Editor view
-    document.getElementById('backToMainBtn').addEventListener('click', () => {
-        showView('mainView');
-    });
+    document.getElementById('newSetBtn').addEventListener('click', openCreateSet);
 
     document.getElementById('addCardBtn').addEventListener('click', addCardToEditor);
     document.getElementById('saveSetBtn').addEventListener('click', saveSet);
@@ -227,11 +232,6 @@ function clearCacheAndReload() {
         });
     }
 
-    // Study setup
-    document.getElementById('backToMainFromSetupBtn').addEventListener('click', () => {
-        showView('mainView');
-    });
-
     document.getElementById('selectedSet').addEventListener('change', updateRoundSelect);
     document.getElementById('startStudyBtn').addEventListener('click', startStudy);
 
@@ -247,10 +247,7 @@ function clearCacheAndReload() {
     document.getElementById('askForHintBtn').addEventListener('click', askForHint);
 
     // Results view
-    document.getElementById('studyAgainBtn').addEventListener('click', () => {
-        showView('studySetupView');
-        populateSetSelect();
-    });
+    document.getElementById('studyAgainBtn').addEventListener('click', () => showView('studySetupView'));
 
     document.getElementById('backToMainFromResultsBtn').addEventListener('click', () => {
         showView('mainView');
@@ -277,12 +274,50 @@ function setupSiteLogoFallback() {
 // View management with URL hash support
 let isUpdatingHash = false; // Prevent infinite loop
 
+// Persist study setup when switching tabs (restore when returning)
+let lastStudySetupState = { setIndex: '', roundId: '', progressive: true };
+
 function showView(viewId, updateHash = true) {
+    const previousView = getCurrentViewId();
+    if (previousView === 'studySetupView') {
+        const setSelect = document.getElementById('selectedSet');
+        const roundSelect = document.getElementById('selectedRound');
+        const prog = document.getElementById('progressiveMode');
+        if (setSelect && roundSelect && prog) {
+            lastStudySetupState = {
+                setIndex: setSelect.value,
+                roundId: roundSelect.value,
+                progressive: prog.checked
+            };
+        }
+    }
+
     document.querySelectorAll('.view').forEach(view => {
         view.classList.remove('active');
     });
     document.getElementById(viewId).classList.add('active');
     
+    if (viewId === 'studySetupView') {
+        populateSetSelect();
+        const setSelect = document.getElementById('selectedSet');
+        const roundSelect = document.getElementById('selectedRound');
+        const prog = document.getElementById('progressiveMode');
+        if (setSelect && lastStudySetupState.setIndex !== undefined) {
+            const idx = lastStudySetupState.setIndex;
+            if (idx && Array.from(setSelect.options).some(o => o.value === idx)) {
+                setSelect.value = idx;
+                updateRoundSelect();
+            }
+            if (roundSelect && lastStudySetupState.roundId !== undefined) {
+                const rid = lastStudySetupState.roundId;
+                if (rid && Array.from(roundSelect.options).some(o => o.value === rid)) {
+                    roundSelect.value = rid;
+                }
+            }
+            if (prog) prog.checked = lastStudySetupState.progressive;
+        }
+    }
+
     updatePwaNavActive(viewId);
     updateGamepadNavigation(viewId);
     
@@ -293,7 +328,8 @@ function showView(viewId, updateHash = true) {
             'setEditorView': 'creator',
             'studySetupView': 'study',
             'studyView': 'study',
-            'resultsView': 'study'
+            'resultsView': 'study',
+            'settingsView': 'settings'
         };
         
         const hash = hashMap[viewId] || '';
@@ -315,31 +351,15 @@ function handleHashChange() {
     const hash = window.location.hash.substring(1); // Remove the #
     
     if (hash === 'creator') {
-        // Check if we're creating new or editing
-        if (currentSetId === null) {
-            showView('setEditorView', false);
-            document.getElementById('editorTitle').textContent = 'Create New Set';
-            document.getElementById('deleteSetBtn').style.display = 'none';
-            document.getElementById('setName').value = '';
-            document.getElementById('setYear').value = '';
-            document.getElementById('setCreator').value = '';
-            document.getElementById('setSubject').value = '';
-            document.getElementById('setColor').value = '#6b7280';
-            document.getElementById('setColorText').value = '';
-            document.getElementById('cardsList').innerHTML = '';
-        } else {
-            // Already in editor, just show the view
-            showView('setEditorView', false);
-        }
+        showView('setEditorView', false);
     } else if (hash === 'study') {
-        // Show study setup if not already in study
-        if (!document.getElementById('studyView').classList.contains('active') && 
+        if (!document.getElementById('studyView').classList.contains('active') &&
             !document.getElementById('resultsView').classList.contains('active')) {
             showView('studySetupView', false);
-            populateSetSelect();
         }
+    } else if (hash === 'settings') {
+        showView('settingsView', false);
     } else {
-        // Default to main view
         showView('mainView', false);
     }
     
@@ -2632,6 +2652,8 @@ function handleWiiUConfirm() {
         handleSetupViewButtons(0);
     } else if (viewId === 'setEditorView') {
         handleEditorViewButtons(0);
+    } else if (viewId === 'settingsView') {
+        handleSettingsViewButtons(0);
     }
 }
 
@@ -2676,6 +2698,7 @@ function getPwaNavActiveView(viewId) {
     if (viewId === 'mainView') return 'mainView';
     if (viewId === 'setEditorView') return 'setEditorView';
     if (viewId === 'studySetupView' || viewId === 'studyView' || viewId === 'resultsView') return 'studySetupView';
+    if (viewId === 'settingsView') return 'settingsView';
     return viewId;
 }
 
@@ -2783,7 +2806,15 @@ function handleButtonPress(buttonIndex, viewId) {
         case 'setEditorView':
             handleEditorViewButtons(buttonIndex);
             break;
+        case 'settingsView':
+            handleSettingsViewButtons(buttonIndex);
+            break;
     }
+}
+
+// Handle buttons in settings view
+function handleSettingsViewButtons(buttonIndex) {
+    if (buttonIndex === 0) activateFocusedElement();
 }
 
 // Handle buttons in study view
@@ -2865,7 +2896,7 @@ function handleSetupViewButtons(buttonIndex) {
             break;
         case 1: // B / Circle button - Back
         case 8: // Back button
-            document.getElementById('backToMainFromSetupBtn').click();
+            showView('mainView');
             break;
     }
 }
@@ -2925,7 +2956,7 @@ function handleEditorViewButtons(buttonIndex) {
     switch (buttonIndex) {
         case 1: // B / Circle button - Back
         case 8: // Back button
-            document.getElementById('backToMainBtn').click();
+            showView('mainView');
             break;
         case 0: // A / X button - Save (if focused)
             const focused = document.querySelector('.gamepad-focused');
@@ -2965,7 +2996,7 @@ function handleDpadNavigation(gamepad, viewId) {
     if (Math.abs(horizontal) > 0.1 || Math.abs(vertical) > 0.1) {
         const now = Date.now();
         if (now - gamepadState.lastButtonPress > 300) { // Throttle navigation
-            if (viewId === 'mainView' || viewId === 'studySetupView' || viewId === 'resultsView' || viewId === 'setEditorView' || viewId === 'studyView') {
+            if (viewId === 'mainView' || viewId === 'studySetupView' || viewId === 'resultsView' || viewId === 'setEditorView' || viewId === 'studyView' || viewId === 'settingsView') {
                 // Normal navigation
                 navigateWithDpad(vertical, horizontal);
             }
@@ -3053,11 +3084,9 @@ function updateGamepadNavigation(viewId) {
             break;
             
         case 'studySetupView':
-            // Setup elements in order (top to bottom)
             const setupElements = [
-                'backToMainFromSetupBtn',
                 'selectedSet',
-                'cardCount',
+                'selectedRound',
                 'progressiveMode',
                 'startStudyBtn'
             ];
@@ -3081,14 +3110,18 @@ function updateGamepadNavigation(viewId) {
             break;
             
         case 'setEditorView':
-            // Editor buttons
-            const editorButtons = ['saveSetBtn', 'backToMainBtn'];
+            const editorButtons = ['saveSetBtn', 'newSetBtn'];
             editorButtons.forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) {
                     gamepadState.navigationElements.push(btn);
                 }
             });
+            break;
+
+        case 'settingsView':
+            const settingsBtn = document.getElementById('settingsClearCacheBtn');
+            if (settingsBtn) gamepadState.navigationElements.push(settingsBtn);
             break;
             
         case 'studyView':
