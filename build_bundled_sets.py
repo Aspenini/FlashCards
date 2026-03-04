@@ -15,7 +15,7 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 BUNDLED_DIR = Path("bundled")
-OUTPUT_FILE = Path("bundled-sets.js")
+OUTPUT_FILE = Path("public/bundled-sets.js")
 INDEX_HTML = Path("index.html")
 
 

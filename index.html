@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-    <!-- Wii U: full support via key events (A/D-pad), touch, optional wiiu.gamepad; .wiiu class applied by app.js -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,7 +15,7 @@
     <meta name="theme-color" content="#0a0a0a">
     <link rel="canonical" href="https://flashcards.aspenini.com/">
 
-    <!-- Open Graph (Facebook, LinkedIn, etc.) -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://flashcards.aspenini.com/">
     <meta property="og:title" content="FlashCards – Create, Study & Print Flashcards">
@@ -37,11 +36,10 @@
     <!-- PWA -->
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="img/sandy-bowling-approved.png">
-
     <link rel="icon" type="image/x-icon" href="img/sandy-bowling-approved.ico">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <link rel="stylesheet" href="styles.css">
-    <!-- Standalone detection + theme (apply before first paint to avoid flash) -->
+
+    <!-- Standalone detection + theme (before first paint to avoid flash) -->
     <script>
       (function() {
         var isStandalone = window.matchMedia('(display-mode: standalone)').matches || !!navigator.standalone;
@@ -93,7 +91,7 @@
                 </div>
             </div>
             
-            <div class="version-info">v0.4.8-10</div>
+            <div class="version-info">v0.5.0</div>
         </div>
 
         <!-- Create/Edit Set View -->
@@ -108,23 +106,19 @@
                 <label for="setName">Set Name</label>
                 <input type="text" id="setName" placeholder="Enter set name" maxlength="50">
             </div>
-
             <div class="form-group">
                 <label for="setYear">Year (optional)</label>
                 <input type="text" id="setYear" placeholder="e.g. 2024 or 2024-2025" maxlength="20">
                 <span class="hint">Single year or range like 2025-2026</span>
             </div>
-
             <div class="form-group">
                 <label for="setCreator">Creator (optional)</label>
                 <input type="text" id="setCreator" placeholder="e.g. Your name or organization" maxlength="80">
             </div>
-
             <div class="form-group">
                 <label for="setSubject">Subject (optional)</label>
                 <input type="text" id="setSubject" placeholder="e.g. Science, History" maxlength="50">
             </div>
-
             <div class="form-group">
                 <label for="setColor">Color (optional)</label>
                 <div class="color-input-row">
@@ -133,14 +127,12 @@
                 </div>
                 <span class="hint">Shown in the top-right corner of the set card on the homepage</span>
             </div>
-
             <div class="form-group">
                 <label class="checkbox-label">
                     <input type="checkbox" id="roundsEnabled">
                     <span>Enable Rounds (group cards into rounds)</span>
                 </label>
             </div>
-
             <div id="roundsSection" style="display: none;" class="rounds-section">
                 <div class="rounds-header">
                     <h3>Rounds</h3>
@@ -148,7 +140,6 @@
                 </div>
                 <div id="roundsList" class="rounds-list"></div>
             </div>
-
             <div class="cards-editor">
                 <div class="cards-header">
                     <h3>Cards</h3>
@@ -158,7 +149,6 @@
                 </div>
                 <div id="cardsList" class="cards-list"></div>
             </div>
-
             <div class="editor-actions">
                 <button id="saveSetBtn" class="btn btn-primary">Save Set</button>
                 <button id="deleteSetBtn" class="btn btn-danger" style="display: none;">Delete Set</button>
@@ -171,27 +161,23 @@
                 <button id="backToMainFromSetupBtn" class="btn btn-secondary">← Back</button>
                 <h2>Study Setup</h2>
             </div>
-            
             <div class="setup-content">
                 <div class="form-group">
                     <label for="selectedSet">Select Set</label>
                     <select id="selectedSet" class="select-input"></select>
                 </div>
-                
                 <div class="form-group" id="roundSelectGroup" style="display: none;">
                     <label for="selectedRound">Select Round</label>
                     <select id="selectedRound" class="select-input">
                         <option value="">All Rounds</option>
                     </select>
                 </div>
-                
                 <div class="form-group">
                     <label class="checkbox-label">
                         <input type="checkbox" id="progressiveMode" checked>
                         <span>Progressive Mode (questions shown in order, can add more before answering)</span>
                     </label>
                 </div>
-                
                 <button id="startStudyBtn" class="btn btn-primary">Start Studying</button>
             </div>
         </div>
@@ -213,7 +199,6 @@
                     <select id="readVoiceSelect" class="read-voice-select" title="Choose voice"></select>
                 </div>
             </div>
-
             <div class="card-container">
                 <div id="flashcard" class="flashcard">
                     <div class="card-front">
@@ -221,9 +206,7 @@
                         <div id="doNotAcceptFront" class="card-do-not-accept"></div>
                         <div class="card-main-content">
                             <div class="card-text-content">
-                                <div class="card-label">
-                                    <span>Question</span>
-                                </div>
+                                <div class="card-label"><span>Question</span></div>
                                 <div id="questionText" class="card-content"></div>
                             </div>
                             <div id="cardImageFront" class="card-image"></div>
@@ -243,7 +226,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="study-actions">
                 <button id="flipCardBtn" class="btn btn-secondary">Flip Card</button>
                 <div id="answerButtons" class="answer-buttons" style="display: none;">
@@ -258,10 +240,7 @@
 
         <!-- Results View -->
         <div id="resultsView" class="view">
-            <div class="results-header">
-                <h2>Study Results</h2>
-            </div>
-            
+            <div class="results-header"><h2>Study Results</h2></div>
             <div class="results-content">
                 <div class="stat-card">
                     <div class="stat-value" id="totalCards">0</div>
@@ -280,25 +259,21 @@
                     <div class="stat-label">Accuracy</div>
                 </div>
             </div>
-            
             <div class="cards-results-container">
                 <h3>Card Results</h3>
                 <div id="cardsResultsList" class="cards-results-list"></div>
             </div>
-
             <div class="results-actions">
                 <button id="studyAgainBtn" class="btn btn-primary">Study Again</button>
                 <button id="backToMainFromResultsBtn" class="btn btn-secondary">Back to Main</button>
             </div>
         </div>
 
-        <!-- Settings View (PWA mobile: version + clear cache) -->
+        <!-- Settings View -->
         <div id="settingsView" class="view">
-            <div class="settings-header">
-                <h2>Settings</h2>
-            </div>
+            <div class="settings-header"><h2>Settings</h2></div>
             <div class="settings-content">
-                <p class="settings-version" id="settingsVersion">v0.3.3-6</p>
+                <p class="settings-version" id="settingsVersion">v0.5.0</p>
                 <div class="theme-select-row settings-update-row">
                     <label for="themeSelectSettings">Theme</label>
                     <select id="themeSelectSettings" class="theme-select" title="Choose theme" aria-label="Choose theme">
@@ -317,7 +292,7 @@
         </div>
     </div>
 
-    <!-- PWA mobile bottom nav (visible in standalone + mobile viewport). Order: Home, Study, Create, Settings -->
+    <!-- PWA bottom nav -->
     <nav class="pwa-bottom-nav" id="pwaBottomNav" aria-label="Main navigation">
         <button type="button" class="pwa-nav-btn" id="pwaNavHome" data-view="mainView" aria-label="Home">
             <span class="material-symbols-outlined pwa-nav-icon" aria-hidden="true">home</span>
@@ -366,11 +341,9 @@
         </div>
     </div>
 
-    <!-- Cache-busting: bundled-sets.js uses content hash from build script -->
-    <!-- Update the hash after running build_bundled_sets.py (check build output) -->
+    <!-- Bundled sets (generated by build_bundled_sets.py) -->
     <script src="bundled-sets.js?v=532b7f0a"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="app.js?v=0.1.7"></script>
+    <!-- App entry point -->
+    <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
-

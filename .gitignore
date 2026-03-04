@@ -1,2 +1,4 @@
 *.DS_Store
 logo-base64.txt
+node_modules/
+dist/
