@@ -2447,6 +2447,100 @@ input.card-do-not-accept::placeholder,
         font-size: 0.9rem;
         padding: 8px 12px;
     }
+
+    /* Moderator mode - mobile */
+    .moderator-view {
+        gap: 14px;
+    }
+
+    .mod-qa-section {
+        padding: 16px;
+        gap: 14px;
+        border-radius: 12px;
+    }
+
+    .mod-qa-text {
+        font-size: 1.05rem;
+    }
+
+    .mod-nav-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .mod-nav-row .btn {
+        width: 100%;
+        min-height: 50px;
+        font-size: 1rem;
+    }
+
+    .mod-players-section {
+        padding: 14px 16px;
+        border-radius: 12px;
+    }
+
+    .mod-players-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .mod-player-add-row {
+        min-width: 0;
+    }
+
+    .mod-player-add-row .text-input {
+        padding: 10px 14px;
+        font-size: 16px;
+        min-height: 44px;
+    }
+
+    .mod-player-add-row .btn-sm {
+        min-height: 44px;
+        padding: 10px 18px;
+        font-size: 0.95rem;
+    }
+
+    .mod-player-row {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .mod-player-name {
+        font-size: 1rem;
+    }
+
+    .mod-player-score-badge {
+        min-width: 34px;
+        height: 30px;
+        font-size: 0.9rem;
+    }
+
+    .mod-player-actions {
+        gap: 6px;
+    }
+
+    .mod-player-actions button {
+        min-width: 44px;
+        min-height: 44px;
+        font-size: 1rem;
+        padding: 8px 12px;
+        border-radius: 8px;
+    }
+
+    .mod-award-btn {
+        font-size: 1rem !important;
+    }
+
+    /* Results scoreboard - mobile */
+    .moderator-final-scores {
+        gap: 10px;
+    }
+
+    .mod-final-card {
+        padding: 12px 16px;
+        min-width: 80px;
+    }
 }
 
 /* ── Toast notifications ─────────────────────────────────────────────────── */
@@ -2555,6 +2649,7 @@ input.card-do-not-accept::placeholder,
     width: 100%;
     max-width: 700px;
     margin: 0 auto;
+    overflow: hidden;
 }
 
 .mod-qa-section {
