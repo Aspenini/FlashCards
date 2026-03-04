@@ -8,7 +8,7 @@ import type {
   Player,
 } from './types';
 
-export const APP_VERSION = 'v0.5.0';
+export const APP_VERSION = 'v0.5.1';
 
 export let sets: FlashCardSet[] = [];
 export let currentSetId: number | null = null;
