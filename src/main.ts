@@ -8,6 +8,7 @@
 
 import './styles.css';
 
+import { ViewId } from './constants';
 import { APP_VERSION, lastStudySetupState, setLastStudySetupState, gamepadState } from './state';
 import { cleanReloadQueryFromUrl, isWiiU, el } from './utils';
 import { applyTheme, setTheme } from './theme';
@@ -31,6 +32,12 @@ import {
   flipCard,
   markAnswer,
   askForHint,
+  closeReview,
+  awardPoint,
+  moderatorNext,
+  moderatorHint,
+  addModeratorPlayer,
+  removeModeratorPlayer,
 } from './study';
 import { openPrintModal, closePrintModal, updatePrintRoundSelect, generatePrintPdf } from './print';
 import { handleImport } from './import-export';
@@ -44,21 +51,23 @@ injectGamepadDeps({ showView, flipCard, markAnswer, askForHint });
 // ── View-change hook (runs after every showView call) ──────────────────────
 onViewChange((viewId, previousId) => {
   // Persist study-setup state when leaving that view
-  if (previousId === 'studySetupView') {
+  if (previousId === ViewId.STUDY_SETUP) {
     const setSelect = document.getElementById('selectedSet') as HTMLSelectElement | null;
     const roundSelect = document.getElementById('selectedRound') as HTMLSelectElement | null;
     const prog = document.getElementById('progressiveMode') as HTMLInputElement | null;
+    const mod = document.getElementById('moderatorMode') as HTMLInputElement | null;
     if (setSelect && roundSelect && prog) {
       setLastStudySetupState({
         setIndex: setSelect.value,
         roundId: roundSelect.value,
         progressive: prog.checked,
+        moderator: mod?.checked ?? false,
       });
     }
   }
 
   // Restore study-setup state when returning to it
-  if (viewId === 'studySetupView') {
+  if (viewId === ViewId.STUDY_SETUP) {
     populateSetSelect();
     const setSelect = el<HTMLSelectElement>('selectedSet');
     const roundSelect = el<HTMLSelectElement>('selectedRound');
@@ -72,6 +81,8 @@ onViewChange((viewId, previousId) => {
       roundSelect.value = state.roundId;
     }
     prog.checked = state.progressive;
+    const mod = el<HTMLInputElement>('moderatorMode');
+    mod.checked = state.moderator;
   }
 
   // Gamepad navigation refresh
@@ -104,16 +115,16 @@ function setupEventListeners(): void {
 
   // Main view
   el('createSetBtn').addEventListener('click', openCreateSet);
-  el('studyBtn').addEventListener('click', () => { showView('studySetupView'); populateSetSelect(); });
+  el('studyBtn').addEventListener('click', () => { showView(ViewId.STUDY_SETUP); populateSetSelect(); });
   el('importSetBtn').addEventListener('click', () => el<HTMLInputElement>('importFileInput').click());
   el('printBtn').addEventListener('click', openPrintModal);
   el<HTMLInputElement>('importFileInput').addEventListener('change', handleImport);
 
   // PWA bottom nav
-  document.getElementById('pwaNavHome')?.addEventListener('click', () => showView('mainView'));
-  document.getElementById('pwaNavStudy')?.addEventListener('click', () => showView('studySetupView'));
-  document.getElementById('pwaNavCreate')?.addEventListener('click', () => showView('setEditorView'));
-  document.getElementById('pwaNavSettings')?.addEventListener('click', () => showView('settingsView'));
+  document.getElementById('pwaNavHome')?.addEventListener('click', () => showView(ViewId.MAIN));
+  document.getElementById('pwaNavStudy')?.addEventListener('click', () => showView(ViewId.STUDY_SETUP));
+  document.getElementById('pwaNavCreate')?.addEventListener('click', () => showView(ViewId.EDITOR));
+  document.getElementById('pwaNavSettings')?.addEventListener('click', () => showView(ViewId.SETTINGS));
 
   // Version sync
   const versionEl = document.querySelector('.version-info');
@@ -139,7 +150,7 @@ function setupEventListeners(): void {
   el('printGenerateBtn').addEventListener('click', generatePrintPdf);
 
   // Editor
-  el('backToMainBtn').addEventListener('click', () => showView('mainView'));
+  el('backToMainBtn').addEventListener('click', () => showView(ViewId.MAIN));
   el('newSetBtn').addEventListener('click', openCreateSet);
   el('addCardBtn').addEventListener('click', () => addCardToEditor());
   el('saveSetBtn').addEventListener('click', saveSet);
@@ -156,23 +167,57 @@ function setupEventListeners(): void {
   });
 
   // Study setup
-  el('backToMainFromSetupBtn').addEventListener('click', () => showView('mainView'));
+  el('backToMainFromSetupBtn').addEventListener('click', () => showView(ViewId.MAIN));
   el<HTMLSelectElement>('selectedSet').addEventListener('change', updateRoundSelect);
   el('startStudyBtn').addEventListener('click', startStudy);
+
 
   // Study view
   el('flipCardBtn').addEventListener('click', flipCard);
   el('flashcard').addEventListener('click', () => {
     if (!el('flashcard').classList.contains('flipped')) flipCard();
   });
+  el('flashcard').addEventListener('keydown', (e: KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === ' ') && !el('flashcard').classList.contains('flipped')) {
+      e.preventDefault();
+      flipCard();
+    }
+  });
   el('wrongBtn').addEventListener('click', () => markAnswer(false));
   el('rightBtn').addEventListener('click', () => markAnswer(true));
   el('askForHintBtn').addEventListener('click', askForHint);
+  el('reviewClose').addEventListener('click', closeReview);
+  el('reviewOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeReview();
+  });
+
+  // Moderator panel delegation
+  el('modNextBtn').addEventListener('click', moderatorNext);
+  el('modHintBtn').addEventListener('click', moderatorHint);
+  el('modAddPlayerBtn').addEventListener('click', addModeratorPlayer);
+  el<HTMLInputElement>('modPlayerNameInput').addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Enter') { e.preventDefault(); addModeratorPlayer(); }
+  });
+  el('modPlayersList').addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const awardBtn = target.closest<HTMLElement>('.mod-award-btn');
+    if (awardBtn) {
+      const idx = parseInt(awardBtn.dataset.pidx || '', 10);
+      if (!isNaN(idx)) awardPoint(idx);
+      return;
+    }
+    const removeBtn = target.closest<HTMLElement>('.mod-remove-player-btn');
+    if (removeBtn) {
+      const idx = parseInt(removeBtn.dataset.pidx || '', 10);
+      if (!isNaN(idx)) removeModeratorPlayer(idx);
+    }
+  });
+
   setupReadAloud();
 
   // Results
-  el('studyAgainBtn').addEventListener('click', () => showView('studySetupView'));
-  el('backToMainFromResultsBtn').addEventListener('click', () => showView('mainView'));
+  el('studyAgainBtn').addEventListener('click', () => showView(ViewId.STUDY_SETUP));
+  el('backToMainFromResultsBtn').addEventListener('click', () => showView(ViewId.MAIN));
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────
@@ -190,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setTimeout(() => {
     if (window.location.hash) handleHashChange();
-    else showView('mainView', false);
+    else showView(ViewId.MAIN, false);
     updatePwaNavActive();
   }, 0);
 

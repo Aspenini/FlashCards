@@ -4,6 +4,7 @@
  * Uses data-attribute event delegation instead of inline onclick handlers.
  */
 
+import { ViewId } from './constants';
 import { sets } from './state';
 import { escapeHtml, formatYearDisplay } from './utils';
 import { showView } from './views';
@@ -115,7 +116,7 @@ export function setupSetListDelegation(): void {
         copyBundledSetToUser(index);
         break;
       case 'study':
-        showView('studySetupView');
+        showView(ViewId.STUDY_SETUP);
         break;
     }
   };

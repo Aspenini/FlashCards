@@ -6,16 +6,18 @@
  * (gamepad, study setup restore) can react without creating circular deps.
  */
 
+import { ViewId } from './constants';
+
 let isUpdatingHash = false;
 let viewChangeCallbacks: ((viewId: string, previousId: string) => void)[] = [];
 
 const VIEW_HASH_MAP: Record<string, string> = {
-  mainView: '',
-  setEditorView: 'creator',
-  studySetupView: 'study',
-  studyView: 'study',
-  resultsView: 'study',
-  settingsView: 'settings',
+  [ViewId.MAIN]: '',
+  [ViewId.EDITOR]: 'creator',
+  [ViewId.STUDY_SETUP]: 'study',
+  [ViewId.STUDY]: 'study',
+  [ViewId.RESULTS]: 'study',
+  [ViewId.SETTINGS]: 'settings',
 };
 
 export function onViewChange(cb: (viewId: string, previousId: string) => void): void {
@@ -23,14 +25,21 @@ export function onViewChange(cb: (viewId: string, previousId: string) => void): 
 }
 
 export function getCurrentViewId(): string {
-  return document.querySelector('.view.active')?.id || 'mainView';
+  return document.querySelector('.view.active')?.id || ViewId.MAIN;
 }
 
 export function showView(viewId: string, updateHash = true): void {
   const previousId = getCurrentViewId();
 
-  document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
-  document.getElementById(viewId)?.classList.add('active');
+  document.querySelectorAll('.view').forEach((v) => {
+    v.classList.remove('active');
+    v.setAttribute('aria-hidden', 'true');
+  });
+  const activeView = document.getElementById(viewId);
+  if (activeView) {
+    activeView.classList.add('active');
+    activeView.removeAttribute('aria-hidden');
+  }
 
   updatePwaNavActive(viewId);
 
@@ -51,25 +60,25 @@ export function handleHashChange(): void {
   const hash = window.location.hash.substring(1);
 
   if (hash === 'creator') {
-    showView('setEditorView', false);
+    showView(ViewId.EDITOR, false);
   } else if (hash === 'study') {
-    const studyActive = document.getElementById('studyView')?.classList.contains('active');
-    const resultsActive = document.getElementById('resultsView')?.classList.contains('active');
+    const studyActive = document.getElementById(ViewId.STUDY)?.classList.contains('active');
+    const resultsActive = document.getElementById(ViewId.RESULTS)?.classList.contains('active');
     if (!studyActive && !resultsActive) {
-      showView('studySetupView', false);
+      showView(ViewId.STUDY_SETUP, false);
     }
   } else if (hash === 'settings') {
-    showView('settingsView', false);
+    showView(ViewId.SETTINGS, false);
   } else {
-    showView('mainView', false);
+    showView(ViewId.MAIN, false);
   }
 
   isUpdatingHash = false;
 }
 
 function getPwaNavActiveView(viewId: string): string {
-  if (viewId === 'studySetupView' || viewId === 'studyView' || viewId === 'resultsView')
-    return 'studySetupView';
+  if (viewId === ViewId.STUDY_SETUP || viewId === ViewId.STUDY || viewId === ViewId.RESULTS)
+    return ViewId.STUDY_SETUP;
   return viewId;
 }
 

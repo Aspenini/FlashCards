@@ -53,7 +53,7 @@
     <img id="pdfLogo" src="img/logo.png" alt="" hidden>
     <div class="container">
         <!-- Main Menu View -->
-        <div id="mainView" class="view active">
+        <div id="mainView" class="view active" role="region" aria-label="Home">
             <div class="main-header">
                 <div class="header-top">
                     <div class="site-logo">
@@ -95,7 +95,7 @@
         </div>
 
         <!-- Create/Edit Set View -->
-        <div id="setEditorView" class="view">
+        <div id="setEditorView" class="view" role="region" aria-label="Set editor">
             <div class="editor-header">
                 <button id="backToMainBtn" class="btn btn-secondary">← Back</button>
                 <h2 id="editorTitle">Create New Set</h2>
@@ -156,7 +156,7 @@
         </div>
 
         <!-- Study Setup View -->
-        <div id="studySetupView" class="view">
+        <div id="studySetupView" class="view" role="region" aria-label="Study setup">
             <div class="setup-header">
                 <button id="backToMainFromSetupBtn" class="btn btn-secondary">← Back</button>
                 <h2>Study Setup</h2>
@@ -174,8 +174,14 @@
                 </div>
                 <div class="form-group">
                     <label class="checkbox-label">
-                        <input type="checkbox" id="progressiveMode" checked>
+                        <input type="checkbox" id="progressiveMode">
                         <span>Progressive Mode (questions shown in order, can add more before answering)</span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="moderatorMode">
+                        <span>Moderator Mode (show question &amp; answer together, manage players &amp; points)</span>
                     </label>
                 </div>
                 <button id="startStudyBtn" class="btn btn-primary">Start Studying</button>
@@ -183,31 +189,41 @@
         </div>
 
         <!-- Study View -->
-        <div id="studyView" class="view">
+        <div id="studyView" class="view" role="region" aria-label="Study">
             <div class="study-header">
                 <div class="progress-info">
                     <span id="progressText">Card 1 of 10</span>
-                    <div class="progress-bar">
-                        <div id="progressFill" class="progress-fill"></div>
-                    </div>
+                    <div class="progress-timeline" id="progressTimeline" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Study progress"></div>
                 </div>
-                <div class="study-read-controls">
-                    <button type="button" id="readAloudBtn" class="btn-read-aloud" title="Read current side aloud" aria-label="Read current side aloud">
-                        <span class="material-symbols-outlined" aria-hidden="true">volume_up</span>
-                    </button>
-                    <label for="readVoiceSelect" class="sr-only">Voice</label>
-                    <select id="readVoiceSelect" class="read-voice-select" title="Choose voice"></select>
+                <div id="reviewOverlay" class="review-overlay" style="display:none;">
+                    <div class="review-card">
+                        <div class="review-header">
+                            <span id="reviewTitle" class="review-title"></span>
+                            <button type="button" id="reviewClose" class="review-close" aria-label="Close review">&times;</button>
+                        </div>
+                        <div class="review-body">
+                            <div class="review-section">
+                                <span class="review-label">Question</span>
+                                <span id="reviewQuestion" class="review-text"></span>
+                            </div>
+                            <div class="review-section">
+                                <span class="review-label">Answer</span>
+                                <span id="reviewAnswer" class="review-text"></span>
+                            </div>
+                            <div id="reviewBadge" class="review-badge"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="card-container">
-                <div id="flashcard" class="flashcard">
+                <div id="flashcard" class="flashcard" role="button" tabindex="0" aria-label="Flashcard – click or press Enter to flip">
                     <div class="card-front">
                         <div id="hintsFront" class="card-hints"></div>
                         <div id="doNotAcceptFront" class="card-do-not-accept"></div>
                         <div class="card-main-content">
                             <div class="card-text-content">
                                 <div class="card-label"><span>Question</span></div>
-                                <div id="questionText" class="card-content"></div>
+                                <div id="questionText" class="card-content" aria-live="polite"></div>
                             </div>
                             <div id="cardImageFront" class="card-image"></div>
                         </div>
@@ -218,7 +234,7 @@
                         <div class="card-main-content">
                             <div class="card-text-content">
                                 <div class="card-label">Answer</div>
-                                <div id="answerText" class="card-content"></div>
+                                <div id="answerText" class="card-content" aria-live="polite"></div>
                                 <div id="acceptedAnswersList" class="accepted-answers-list"></div>
                             </div>
                             <div id="cardImageBack" class="card-image"></div>
@@ -236,10 +252,48 @@
                     <button id="askForHintBtn" class="btn btn-secondary">Add Next Question</button>
                 </div>
             </div>
+            <!-- Moderator view (replaces flashcard when moderator mode active) -->
+            <div id="moderatorView" class="moderator-view" style="display:none;">
+                <div class="mod-qa-section">
+                    <div class="mod-qa-block">
+                        <div class="mod-qa-label">Question</div>
+                        <div class="mod-qa-text" id="modQuestionText"></div>
+                        <div class="mod-qa-hints" id="modHints"></div>
+                    </div>
+                    <div class="mod-qa-block mod-answer-block">
+                        <div class="mod-qa-label">Answer</div>
+                        <div class="mod-qa-text" id="modAnswerText"></div>
+                        <div class="mod-qa-dna" id="modDoNotAccept"></div>
+                        <div class="mod-qa-accepted" id="modAccepted"></div>
+                    </div>
+                    <div class="mod-qa-image" id="modImage"></div>
+                </div>
+                <div class="mod-nav-row">
+                    <button type="button" id="modHintBtn" class="btn btn-secondary" style="display:none;">Add Next Question</button>
+                    <button type="button" id="modNextBtn" class="btn btn-primary">Next →</button>
+                </div>
+                <div class="mod-players-section">
+                    <div class="mod-players-header">
+                        <h3>Players</h3>
+                        <div class="mod-player-add-row">
+                            <input type="text" id="modPlayerNameInput" class="text-input" placeholder="Add player..." maxlength="40">
+                            <button type="button" id="modAddPlayerBtn" class="btn btn-primary btn-sm">Add</button>
+                        </div>
+                    </div>
+                    <div id="modPlayersList" class="mod-players-list"></div>
+                </div>
+            </div>
+            <div class="study-read-controls">
+                <button type="button" id="readAloudBtn" class="btn-read-aloud" title="Read current side aloud" aria-label="Read current side aloud">
+                    <span class="material-symbols-outlined" aria-hidden="true">volume_up</span>
+                </button>
+                <label for="readVoiceSelect" class="sr-only">Voice</label>
+                <select id="readVoiceSelect" class="read-voice-select" title="Choose voice"></select>
+            </div>
         </div>
 
         <!-- Results View -->
-        <div id="resultsView" class="view">
+        <div id="resultsView" class="view" role="region" aria-label="Results">
             <div class="results-header"><h2>Study Results</h2></div>
             <div class="results-content">
                 <div class="stat-card">
@@ -259,6 +313,10 @@
                     <div class="stat-label">Accuracy</div>
                 </div>
             </div>
+            <div id="moderatorResultsSection" class="moderator-results-section" style="display:none;">
+                <h3>Player Scores</h3>
+                <div id="moderatorFinalScores" class="moderator-final-scores"></div>
+            </div>
             <div class="cards-results-container">
                 <h3>Card Results</h3>
                 <div id="cardsResultsList" class="cards-results-list"></div>
@@ -270,7 +328,7 @@
         </div>
 
         <!-- Settings View -->
-        <div id="settingsView" class="view">
+        <div id="settingsView" class="view" role="region" aria-label="Settings">
             <div class="settings-header"><h2>Settings</h2></div>
             <div class="settings-content">
                 <p class="settings-version" id="settingsVersion">v0.5.0</p>

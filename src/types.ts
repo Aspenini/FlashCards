@@ -42,10 +42,16 @@ export interface StudyResults {
   cards: CardResult[];
 }
 
+export interface Player {
+  name: string;
+  score: number;
+}
+
 export interface StudySetupState {
   setIndex: string;
   roundId: string;
   progressive: boolean;
+  moderator: boolean;
 }
 
 export interface GamepadState {

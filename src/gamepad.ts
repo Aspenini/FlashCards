@@ -4,6 +4,7 @@
  * Dependencies are injected via setters to avoid circular imports with views/study.
  */
 
+import { ViewId } from './constants';
 import { gamepadState } from './state';
 import { isStandalone } from './utils';
 import { getCurrentViewId } from './views';
@@ -83,24 +84,24 @@ export function updateGamepadNavigation(viewId: string): void {
   };
 
   switch (viewId) {
-    case 'mainView':
+    case ViewId.MAIN:
       ['createSetBtn', 'studyBtn', 'importSetBtn', 'printBtn'].forEach(push);
       break;
-    case 'studySetupView':
+    case ViewId.STUDY_SETUP:
       ['backToMainFromSetupBtn', 'selectedSet', 'selectedRound', 'progressiveMode', 'startStudyBtn'].forEach(push);
       break;
-    case 'resultsView':
+    case ViewId.RESULTS:
       ['studyAgainBtn', 'backToMainFromResultsBtn'].forEach(push);
       break;
-    case 'setEditorView':
+    case ViewId.EDITOR:
       ['saveSetBtn', 'backToMainBtn', 'newSetBtn'].forEach(push);
       break;
-    case 'settingsView': {
+    case ViewId.SETTINGS: {
       push('themeSelectSettings');
       push('updateBtnSettings');
       break;
     }
-    case 'studyView': {
+    case ViewId.STUDY: {
       if (!isStandalone()) { push('readAloudBtn'); push('readVoiceSelect'); }
       const flashcard = document.getElementById('flashcard');
       const flipped = flashcard?.classList.contains('flipped');
@@ -205,10 +206,10 @@ function handleInput(gp: Gamepad): void {
 }
 
 function handleButton(btn: number, view: string): void {
-  if (view === 'studyView') handleStudyBtn(btn);
-  else if (view === 'resultsView') handleResultsBtn(btn);
-  else if (view === 'mainView' || view === 'studySetupView' || view === 'settingsView') { if (btn === 0) activateFocused(); if ((view === 'studySetupView') && (btn === 1 || btn === 8)) document.getElementById('backToMainFromSetupBtn')?.click(); }
-  else if (view === 'setEditorView') { if (btn === 1 || btn === 8) document.getElementById('backToMainBtn')?.click(); if (btn === 0) { const f = document.querySelector<HTMLElement>('.gamepad-focused'); if (f?.id === 'saveSetBtn') f.click(); } }
+  if (view === ViewId.STUDY) handleStudyBtn(btn);
+  else if (view === ViewId.RESULTS) handleResultsBtn(btn);
+  else if (view === ViewId.MAIN || view === ViewId.STUDY_SETUP || view === ViewId.SETTINGS) { if (btn === 0) activateFocused(); if ((view === ViewId.STUDY_SETUP) && (btn === 1 || btn === 8)) document.getElementById('backToMainFromSetupBtn')?.click(); }
+  else if (view === ViewId.EDITOR) { if (btn === 1 || btn === 8) document.getElementById('backToMainBtn')?.click(); if (btn === 0) { const f = document.querySelector<HTMLElement>('.gamepad-focused'); if (f?.id === 'saveSetBtn') f.click(); } }
 }
 
 function handleStudyBtn(btn: number): void {
@@ -216,7 +217,7 @@ function handleStudyBtn(btn: number): void {
   if (btn === 0) { const f = document.querySelector<HTMLElement>('.gamepad-focused'); f ? activateFocused() : (flipped ? _markAnswer(true) : _flipCard()); }
   else if (btn === 1) { if (flipped) _markAnswer(false); }
   else if (btn === 3) { const hb = document.getElementById('hintButton'); if (hb && hb.style.display !== 'none') _askForHint(); }
-  else if (btn === 8) _showView('mainView');
+  else if (btn === 8) _showView(ViewId.MAIN);
 }
 
 function handleResultsBtn(btn: number): void {
@@ -270,8 +271,8 @@ function handleWiiUConfirm(): void {
   if (now - gamepadState.lastButtonPress < gamepadState.buttonDebounceDelay) return;
   gamepadState.lastButtonPress = now;
   const view = getCurrentViewId();
-  if (view === 'studyView') handleStudyBtn(0);
-  else if (view === 'resultsView') handleResultsBtn(0);
+  if (view === ViewId.STUDY) handleStudyBtn(0);
+  else if (view === ViewId.RESULTS) handleResultsBtn(0);
   else activateFocused();
 }
 

@@ -5,6 +5,8 @@
  * to ≤50 KB, stored as base64 data URI).
  */
 
+import { showToast } from './toast';
+
 const MAX_WIDTH = 1280;
 const MAX_HEIGHT = 720;
 const MAX_SIZE_KB = 50;
@@ -88,7 +90,7 @@ export function setupImageFileHandler(cardItem: HTMLElement): void {
 
     const isSVG = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
     const isImage = file.type.startsWith('image/') && /^image\/(svg\+xml|jpeg|png|webp)$/.test(file.type) || isSVG;
-    if (!isImage) { alert('Please select an image file (SVG, JPG, PNG, or WebP).'); fileInput.value = ''; return; }
+    if (!isImage) { showToast('Please select an image file (SVG, JPG, PNG, or WebP).', 'warning'); fileInput.value = ''; return; }
 
     const reader = new FileReader();
 
@@ -150,15 +152,15 @@ export function setupImageFileHandler(cardItem: HTMLElement): void {
         }
 
         if (sizeKB > MAX_SIZE_KB) {
-          alert(`Image too large (${sizeKB.toFixed(1)} KB) even after compression. Use a smaller image.`);
+          showToast(`Image too large (${sizeKB.toFixed(1)} KB) even after compression. Use a smaller image.`, 'error');
           fileInput.value = '';
           return;
         }
 
         svg.value = dataURI;
-        if (msgs.length) alert(msgs.join(' '));
+        if (msgs.length) showToast(msgs.join(' '), 'info');
       };
-      img.onerror = () => { alert('Error loading image.'); fileInput.value = ''; };
+      img.onerror = () => { showToast('Error loading image.', 'error'); fileInput.value = ''; };
       img.src = ev.target!.result as string;
     };
     reader.readAsDataURL(file);

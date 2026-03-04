@@ -1,22 +1,28 @@
 import {
   sets,
+  setSets,
   currentSetId,
   setCurrentSetId,
   rounds,
   setRounds,
 } from './state';
+import { ViewId } from './constants';
 import { escapeHtml, parseYearInput, el } from './utils';
+import { showToast, showConfirm } from './toast';
 import { showView } from './views';
 import { saveSets } from './storage';
 import { renderSets } from './render';
+import { renderRounds } from './rounds';
 import { setupImageFileHandler } from './image';
 import type { FlashCardQuestion } from './types';
+
+export { toggleRounds, addRound, setupRoundListDelegation } from './rounds';
 
 // ── Create / open ──────────────────────────────────────────────────────────
 
 export function openCreateSet(): void {
   setCurrentSetId(null);
-  showView('setEditorView');
+  showView(ViewId.EDITOR);
   el('editorTitle').textContent = 'Create New Set';
   el<HTMLButtonElement>('deleteSetBtn').style.display = 'none';
   (el('setName') as HTMLInputElement).value = '';
@@ -35,11 +41,11 @@ export function openCreateSet(): void {
 export function editSet(index: number): void {
   const set = sets[index];
   if (set.bundled) {
-    alert('Bundled sets cannot be edited. You can only edit sets you created.');
+    showToast('Bundled sets cannot be edited. You can only edit sets you created.', 'warning');
     return;
   }
   setCurrentSetId(index);
-  showView('setEditorView');
+  showView(ViewId.EDITOR);
   el('editorTitle').textContent = 'Edit Set';
   el<HTMLButtonElement>('deleteSetBtn').style.display = 'block';
   (el('setName') as HTMLInputElement).value = set.name;
@@ -203,7 +209,7 @@ export function setupCardListDelegation(): void {
       if (list && list.children.length > 1) {
         target.closest('.question-item')?.remove();
       } else {
-        alert('Each card must have at least one question');
+        showToast('Each card must have at least one question', 'warning');
       }
     }
   });
@@ -267,151 +273,19 @@ export function addQuestion(button: HTMLElement): void {
   if (ta) setupQuestionEnterHandler(ta);
 }
 
-// ── Rounds management ──────────────────────────────────────────────────────
-
-export function toggleRounds(): void {
-  const enabled = (el('roundsEnabled') as HTMLInputElement).checked;
-  if (enabled) {
-    el('roundsSection').style.display = 'block';
-    renderRounds();
-    updateAllCardRoundDropdowns();
-  } else {
-    let hasAssigned = false;
-    document.querySelectorAll<HTMLSelectElement>('.card-round-select').forEach((sel) => {
-      if (sel.value) hasAssigned = true;
-    });
-    if (hasAssigned) {
-      alert('Cannot disable rounds. Remove round assignments from all cards first.');
-      (el('roundsEnabled') as HTMLInputElement).checked = true;
-      return;
-    }
-    el('roundsSection').style.display = 'none';
-  }
-}
-
-export function addRound(): void {
-  const existing = rounds.map((r) => r.number);
-  let suggested = 1;
-  while (existing.includes(suggested)) suggested++;
-
-  const input = prompt('Enter round number:', String(suggested));
-  if (input === null) return;
-
-  const num = parseInt(input, 10);
-  if (isNaN(num) || num < 1) {
-    alert('Please enter a valid positive number');
-    return;
-  }
-  if (existing.includes(num)) {
-    alert(`Round ${num} already exists.`);
-    return;
-  }
-
-  rounds.push({ id: 'round_' + Date.now(), number: num });
-  rounds.sort((a, b) => a.number - b.number);
-  renderRounds();
-  updateAllCardRoundDropdowns();
-}
-
-export function removeRound(roundId: string): void {
-  if (rounds.length <= 1) {
-    alert('You must have at least one round');
-    return;
-  }
-  setRounds(rounds.filter((r) => r.id !== roundId));
-  document.querySelectorAll<HTMLSelectElement>('.card-round-select').forEach((sel) => {
-    if (sel.value === roundId) sel.value = '';
-  });
-  renderRounds();
-  updateAllCardRoundDropdowns();
-}
-
-export function editRoundNumber(roundId: string): void {
-  const round = rounds.find((r) => r.id === roundId);
-  if (!round) return;
-  const others = rounds.filter((r) => r.id !== roundId).map((r) => r.number);
-  const input = prompt(`Enter new number for Round ${round.number}:`, String(round.number));
-  if (input === null) return;
-  const num = parseInt(input, 10);
-  if (isNaN(num) || num < 1) {
-    alert('Please enter a valid positive number');
-    return;
-  }
-  if (others.includes(num)) {
-    alert(`Round ${num} already exists.`);
-    return;
-  }
-  round.number = num;
-  rounds.sort((a, b) => a.number - b.number);
-  renderRounds();
-  updateAllCardRoundDropdowns();
-}
-
-export function renderRounds(): void {
-  const list = el('roundsList');
-  list.innerHTML = '';
-  rounds.forEach((r) => {
-    const item = document.createElement('div');
-    item.className = 'round-item';
-    item.innerHTML = `
-      <span>Round ${r.number}</span>
-      <button class="btn btn-secondary btn-tiny" data-round-action="edit" data-round-id="${r.id}">Edit</button>
-      <button class="btn btn-danger btn-tiny" data-round-action="remove" data-round-id="${r.id}">×</button>`;
-    list.appendChild(item);
-  });
-}
-
-export function setupRoundListDelegation(): void {
-  el('roundsList').addEventListener('click', (e) => {
-    const target = (e.target as HTMLElement).closest<HTMLElement>('[data-round-action]');
-    if (!target) return;
-    const id = target.dataset.roundId!;
-    if (target.dataset.roundAction === 'edit') editRoundNumber(id);
-    else if (target.dataset.roundAction === 'remove') removeRound(id);
-  });
-}
-
-export function updateAllCardRoundDropdowns(): void {
-  const enabled = (el('roundsEnabled') as HTMLInputElement).checked;
-
-  document.querySelectorAll<HTMLSelectElement>('.card-round-select').forEach((sel) => {
-    const current = sel.value;
-    const opts = rounds.map(
-      (r) => `<option value="${r.id}" ${current === r.id ? 'selected' : ''}>Round ${r.number}</option>`,
-    );
-    sel.innerHTML = '<option value="">No Round</option>' + opts.join('');
-  });
-
-  if (enabled && rounds.length > 0) {
-    document.querySelectorAll('.card-item').forEach((ci) => {
-      if (!ci.querySelector('.card-round-select-wrapper')) {
-        const inputs = ci.querySelector('.card-item-inputs')!;
-        const opts = rounds.map((r) => `<option value="${r.id}">Round ${r.number}</option>`).join('');
-        inputs.insertAdjacentHTML(
-          'afterbegin',
-          `<div class="card-round-select-wrapper"><label>Round:</label>
-           <select class="card-round-select"><option value="">No Round</option>${opts}</select></div>`,
-        );
-      }
-    });
-  } else if (!enabled) {
-    document.querySelectorAll('.card-round-select-wrapper').forEach((el) => el.remove());
-  }
-}
-
 // ── Save / Delete ──────────────────────────────────────────────────────────
 
 export function saveSet(): void {
   const name = (el('setName') as HTMLInputElement).value.trim();
   if (!name) {
-    alert('Please enter a set name');
+    showToast('Please enter a set name', 'warning');
     return;
   }
 
   const yearInput = (el('setYear') as HTMLInputElement).value;
   const year = parseYearInput(yearInput);
   if (yearInput.trim() && year === null) {
-    alert('Please enter a valid year (e.g. 2024) or range (e.g. 2024-2025)');
+    showToast('Please enter a valid year (e.g. 2024) or range (e.g. 2024-2025)', 'warning');
     return;
   }
 
@@ -457,7 +331,7 @@ export function saveSet(): void {
   });
 
   if (cards.length === 0) {
-    alert('Please add at least one card with a question and answer');
+    showToast('Please add at least one card with a question and answer', 'warning');
     return;
   }
 
@@ -474,39 +348,39 @@ export function saveSet(): void {
       setData.bundled = true;
       setData.bundledFileName = existing.bundledFileName;
     }
-    sets[currentSetId] = setData;
+    setSets(sets.map((s, i) => i === currentSetId ? setData : s));
   } else {
-    sets.push(setData);
+    setSets([...sets, setData]);
   }
 
   saveSets();
   renderSets();
-  showView('mainView');
+  showView(ViewId.MAIN);
 }
 
-export function deleteSet(): void {
+export async function deleteSet(): Promise<void> {
   if (currentSetId === null) return;
   const set = sets[currentSetId];
   if (set.bundled) {
-    alert('Bundled sets cannot be deleted.');
+    showToast('Bundled sets cannot be deleted.', 'warning');
     return;
   }
-  if (confirm('Are you sure you want to delete this set?')) {
-    sets.splice(currentSetId, 1);
+  if (await showConfirm('Are you sure you want to delete this set?')) {
+    setSets([...sets.slice(0, currentSetId), ...sets.slice(currentSetId + 1)]);
     saveSets();
     renderSets();
-    showView('mainView');
+    showView(ViewId.MAIN);
   }
 }
 
-export function deleteSetFromList(index: number): void {
+export async function deleteSetFromList(index: number): Promise<void> {
   const set = sets[index];
   if (set.bundled) {
-    alert('Bundled sets cannot be deleted.');
+    showToast('Bundled sets cannot be deleted.', 'warning');
     return;
   }
-  if (confirm('Are you sure you want to delete this set?')) {
-    sets.splice(index, 1);
+  if (await showConfirm('Are you sure you want to delete this set?')) {
+    setSets([...sets.slice(0, index), ...sets.slice(index + 1)]);
     saveSets();
     renderSets();
   }
@@ -527,7 +401,7 @@ export function copyBundledSetToUser(index: number): void {
     name = `${copy.name} (${n})`;
   }
   copy.name = name;
-  sets.push(copy);
+  setSets([...sets, copy]);
   saveSets();
   renderSets();
 }

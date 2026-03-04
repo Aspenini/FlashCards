@@ -28,8 +28,8 @@ export function loadSets(): void {
     const bundled = sets.filter((s) => s.bundled);
     const clean = userSets.filter((s) => !s.bundled);
     setSets([...bundled, ...clean]);
-  } catch {
-    // corrupt data – ignore
+  } catch (e) {
+    console.warn('Failed to parse saved sets:', e);
   }
 }
 

@@ -5,6 +5,7 @@ import type {
   StudyResults,
   StudySetupState,
   GamepadState,
+  Player,
 } from './types';
 
 export const APP_VERSION = 'v0.5.0';
@@ -21,12 +22,16 @@ export let currentCardQuestions: FlashCardQuestion[] = [];
 export let currentCardQuestionsForCardIndex = -1;
 export let shownQuestions: FlashCardQuestion[] = [];
 
+export let moderatorMode = false;
+export let players: Player[] = [];
+
 export let rounds: FlashCardRound[] = [];
 
 export let lastStudySetupState: StudySetupState = {
   setIndex: '',
   roundId: '',
-  progressive: true,
+  progressive: false,
+  moderator: false,
 };
 
 export const gamepadState: GamepadState = {
@@ -73,6 +78,12 @@ export function setCurrentCardQuestionsForCardIndex(val: number): void {
 }
 export function setShownQuestions(val: FlashCardQuestion[]): void {
   shownQuestions = val;
+}
+export function setModeratorMode(val: boolean): void {
+  moderatorMode = val;
+}
+export function setPlayers(val: Player[]): void {
+  players = val;
 }
 export function setRounds(val: FlashCardRound[]): void {
   rounds = val;

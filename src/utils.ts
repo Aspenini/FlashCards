@@ -97,7 +97,14 @@ export function tryGamepadVibration(options: {
   }
 }
 
-/** el shorthand with non-null assertion for known DOM ids */
+/** el shorthand that throws a descriptive error when element is missing */
 export function el<T extends HTMLElement>(id: string): T {
-  return document.getElementById(id) as T;
+  const element = document.getElementById(id);
+  if (!element) throw new Error(`Element #${id} not found`);
+  return element as T;
+}
+
+/** Like el(), but returns null instead of throwing when element is missing */
+export function elMaybe<T extends HTMLElement>(id: string): T | null {
+  return document.getElementById(id) as T | null;
 }

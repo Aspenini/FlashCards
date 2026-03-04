@@ -1,52 +1,51 @@
 import { sets } from './state';
 import { stripHtmlForPdf, el } from './utils';
+import { sanitizeImageHtml } from './sanitize';
+import { showToast } from './toast';
+import { populateSetOptions, populateRoundOptions } from './select-helpers';
+
+let previousFocus: HTMLElement | null = null;
+let trapHandler: ((e: KeyboardEvent) => void) | null = null;
 
 export function openPrintModal(): void {
-  el('printModal').style.display = 'flex';
+  previousFocus = document.activeElement as HTMLElement | null;
+  const modal = el('printModal');
+  modal.style.display = 'flex';
   populatePrintSetSelect();
   updatePrintRoundSelect();
+
+  const focusables = modal.querySelectorAll<HTMLElement>(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+  );
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+
+  trapHandler = (e: KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last?.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first?.focus(); }
+    }
+  };
+  modal.addEventListener('keydown', trapHandler);
+  first?.focus();
 }
 
 export function closePrintModal(): void {
-  el('printModal').style.display = 'none';
+  const modal = el('printModal');
+  if (trapHandler) { modal.removeEventListener('keydown', trapHandler); trapHandler = null; }
+  modal.style.display = 'none';
+  previousFocus?.focus();
+  previousFocus = null;
 }
 
 export function populatePrintSetSelect(): void {
-  const select = el<HTMLSelectElement>('printSetSelect');
-  select.innerHTML = '<option value="">Select a set...</option>';
-  sets.forEach((set, i) => {
-    const opt = document.createElement('option');
-    opt.value = String(i);
-    opt.textContent = `${set.name} (${set.cards.length} cards)`;
-    select.appendChild(opt);
-  });
+  populateSetOptions('printSetSelect');
 }
 
 export function updatePrintRoundSelect(): void {
-  const select = el<HTMLSelectElement>('printSetSelect');
-  const roundSelect = el<HTMLSelectElement>('printRoundSelect');
-  const group = el('printRoundGroup');
-
-  if (select.value === '') {
-    group.style.display = 'none';
-    roundSelect.innerHTML = '<option value="">All Rounds</option>';
-    return;
-  }
-
-  const set = sets[parseInt(select.value, 10)];
-  if (set.rounds?.length) {
-    group.style.display = 'block';
-    roundSelect.innerHTML = '<option value="">All Rounds</option>';
-    [...set.rounds].sort((a, b) => a.number - b.number).forEach((r) => {
-      const opt = document.createElement('option');
-      opt.value = r.id;
-      opt.textContent = `Round ${r.number}`;
-      roundSelect.appendChild(opt);
-    });
-  } else {
-    group.style.display = 'none';
-    roundSelect.innerHTML = '<option value="">All Rounds</option>';
-  }
+  populateRoundOptions('printSetSelect', 'printRoundSelect', 'printRoundGroup');
 }
 
 function resolveImageToDataUri(imageStr: string): Promise<string | null> {
@@ -73,8 +72,10 @@ function resolveImageToDataUri(imageStr: string): Promise<string | null> {
   }
 
   if (s.startsWith('<svg')) {
+    const sanitized = sanitizeImageHtml(s);
+    if (!sanitized) return Promise.resolve(null);
     return new Promise((resolve) => {
-      const blob = new Blob([s], { type: 'image/svg+xml' });
+      const blob = new Blob([sanitized], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(blob);
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -107,13 +108,13 @@ function getImageDimensions(uri: string | null): Promise<{ w: number; h: number 
 export async function generatePrintPdf(): Promise<void> {
   const setSelect = el<HTMLSelectElement>('printSetSelect');
   const roundSelect = el<HTMLSelectElement>('printRoundSelect');
-  if (setSelect.value === '') { alert('Please select a set'); return; }
+  if (setSelect.value === '') { showToast('Please select a set', 'warning'); return; }
 
   const set = sets[parseInt(setSelect.value, 10)];
   let cards = [...set.cards];
   if (roundSelect.value) {
     cards = cards.filter((c) => c.roundId === roundSelect.value);
-    if (cards.length === 0) { alert('No cards in the selected round'); return; }
+    if (cards.length === 0) { showToast('No cards in the selected round', 'warning'); return; }
   }
 
   // Dynamic import keeps jspdf out of the main bundle
