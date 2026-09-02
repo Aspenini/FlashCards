@@ -1,23 +1,27 @@
 {
   "name": "flashcards",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev": "vite dev",
+    "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "check": "svelte-kit sync && tsc --noEmit",
+    "test": "bun test"
   },
   "devDependencies": {
-    "jsdom": "^28.1.0",
-    "typescript": "^5.7.0",
-    "vite": "^6.2.0",
-    "vitest": "^4.0.18"
+    "@sveltejs/adapter-static": "^3.0.10",
+    "@sveltejs/kit": "^2.47.0",
+    "@sveltejs/vite-plugin-svelte": "^6.2.0",
+    "@types/bun": "^1.2.0",
+    "happy-dom": "^20.0.0",
+    "svelte": "^5.39.0",
+    "typescript": "^7.0.2",
+    "vite": "^7.1.0"
   },
   "dependencies": {
     "dompurify": "^3.3.1",
-    "jspdf": "^2.5.2"
+    "jspdf": "^3.0.3"
   }
 }
