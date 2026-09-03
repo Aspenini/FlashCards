@@ -42,10 +42,11 @@
   <button
     type="button"
     class="set-info"
+    class:static={set.bundled}
+    disabled={set.bundled}
     onclick={() => {
       if (!set.bundled) goto(`/edit/${set.id}`);
     }}
-    style={set.bundled ? 'cursor:default;text-align:left;background:none;border:none;padding:0;color:inherit;font:inherit;' : 'text-align:left;background:none;border:none;padding:0;color:inherit;font:inherit;cursor:pointer;'}
   >
     <div class="set-name">{set.name}</div>
     <div class="set-meta">{meta}</div>

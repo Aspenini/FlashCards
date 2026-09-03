@@ -17,7 +17,7 @@
     cleanReloadQueryFromUrl();
     ui.standalone = isStandalone();
     ui.applyTheme();
-    setsStore.load();
+    setsStore.load().catch(() => {});
     const stop = setupGamepadSupport();
 
     if ('serviceWorker' in navigator) {

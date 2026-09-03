@@ -73,11 +73,11 @@ export type ThemeName = 'dark' | 'light' | 'ocean' | 'forest' | 'sunset';
 export const THEMES: ThemeName[] = ['dark', 'light', 'ocean', 'forest', 'sunset'];
 
 export const THEME_META_COLORS: Record<ThemeName, string> = {
-  dark: '#0a0a0a',
-  light: '#1a1a1a',
-  ocean: '#0d2137',
-  forest: '#0f1f14',
-  sunset: '#2d1b2e',
+  dark: '#08080b',
+  light: '#f6f7f9',
+  ocean: '#05131f',
+  forest: '#07140d',
+  sunset: '#170e1e',
 };
 
 export const APP_VERSION = 'v1.0.0';

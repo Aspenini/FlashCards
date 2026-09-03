@@ -27,21 +27,26 @@ class SetsStore {
     return this.sets.find((s) => s.id === id);
   }
 
-  load(): void {
-    const bundled = loadBundledSets();
-    let user: FlashCardSet[] = [];
+  #readUserSets(): FlashCardSet[] {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved) as FlashCardSet[];
-        user = parsed
-          .filter((s) => !s.bundled)
-          .map((s, i) => ensureId(s, `user_${i}_${s.name}`));
-      } catch (e) {
-        console.warn('Failed to parse saved sets:', e);
-      }
+    if (!saved) return [];
+    try {
+      return (JSON.parse(saved) as FlashCardSet[])
+        .filter((s) => !s.bundled)
+        .map((s, i) => ensureId(s, `user_${i}_${s.name}`));
+    } catch (e) {
+      console.warn('Failed to parse saved sets:', e);
+      return [];
     }
-    this.sets = [...bundled, ...user];
+  }
+
+  async load(): Promise<void> {
+    // Show the user's own sets immediately; bundled JSON streams in behind it.
+    this.sets = this.#readUserSets();
+    const bundled = await loadBundledSets();
+    // Re-read user sets rather than reusing `user`: anything added while the
+    // bundled JSON was in flight must survive.
+    this.sets = [...bundled, ...this.sets.filter((s) => !s.bundled)];
     this.loaded = true;
     this.persist();
   }
@@ -115,7 +120,8 @@ class SetsStore {
   copyBundled(id: string): FlashCardSet | null {
     const set = this.byId(id);
     if (!set?.bundled) return null;
-    const copy: FlashCardSet = structuredClone(set);
+    // structuredClone cannot clone the $state proxy; snapshot it to a plain object first.
+    const copy: FlashCardSet = $state.snapshot(set) as FlashCardSet;
     delete copy.bundled;
     delete copy.bundledFileName;
     copy.id = uid('set');

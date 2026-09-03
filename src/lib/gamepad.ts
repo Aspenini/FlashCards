@@ -19,7 +19,8 @@ export const gamepadState: GamepadState = {
 };
 
 function currentView(): string {
-  const path = get(page).url.pathname;
+  // Routes are typed with a trailing slash, so normalise before comparing.
+  const path = get(page).url.pathname.replace(/\/+$/, '') || '/';
   if (path === '/') return 'main';
   if (path.startsWith('/create') || path.startsWith('/edit')) return 'editor';
   if (path === '/study') return 'setup';
@@ -129,6 +130,9 @@ export function updateGamepadNavigation(): void {
   gamepadState.navigationElements = [];
   gamepadState.navigationIndex = 0;
   clearFocus();
+
+  // Without a gamepad (or Wii U) there is nothing to drive the focus ring.
+  if (!gamepadState.connected) return;
 
   const push = (id: string) => {
     const e = document.getElementById(id);

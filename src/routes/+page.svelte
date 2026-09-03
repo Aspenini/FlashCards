@@ -65,7 +65,7 @@
   <div class="sets-container">
     {#if bundled.length}
       <div id="bundledSetsContainer">
-        <h2>Bundled Sets</h2>
+        <h2>Bundled Sets <span class="count">{bundled.length}</span></h2>
         <div id="bundledSetsList" class="sets-list">
           {#each bundled as set (set.id)}
             <SetCard {set} />
@@ -73,11 +73,17 @@
         </div>
       </div>
     {/if}
-    <h2>Your Sets</h2>
+    <h2>Your Sets {#if user.length}<span class="count">{user.length}</span>{/if}</h2>
     <div id="setsList" class="sets-list">
       {#if user.length === 0}
         <p class="empty-message">
-          {q ? 'No matching sets.' : 'No sets yet. Create your first set to get started!'}
+          {#if !setsStore.loaded}
+            Loading sets…
+          {:else if q}
+            No matching sets.
+          {:else}
+            No sets yet. Create your first set to get started!
+          {/if}
         </p>
       {:else}
         {#each user as set (set.id)}
@@ -93,7 +99,8 @@
 <style>
   a.btn.disabled {
     pointer-events: none;
-    background: var(--btn-primary-disabled);
+    opacity: 0.5;
     cursor: not-allowed;
+    box-shadow: none;
   }
 </style>

@@ -301,180 +301,186 @@
   <a href="/create" id="newSetBtn" class="btn btn-secondary btn-small">New set</a>
 </div>
 
-<div class="form-group">
-  <label for="setName">Set Name</label>
-  <input type="text" id="setName" placeholder="Enter set name" maxlength="50" bind:value={name} />
-</div>
-<div class="form-group">
-  <label for="setYear">Year (optional)</label>
-  <input type="text" id="setYear" placeholder="e.g. 2024 or 2024-2025" maxlength="20" bind:value={year} />
-  <span class="hint">Single year or range like 2025-2026</span>
-</div>
-<div class="form-group">
-  <label for="setCreator">Creator (optional)</label>
-  <input type="text" id="setCreator" placeholder="e.g. Your name or organization" maxlength="80" bind:value={creator} />
-</div>
-<div class="form-group">
-  <label for="setSubject">Subject (optional)</label>
-  <input type="text" id="setSubject" placeholder="e.g. Science, History" maxlength="50" bind:value={subject} />
-</div>
-<div class="form-group">
-  <label for="setColor">Color (optional)</label>
-  <div class="color-input-row">
-    <input
-      type="color"
-      id="setColor"
-      title="Set card accent color"
-      bind:value={color}
-      oninput={() => {
-        colorText = color;
-      }}
-    />
-    <input
-      type="text"
-      id="setColorText"
-      placeholder="#6b7280"
-      maxlength="9"
-      class="color-text-input"
-      bind:value={colorText}
-      oninput={() => {
-        if (/^#[0-9A-Fa-f]{6}$/.test(colorText.trim())) color = colorText.trim();
-      }}
-    />
-  </div>
-  <span class="hint">Shown in the top-right corner of the set card on the homepage</span>
-</div>
-<div class="form-group">
-  <label class="checkbox-label">
-    <input type="checkbox" id="roundsEnabled" bind:checked={roundsEnabled} onchange={toggleRounds} />
-    <span>Enable Rounds (group cards into rounds)</span>
-  </label>
-</div>
+<div class="editor-grid">
+  <aside class="editor-meta">
+    <div class="form-group">
+      <label for="setName">Set Name</label>
+      <input type="text" id="setName" placeholder="Enter set name" maxlength="50" bind:value={name} />
+    </div>
+    <div class="form-group">
+      <label for="setYear">Year (optional)</label>
+      <input type="text" id="setYear" placeholder="e.g. 2024 or 2024-2025" maxlength="20" bind:value={year} />
+      <span class="hint">Single year or range like 2025-2026</span>
+    </div>
+    <div class="form-group">
+      <label for="setCreator">Creator (optional)</label>
+      <input type="text" id="setCreator" placeholder="e.g. Your name or organization" maxlength="80" bind:value={creator} />
+    </div>
+    <div class="form-group">
+      <label for="setSubject">Subject (optional)</label>
+      <input type="text" id="setSubject" placeholder="e.g. Science, History" maxlength="50" bind:value={subject} />
+    </div>
+    <div class="form-group">
+      <label for="setColor">Color (optional)</label>
+      <div class="color-input-row">
+        <input
+          type="color"
+          id="setColor"
+          title="Set card accent color"
+          bind:value={color}
+          oninput={() => {
+            colorText = color;
+          }}
+        />
+        <input
+          type="text"
+          id="setColorText"
+          placeholder="#6b7280"
+          maxlength="9"
+          class="color-text-input"
+          bind:value={colorText}
+          oninput={() => {
+            if (/^#[0-9A-Fa-f]{6}$/.test(colorText.trim())) color = colorText.trim();
+          }}
+        />
+      </div>
+      <span class="hint">Shown in the top-right corner of the set card on the homepage</span>
+    </div>
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input type="checkbox" id="roundsEnabled" bind:checked={roundsEnabled} onchange={toggleRounds} />
+        <span>Enable Rounds (group cards into rounds)</span>
+      </label>
+    </div>
 
-{#if roundsEnabled}
-  <div id="roundsSection" class="rounds-section">
-    <div class="rounds-header">
-      <h3>Rounds</h3>
-      <button id="addRoundBtn" class="btn btn-secondary btn-small" type="button" onclick={addRound}>+ Add Round</button>
-    </div>
-    <div id="roundsList" class="rounds-list">
-      {#each rounds as r (r.id)}
-        <div class="round-item">
-          <span>Round {r.number}</span>
-          <button class="btn btn-secondary btn-tiny" type="button" onclick={() => editRound(r)}>Edit</button>
-          <button class="btn btn-danger btn-tiny" type="button" onclick={() => removeRound(r.id)}>×</button>
+    {#if roundsEnabled}
+      <div id="roundsSection" class="rounds-section">
+        <div class="rounds-header">
+          <h3>Rounds</h3>
+          <button id="addRoundBtn" class="btn btn-secondary btn-small" type="button" onclick={addRound}>+ Add Round</button>
         </div>
-      {/each}
-    </div>
-  </div>
-{/if}
-
-<div class="cards-editor">
-  <div class="cards-header">
-    <h3>Cards</h3>
-    <div class="cards-header-actions">
-      <button id="addCardBtn" class="btn btn-small" type="button" onclick={() => (cards = [...cards, emptyCard()])}>+ Add Card</button>
-    </div>
-  </div>
-  <div id="cardsList" class="cards-list">
-    {#each cards as card, i (card.id)}
-      <div class="card-item">
-        <div class="card-item-header">
-          <span class="card-item-number">Card {i + 1}</span>
-          <button class="btn btn-danger btn-small" type="button" onclick={() => (cards = cards.filter((c) => c.id !== card.id))}>Remove</button>
-        </div>
-        <div class="card-item-inputs">
-          {#if roundsEnabled && rounds.length}
-            <div class="card-round-select-wrapper">
-              <label for="round-{card.id}">Round:</label>
-              <select id="round-{card.id}" class="card-round-select" bind:value={card.roundId}>
-                <option value="">No Round</option>
-                {#each rounds as r}
-                  <option value={r.id}>Round {r.number}</option>
-                {/each}
-              </select>
+        <div id="roundsList" class="rounds-list">
+          {#each rounds as r (r.id)}
+            <div class="round-item">
+              <span>Round {r.number}</span>
+              <button class="btn btn-secondary btn-tiny" type="button" onclick={() => editRound(r)}>Edit</button>
+              <button class="btn btn-danger btn-tiny" type="button" onclick={() => removeRound(r.id)}>×</button>
             </div>
-          {/if}
-          <div class="questions-section">
-            <div class="questions-header">
-              <span>Questions (randomly selected during study)</span>
-              <button class="btn btn-secondary btn-tiny" type="button" onclick={() => addQuestion(card)}>+ Add Question</button>
-            </div>
-            <div class="questions-list" role="list">
-              {#each card.questions as q, qi (q.id)}
-                <div
-                  class="question-item"
-                  role="listitem"
-                  class:dragging={draggedId === q.id}
-                  class:question-placeholder={dragOverId === q.id && draggedId !== q.id}
-                  ondragover={(e) => {
-                    e.preventDefault();
-                    dragOverId = q.id;
-                  }}
-                  ondrop={(e) => {
-                    e.preventDefault();
-                    onDrop(card, q.id);
-                  }}
-                >
-                  <div
-                    class="question-drag-handle"
-                    role="button"
-                    tabindex="0"
-                    aria-label="Drag to reorder"
-                    draggable="true"
-                    ondragstart={() => onDragStart(q.id)}
-                    ondragend={() => {
-                      draggedId = null;
-                      dragOverId = null;
-                    }}
-                  >
-                    ⋮⋮
-                  </div>
-                  <div class="question-input-wrapper">
-                    <textarea
-                      placeholder="Question {qi + 1}"
-                      class="card-question"
-                      bind:value={q.text}
-                      onkeydown={(e) => onQuestionKey(e, card, qi)}
-                    ></textarea>
-                  </div>
-                  {#if qi > 0}
-                    <button class="btn btn-danger btn-tiny" type="button" onclick={() => removeQuestion(card, q.id)}>×</button>
-                  {/if}
-                </div>
-              {/each}
-            </div>
-          </div>
-          <textarea placeholder="Answer" class="card-answer" bind:value={card.answer}></textarea>
-          <div class="answer-syntax-hint">
-            <small>Tip: Use (option1/option2) for interchangeable words, [optional] for optional prefixes or suffixes</small>
-            <small>Examples: Conservation of (mass/matter), [Law of] Conservation of (mass/matter)</small>
-          </div>
-          <div class="hints-section">
-            <label for="hint-{card.id}">Hint (optional, always visible)</label>
-            <input id="hint-{card.id}" type="text" placeholder="Hint (e.g., multi-word answer)" class="card-hint" maxlength="100" bind:value={card.hint} />
-          </div>
-          <div class="hints-section">
-            <label for="dna-{card.id}">DO NOT ACCEPT (optional, always visible)</label>
-            <input id="dna-{card.id}" type="text" placeholder="DO NOT ACCEPT (e.g., incorrect answer variation)" class="card-do-not-accept" maxlength="100" bind:value={card.doNotAccept} />
-          </div>
-          <div class="hints-section">
-            <label for="img-{card.id}">Image (optional – SVG, JPG, PNG, or WebP)</label>
-            <div class="image-input-wrapper">
-              <textarea id="img-{card.id}" placeholder="Paste SVG code or base64 data URI here, or use file upload below" class="card-image-svg" rows="4" bind:value={card.image}></textarea>
-              <input type="file" accept=".svg,.jpg,.jpeg,.png,.webp,image/svg+xml,image/jpeg,image/png,image/webp" class="card-image-file" onchange={(e) => onImageFile(card, e)} />
-              <button type="button" class="btn btn-secondary btn-tiny card-image-clear" onclick={() => (card.image = '')}>Clear Image</button>
-            </div>
-          </div>
+          {/each}
         </div>
       </div>
-    {/each}
-  </div>
-</div>
+    {/if}
+  </aside>
 
-<div class="editor-actions">
-  <button id="saveSetBtn" class="btn btn-primary" type="button" onclick={save}>Save Set</button>
-  {#if existing && !existing.bundled}
-    <button id="deleteSetBtn" class="btn btn-danger" type="button" onclick={removeSet}>Delete Set</button>
-  {/if}
+  <div class="editor-cards">
+    <div class="cards-editor">
+      <div class="cards-header">
+        <h3>Cards</h3>
+        <div class="cards-header-actions">
+          <button id="addCardBtn" class="btn btn-small" type="button" onclick={() => (cards = [...cards, emptyCard()])}>+ Add Card</button>
+        </div>
+      </div>
+      <div id="cardsList" class="cards-list">
+        {#each cards as card, i (card.id)}
+          <div class="card-item">
+            <div class="card-item-header">
+              <span class="card-item-number">Card {i + 1}</span>
+              <button class="btn btn-danger btn-small" type="button" onclick={() => (cards = cards.filter((c) => c.id !== card.id))}>Remove</button>
+            </div>
+            <div class="card-item-inputs">
+              {#if roundsEnabled && rounds.length}
+                <div class="card-round-select-wrapper">
+                  <label for="round-{card.id}">Round:</label>
+                  <select id="round-{card.id}" class="card-round-select" bind:value={card.roundId}>
+                    <option value="">No Round</option>
+                    {#each rounds as r}
+                      <option value={r.id}>Round {r.number}</option>
+                    {/each}
+                  </select>
+                </div>
+              {/if}
+              <div class="questions-section">
+                <div class="questions-header">
+                  <span>Questions (randomly selected during study)</span>
+                  <button class="btn btn-secondary btn-tiny" type="button" onclick={() => addQuestion(card)}>+ Add Question</button>
+                </div>
+                <div class="questions-list" role="list">
+                  {#each card.questions as q, qi (q.id)}
+                    <div
+                      class="question-item"
+                      role="listitem"
+                      class:dragging={draggedId === q.id}
+                      class:question-placeholder={dragOverId === q.id && draggedId !== q.id}
+                      ondragover={(e) => {
+                        e.preventDefault();
+                        dragOverId = q.id;
+                      }}
+                      ondrop={(e) => {
+                        e.preventDefault();
+                        onDrop(card, q.id);
+                      }}
+                    >
+                      <div
+                        class="question-drag-handle"
+                        role="button"
+                        tabindex="0"
+                        aria-label="Drag to reorder"
+                        draggable="true"
+                        ondragstart={() => onDragStart(q.id)}
+                        ondragend={() => {
+                          draggedId = null;
+                          dragOverId = null;
+                        }}
+                      >
+                        ⋮⋮
+                      </div>
+                      <div class="question-input-wrapper">
+                        <textarea
+                          placeholder="Question {qi + 1}"
+                          class="card-question"
+                          bind:value={q.text}
+                          onkeydown={(e) => onQuestionKey(e, card, qi)}
+                        ></textarea>
+                      </div>
+                      {#if qi > 0}
+                        <button class="btn btn-danger btn-tiny" type="button" onclick={() => removeQuestion(card, q.id)}>×</button>
+                      {/if}
+                    </div>
+                  {/each}
+                </div>
+              </div>
+              <textarea placeholder="Answer" class="card-answer" bind:value={card.answer}></textarea>
+              <div class="answer-syntax-hint">
+                <small>Tip: Use (option1/option2) for interchangeable words, [optional] for optional prefixes or suffixes</small>
+                <small>Examples: Conservation of (mass/matter), [Law of] Conservation of (mass/matter)</small>
+              </div>
+              <div class="hints-section">
+                <label for="hint-{card.id}">Hint (optional, always visible)</label>
+                <input id="hint-{card.id}" type="text" placeholder="Hint (e.g., multi-word answer)" class="card-hint" maxlength="100" bind:value={card.hint} />
+              </div>
+              <div class="hints-section">
+                <label for="dna-{card.id}">DO NOT ACCEPT (optional, always visible)</label>
+                <input id="dna-{card.id}" type="text" placeholder="DO NOT ACCEPT (e.g., incorrect answer variation)" class="card-do-not-accept" maxlength="100" bind:value={card.doNotAccept} />
+              </div>
+              <div class="hints-section">
+                <label for="img-{card.id}">Image (optional – SVG, JPG, PNG, or WebP)</label>
+                <div class="image-input-wrapper">
+                  <textarea id="img-{card.id}" placeholder="Paste SVG code or base64 data URI here, or use file upload below" class="card-image-svg" rows="4" bind:value={card.image}></textarea>
+                  <input type="file" accept=".svg,.jpg,.jpeg,.png,.webp,image/svg+xml,image/jpeg,image/png,image/webp" class="card-image-file" onchange={(e) => onImageFile(card, e)} />
+                  <button type="button" class="btn btn-secondary btn-tiny card-image-clear" onclick={() => (card.image = '')}>Clear Image</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </div>
+
+    <div class="editor-actions">
+      <button id="saveSetBtn" class="btn btn-primary" type="button" onclick={save}>Save Set</button>
+      {#if existing && !existing.bundled}
+        <button id="deleteSetBtn" class="btn btn-danger" type="button" onclick={removeSet}>Delete Set</button>
+      {/if}
+    </div>
+  </div>
 </div>

@@ -10,6 +10,12 @@ import type {
 } from '$lib/types';
 import { setsStore } from './sets.svelte';
 
+/** Card transition timings — keep in sync with the card-stage animations in app.css. */
+const EXIT_MS = 260;
+const ENTER_MS = 340;
+const MOD_EXIT_MS = 190;
+const MOD_ENTER_MS = 260;
+
 function normalizeQuestions(card: FlashCard): FlashCardQuestion[] {
   const raw = Array.isArray(card.questions) && card.questions.length ? card.questions : [{ text: '', order: 1 }];
   return raw.map((q, i) =>
@@ -144,6 +150,7 @@ class StudyStore {
   }
 
   mark(isCorrect: boolean): void {
+    if (this.transitioning) return;
     const card = this.current;
     if (!card) return;
     this.reviewIndex = null;
@@ -174,10 +181,12 @@ class StudyStore {
   }
 
   private advance(moderator = false): void {
-    this.flipped = false;
-    this.animating = 'out';
+    if (this.transitioning) return;
     this.transitioning = true;
-    const delay = moderator ? 350 : 600;
+    this.animating = 'out';
+    const exit = moderator ? MOD_EXIT_MS : EXIT_MS;
+    const enter = moderator ? MOD_ENTER_MS : ENTER_MS;
+
     setTimeout(() => {
       this.index += 1;
       this.questionIndex = this.progressive ? 1 : 0;
@@ -185,17 +194,20 @@ class StudyStore {
       this.currentQuestions = [];
       this.questionsForIndex = -1;
       if (this.index < this.cards.length) {
+        // prepareCard() clears `flipped`; doing it here means the answer stays
+        // visible for the whole exit instead of flipping back under the user.
         this.prepareCard();
         this.animating = 'in';
         setTimeout(() => {
           this.animating = 'none';
           this.transitioning = false;
-        }, delay);
+        }, enter);
       } else {
+        this.flipped = false;
         this.animating = 'none';
         this.transitioning = false;
       }
-    }, delay);
+    }, exit);
   }
 
   addPlayer(name: string): string | null {

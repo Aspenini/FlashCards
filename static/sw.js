@@ -3,7 +3,7 @@
  * Runtime-caching strategy compatible with Vite's hashed asset filenames.
  * Bump CACHE_VERSION when deploying breaking changes.
  */
-const CACHE_VERSION = '2';
+const CACHE_VERSION = '3';
 const CACHE_NAME = `flashcards-v${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
